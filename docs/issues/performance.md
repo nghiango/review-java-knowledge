@@ -71,6 +71,26 @@ a low hit rate. Use a bounded key domain and cap retained entries.
 
 **Appears in:** `modules/02-jvm/broken-examples/unbounded-cache`
 
+### Regex pattern compiled on hot path
+
+**Type:** Performance issue · **Severity:** High · **Difficulty:** Basic
+
+Compiling a regular expression pattern on every invocation of a hot loop wastes CPU cycles parsing
+the regex syntax and creates high young-generation allocation churn. Precompile the pattern once into
+a static final field.
+
+**Appears in:** `modules/02-jvm/broken-examples/excessive-hot-path-allocation`
+
+### Excessive young-gen allocation in telemetry formatting
+
+**Type:** Performance issue · **Severity:** High · **Difficulty:** Intermediate
+
+Using Stream pipelines, intermediate collections, lambdas and `String.format` inside high-throughput
+formatting paths creates high TLAB churn and frequent minor GCs. Use a single operation-local
+`StringBuilder` and direct character traversal.
+
+**Appears in:** `modules/02-jvm/broken-examples/excessive-hot-path-allocation`
+
 ## Related
 
 - [Issue catalogue](index.md)

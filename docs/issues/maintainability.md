@@ -102,6 +102,24 @@ capacity and eviction policy explicit, or inject a production cache implementati
 
 **Appears in:** `modules/02-jvm/broken-examples/unbounded-cache`
 
+### Chained regex character replacement
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Basic
+
+Chaining multiple `replaceAll` calls repeatedly parses regex patterns and allocates intermediate
+string instances for each replacement. Prefer a single-pass character scan using a `StringBuilder`.
+
+**Appears in:** `modules/02-jvm/broken-examples/excessive-hot-path-allocation`
+
+### Untyped loose domain arguments
+
+**Type:** Design issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+Passing loose primitives and mutable maps bypasses validation at domain construction time and allows
+unvalidated or concurrently modified state. Model domain telemetry payloads as immutable records.
+
+**Appears in:** `modules/02-jvm/broken-examples/excessive-hot-path-allocation`
+
 ## Related
 
 - [Issue catalogue](index.md)

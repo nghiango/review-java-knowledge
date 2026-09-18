@@ -31,6 +31,16 @@ behavior operators need. Prefer metrics plus sampled diagnostics.
 
 **Appears in:** `modules/02-jvm/broken-examples/unbounded-cache`
 
+### Hot-path telemetry logging
+
+**Type:** Observability issue · **Severity:** High · **Difficulty:** Basic
+
+Emitting INFO logs on every metric encoding invocation saturates logging appenders, generates huge
+log volumes and adds latency overhead to critical hot paths. Reserve logging for aggregate summaries
+or sampled diagnostics.
+
+**Appears in:** `modules/02-jvm/broken-examples/excessive-hot-path-allocation`
+
 ## Related
 
 - [Issue catalogue](index.md)
