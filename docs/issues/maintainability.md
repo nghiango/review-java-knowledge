@@ -84,6 +84,15 @@ contract. Return an immutable snapshot for inspection.
 
 **Appears in:** `modules/02-jvm/broken-examples/static-listener-leak`
 
+### Ambient request context lacks scope
+
+**Type:** Design issue · **Severity:** High · **Difficulty:** Intermediate
+
+An API that only sets ThreadLocal state hides ownership and cleanup. Return a closeable scope that
+captures the previous value, restores parents and removes the value when no parent exists.
+
+**Appears in:** `modules/02-jvm/broken-examples/threadlocal-pool-leak`
+
 ## Related
 
 - [Issue catalogue](index.md)

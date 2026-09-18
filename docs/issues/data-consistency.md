@@ -40,6 +40,15 @@ one immutable result per input and join in the documented order.
 
 **Appears in:** [Core Java — stream side effects](../topics/core-java/code-review.md#stream-and-parallel-side-effects)
 
+### Request context not cleared after failure
+
+**Type:** Data consistency issue · **Severity:** High · **Difficulty:** Intermediate
+
+When request context cleanup is not tied to `finally` or try-with-resources, exceptions leave stale
+identity on the worker thread. Use a closeable scope so cleanup runs on success and failure.
+
+**Appears in:** `modules/02-jvm/broken-examples/threadlocal-pool-leak`
+
 ## Related
 
 - [Issue catalogue](index.md)

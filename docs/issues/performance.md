@@ -44,6 +44,15 @@ out-of-band knowledge. Return an explicit handle and close it during component s
 
 **Appears in:** `modules/02-jvm/broken-examples/static-listener-leak`
 
+### ThreadLocal value retained on pooled thread
+
+**Type:** Resource leak issue · **Severity:** High · **Difficulty:** Intermediate
+
+ThreadLocal values attached to executor threads can outlive the logical request that created them.
+Open a closeable scope at the request boundary and remove the value when the scope closes.
+
+**Appears in:** `modules/02-jvm/broken-examples/threadlocal-pool-leak`
+
 ## Related
 
 - [Issue catalogue](index.md)
