@@ -93,6 +93,15 @@ captures the previous value, restores parents and removes the value when no pare
 
 **Appears in:** `modules/02-jvm/broken-examples/threadlocal-pool-leak`
 
+### Hidden static cache policy
+
+**Type:** Design issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+Static cache policy cannot be configured, replaced or tested at the component boundary. Make the
+capacity and eviction policy explicit, or inject a production cache implementation.
+
+**Appears in:** `modules/02-jvm/broken-examples/unbounded-cache`
+
 ## Related
 
 - [Issue catalogue](index.md)

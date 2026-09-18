@@ -53,6 +53,24 @@ Open a closeable scope at the request boundary and remove the value when the sco
 
 **Appears in:** `modules/02-jvm/broken-examples/threadlocal-pool-leak`
 
+### Unbounded static cache
+
+**Type:** Memory issue · **Severity:** High · **Difficulty:** Intermediate
+
+A cache backed by a static map with no maximum size, expiry or weight limit can retain data until
+the process fails. Set an explicit bound and eviction policy, and size it with production data.
+
+**Appears in:** `modules/02-jvm/broken-examples/unbounded-cache`
+
+### Caller-controlled cache key cardinality
+
+**Type:** Scalability issue · **Severity:** High · **Difficulty:** Intermediate
+
+Cache keys built from user-controlled request data can grow with traffic cardinality while producing
+a low hit rate. Use a bounded key domain and cap retained entries.
+
+**Appears in:** `modules/02-jvm/broken-examples/unbounded-cache`
+
 ## Related
 
 - [Issue catalogue](index.md)
