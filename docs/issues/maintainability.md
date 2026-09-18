@@ -38,6 +38,24 @@ Keep display/profile data outside the identity key and test the implication dire
 
 **Appears in:** [Core Java — mutable map key](../topics/core-java/code-review.md#mutable-map-key)
 
+### Optional as mutable shared state
+
+**Type:** Design issue · **Severity:** High · **Difficulty:** Intermediate
+
+An Optional field on a singleton service is mutable cross-request state, not an absence contract.
+Keep the service stateless or use an explicitly keyed, thread-safe cache.
+
+**Appears in:** [Core Java — Optional and exceptions](../topics/core-java/code-review.md#optional-and-exception-misuse)
+
+### Optional parameter obscures a required contract
+
+**Type:** API design issue · **Severity:** Medium · **Difficulty:** Basic
+
+An Optional parameter forces wrapping while still allowing a null Optional reference. Accept the
+required value and validate it at the boundary; reserve Optional primarily for return absence.
+
+**Appears in:** [Core Java — Optional and exceptions](../topics/core-java/code-review.md#optional-and-exception-misuse)
+
 ## Related
 
 - [Issue catalogue](index.md)
