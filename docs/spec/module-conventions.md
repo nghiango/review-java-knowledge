@@ -1,7 +1,7 @@
 # Module Conventions
 
 Normative rules for every module in `modules/` and its documentation in `docs/topics/`.
-See [AGENTS.md](../../AGENTS.md) for the short operating manual and
+See the root `AGENTS.md` for the short operating manual and
 [curriculum.md](curriculum.md) for what each module must cover.
 
 ## 1. Project philosophy
@@ -130,7 +130,7 @@ Code is embedded with `pymdownx.snippets`:
 
 ```markdown
 ```java
---8<-- "modules/07-spring-transactions/broken-examples/external-call-in-transaction/OrderService.java"
+--8&lt;-- "modules/07-spring-transactions/broken-examples/external-call-in-transaction/OrderService.java"
 ```
 ```
 

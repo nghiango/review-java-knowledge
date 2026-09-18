@@ -1,7 +1,7 @@
 # Project Specification
 
-Normative specification for the Senior Java / Spring Interview Lab. [AGENTS.md](../../AGENTS.md)
-at the repository root is the short operating manual; these documents hold the detail.
+Normative specification for the Senior Java / Spring Interview Lab. The root `AGENTS.md` is the
+short operating manual; these documents hold the detail.
 
 | Document | Scope |
 |---|---|

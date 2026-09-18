@@ -1,0 +1,83 @@
+site_name: Senior Java / Spring Interview Lab
+site_description: Senior backend interview preparation and production engineering laboratory
+docs_dir: docs
+strict: true
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - search.highlight
+    - search.share
+    - search.suggest
+
+nav:
+  - Start:
+      - Home: index.md
+      - Roadmap: roadmap.md
+      - Interview Checklist: interview-checklist.md
+      - Progress: progress.md
+      - Repository Architecture: architecture.md
+  - Issues:
+      - Catalogue: issues/index.md
+      - Security: issues/security.md
+      - Performance: issues/performance.md
+      - Concurrency: issues/concurrency.md
+      - Transactions: issues/transaction.md
+      - Data Consistency: issues/data-consistency.md
+      - Database and JPA: issues/database.md
+      - Messaging: issues/messaging.md
+      - Resilience: issues/resilience.md
+      - Reliability: issues/reliability.md
+      - Observability: issues/observability.md
+      - Maintainability and Design: issues/maintainability.md
+  - Scenarios:
+      - Overview: scenarios/index.md
+  - Questions:
+      - Overview: questions/index.md
+      - Java: questions/java.md
+  - Reference:
+      - Overview: reference/index.md
+  - Contributing:
+      - Specification Index: spec/README.md
+      - Module Conventions: spec/module-conventions.md
+      - Issue Format: spec/issue-format.md
+      - Curriculum: spec/curriculum.md
+      - Documentation Conventions: spec/documentation-conventions.md
+      - Version and Language Tracks: spec/tracks.md
+      - Bootstrap Design: superpowers/specs/2026-09-18-bootstrap-core-java-design.md
+      - Bootstrap Plan: superpowers/plans/2026-09-18-bootstrap-core-java.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path:
+        - .
+        - docs
+      check_paths: true
+  - pymdownx.tasklist:
+      custom_checkbox: true

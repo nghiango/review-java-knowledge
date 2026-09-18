@@ -118,7 +118,7 @@ Code shown in docs is always included from `modules/` via `pymdownx.snippets`, n
 
 ```markdown
 ```java title="OrderService.java (broken)"
---8<-- "modules/07-spring-transactions/broken-examples/external-call-in-transaction/OrderService.java"
+--8&lt;-- "modules/07-spring-transactions/broken-examples/external-call-in-transaction/OrderService.java"
 ```
 ```
 
@@ -159,13 +159,13 @@ For important issues show both implementations side by side with tabs:
 === "Broken"
 
     ```java
-    --8<-- "modules/07-spring-transactions/broken-examples/external-call-in-transaction/OrderService.java"
+    --8&lt;-- "modules/07-spring-transactions/broken-examples/external-call-in-transaction/OrderService.java"
     ```
 
 === "Correct"
 
     ```java
-    --8<-- "modules/07-spring-transactions/src/main/java/lab/springtransactions/externalcall/OrderService.java"
+    --8&lt;-- "modules/07-spring-transactions/src/main/java/lab/springtransactions/externalcall/OrderService.java"
     ```
 ```
 
