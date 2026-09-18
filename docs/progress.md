@@ -7,7 +7,7 @@
 | # | Topic | Type | Theory | Q&A | Broken | Correct | Tests | Scenario | Docs |
 |---|---|---|---|---|---|---|---|---|---|
 | 01 | Core Java | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 02 | JVM | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 02 | JVM | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 03 | Concurrency | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 04 | Spring Core | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 05 | Spring Boot | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |

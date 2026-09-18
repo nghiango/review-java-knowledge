@@ -38,3 +38,22 @@ else
     mkdocs_command=(mkdocs)
 fi
 "${mkdocs_command[@]}" build --strict
+
+python3 - <<'EOF'
+import os, sys
+
+topics_dir = "docs/topics"
+for slug in os.listdir(topics_dir):
+    q_file = os.path.join(topics_dir, slug, "questions.md")
+    if os.path.isfile(q_file):
+        with open(q_file) as f:
+            text = f.read()
+        questions = len([l for l in text.splitlines() if l.startswith("### ")])
+        reveals = len([l for l in text.splitlines() if '??? question "Reveal answer"' in l])
+        examples = len([l for l in text.splitlines() if '??? example "Example"' in l])
+        if not (questions == reveals == examples):
+            print(f"Error in {q_file}: count mismatch! Questions: {questions}, Reveals: {reveals}, Examples: {examples}", file=sys.stderr)
+            sys.exit(1)
+print("All topic question files match structural counts.")
+EOF
+
