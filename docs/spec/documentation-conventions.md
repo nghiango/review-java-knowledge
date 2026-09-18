@@ -130,6 +130,36 @@ method rather than a whole file when the whole file would be noise.
 Link to files on the repository host with `repo_url` + `edit_uri` configured so relative links
 such as `[OrderService.java](../../modules/…)` are not used — they break under `--strict`.
 
+### Question reveal contract
+
+Every question in `docs/topics/<slug>/questions.md` shows only the question. The complete answer
+sits inside one collapsed `??? question "Reveal answer"` admonition; its example is a second,
+independently collapsed admonition nested inside it:
+
+```markdown
+### Q: Why must equal objects have equal hash codes?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Hash-based collections choose a bucket before checking equality. Equal
+    objects with different hashes may never be compared.
+
+    ??? example "Example"
+
+        ```java
+        --8&lt;-- "modules/NN-<slug>/src/examples/java/<package>/<Example>.java"
+        ```
+```
+
+The nested example is compiled or tested source included via `pymdownx.snippets` — from
+`src/examples/java` (package `lab.<topic>.examples`), `src/main/java`, or a clean broken review
+target — or a shell command block for JVM diagnostics; it is never pasted (see
+module-conventions.md §6). The page initially shows no answer text, hints or code; opening the
+answer still leaves its example collapsed.
+
+Verification counts `###` question headings, `??? question "Reveal answer"` blocks and nested
+`??? example "Example"` blocks per module; all three counts must match.
+
 ## 6. Code review page flow (`docs/topics/<slug>/code-review.md`)
 
 One section per broken example:

@@ -71,7 +71,7 @@ version catalog; they teach the *delta* from the baseline, never duplicate it):
 │       ├── README.md              ← SHORT: what is here + link to docs/topics/<slug>/
 │       ├── build.gradle.kts
 │       ├── broken-examples/<example>/   ← review targets (never in the main build)
-│       └── src/{main,test,integrationTest}/java/lab/<topic>/...
+│       └── src/{main,test,integrationTest,examples}/java/lab/<topic>/...
 └── tracks/<track-id>/             ← included builds: own settings, catalog, build-logic, test-support
     └── modules/NN-<slug>/         ← same slug as baseline for deltas; ≥ 40 for track-only modules
 ```
@@ -135,6 +135,7 @@ the track's what's-new / migration docs can start any time.
 ./gradlew build                     # baseline compile + unit tests, no Docker needed
 ./gradlew integrationTest           # baseline Testcontainers tests, Docker required
 ./gradlew compileBrokenExamples     # baseline broken examples still compile (never part of build)
+./gradlew compileExamples           # question/demo examples under src/examples compile (runs under check)
 ./gradlew buildTracks               # all tracks (each: build + compileBrokenExamples)
 ./gradlew buildTrack-kotlin         # one track
 mkdocs build --strict               # docs build, no broken links

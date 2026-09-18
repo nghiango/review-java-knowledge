@@ -67,7 +67,8 @@ modules/07-spring-transactions/
     │   └── selfinvocation/
     ├── main/resources/               # application.yml, db/migration/ (Flyway)
     ├── test/java/...                 # unit tests (no Docker)
-    └── integrationTest/java/...      # Testcontainers / @SpringBootTest
+    ├── integrationTest/java/...      # Testcontainers / @SpringBootTest
+    └── examples/java/lab/<topic>/examples/   # question/demo code compiled by compileExamples
 ```
 
 Rules:
@@ -81,6 +82,10 @@ Rules:
   the correct package) so that `compileBrokenExamples` can compile them without colliding with
   `src/main`.
 - Module `README.md` is a pointer, not a textbook. All prose lives in `docs/topics/<slug>/`.
+- Question/demo source lives under `src/examples/java`, never in Markdown and never in
+  `src/main`. The `examples` source set sees `src/main` output and module `implementation`
+  dependencies; `check` runs `compileExamples` so documented code cannot rot, but example code is
+  not packaged into the module JAR and never runs under `build` or `test`.
 - Modules are independent Gradle projects; share only `modules/test-support` and `build-logic`.
 - Each Spring module has a runnable `bootRun` that starts against `docker-compose.yml`
   infrastructure (`scripts/run-module.sh <slug>`).
@@ -161,6 +166,50 @@ Common Mistake
 Production Consideration
 Follow-up Questions
 ```
+
+### Reveal contract
+
+Every question keeps only the question visible. All answer sections are nested inside a collapsed
+`Reveal answer` admonition; its example is a second, independently collapsed admonition:
+
+```markdown
+### Q: Why must equal objects have equal hash codes?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Hash-based collections choose a bucket before checking equality. Equal
+    objects with different hashes may never be compared.
+
+    ??? example "Example"
+
+        ```java
+        --8&lt;-- "modules/NN-<slug>/src/examples/java/<package>/<Example>.java"
+        ```
+```
+
+The initial page therefore reveals no answer text, hints, code or root-cause terminology beyond
+the question itself. Opening the answer still leaves its example collapsed so the learner can
+reason from prose before studying code.
+
+Basic answers remain short inside the reveal; neither admonition changes the five-line Short
+Answer limit. Intermediate answers place Short Answer, Internal Mechanism and Common Mistake
+inside the same reveal. Senior and Scenario questions place all seven required answer sections
+inside it.
+
+Every Basic, Intermediate, Senior and Scenario question has exactly one
+`??? question "Reveal answer"` container holding its complete answer, and that answer contains at
+least one nested `??? example "Example"` block. Examples may be:
+
+- compiled Java source from `src/examples/java` (package `lab.<topic>.examples`);
+- tested correct source from `src/main/java`;
+- a clean broken review target when the question asks the learner to diagnose it;
+- a shell command block for JVM diagnostics, optionally paired with compiled Java source.
+
+Source snippets always use `pymdownx.snippets`. Shell commands may be written directly in
+Markdown because they are commands, not duplicated application source.
+
+Verification counts `###` question headings, `??? question "Reveal answer"` blocks and nested
+`??? example "Example"` blocks per module; all three counts must match.
 
 Every question links to its concept page and, where one exists, to the broken and correct
 example. Questions are also surfaced globally under `docs/questions/` (see

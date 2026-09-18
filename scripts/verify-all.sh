@@ -7,6 +7,7 @@ cd "$repo_root"
 ./gradlew build
 ./gradlew integrationTest
 ./gradlew compileBrokenExamples
+./gradlew compileExamples
 
 if grep -R -n " issue:" modules/*/broken-examples \
     --include='*.java' --include='*.kt' --include='Dockerfile' \

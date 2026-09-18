@@ -32,6 +32,7 @@ session** and their output confirms it.
 ./gradlew build                     # baseline, no Docker
 ./gradlew integrationTest           # Docker required — if Docker is unavailable, SAY SO explicitly
 ./gradlew compileBrokenExamples
+./gradlew compileExamples           # question/demo examples compiled by check; NO-SOURCE is fine
 ./gradlew buildTrack-<id>           # when a track was touched (build + compileBrokenExamples of that track)
 mkdocs build --strict
 scripts/verify-all.sh               # instead of the above when the whole repo is claimed green
@@ -51,6 +52,12 @@ grep -rln " issue:" modules/*/broken-examples tracks/*/modules/*/broken-examples
 grep -rn "^public class\|^@Service\|^@Transactional" docs --include=*.md
 # banned dependencies in Java code
 grep -rn "lombok\|com.h2database" modules tracks/java25-boot4 --include=*.kts --include=*.toml
+# question reveal contract: per module, all three counts must be equal
+for q in docs/topics/*/questions.md; do
+  h=$(grep -c '^### ' "$q"); r=$(grep -c '??? question "Reveal answer"' "$q")
+  e=$(grep -c '??? example "Example"' "$q")
+  [ "$h" = "$r" ] && [ "$r" = "$e" ] || echo "reveal contract mismatch in $q: headings=$h reveals=$r examples=$e"
+done
 ```
 
 Every hit is a defect unless it is inside a spec file under `docs/spec/`.

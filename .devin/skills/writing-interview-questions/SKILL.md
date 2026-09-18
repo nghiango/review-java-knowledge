@@ -27,6 +27,35 @@ counts + ≥ 2 migration questions.
 Full format: Short Answer · Deep Explanation · Internal Mechanism · Example (link/snippet) ·
 Common Mistake · Production Consideration · Follow-up Questions.
 
+## Reveal contract
+
+Only the question is visible on the page. Every answer sits inside exactly one collapsed
+`??? question "Reveal answer"` admonition, with at least one nested, independently collapsed
+`??? example "Example"` inside it:
+
+```markdown
+### Q: Why must equal objects have equal hash codes?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Hash-based collections choose a bucket before checking equality. Equal
+    objects with different hashes may never be compared.
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/NN-<slug>/src/examples/java/<package>/<Example>.java"
+        ```
+```
+
+- Basic keeps only Short Answer (≤ 5 lines) inside the reveal; Intermediate adds Internal
+  Mechanism and Common Mistake; Senior/Scenario place all seven sections inside the same reveal.
+- Nested examples come from compiled `src/examples/java` (package `lab.<topic>.examples`),
+  tested `src/main/java` source, a clean broken review target (diagnose-it questions), or a
+  shell command block for JVM diagnostics. Source always via `pymdownx.snippets` — never pasted.
+- Verification counts `###` question headings, `??? question "Reveal answer"` blocks and nested
+  `??? example "Example"` blocks per module — all three counts must match.
+
 ## Depth ladder
 
 Every senior question should be able to climb:
@@ -40,7 +69,8 @@ remote HTTP call → Hikari exhaustion → redesign → eventual consistency →
 
 1. Read `docs/topics/<slug>/concepts.md` and the module's broken examples. Questions must
    reference things that exist in the repo.
-2. Write basic → intermediate → senior → scenario, in that order, in `questions.md`.
+2. Write basic → intermediate → senior → scenario, in that order, in `questions.md`, wrapping
+   every answer in the reveal contract below.
 3. For every question add links: concept page anchor; `code-review.md` anchor of the broken
    example; `solutions.md` anchor of the fix; diagram if any.
 4. Surface into `docs/questions/<area>.md` via a snippet include (`--8<--`), never by copying.

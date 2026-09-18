@@ -20,3 +20,9 @@ tasks.register("compileBrokenExamples") {
     description = "Compiles intentionally broken review examples without adding them to build."
     dependsOn(provider { subprojects.mapNotNull { it.tasks.findByName("compileBrokenExamples") } })
 }
+
+tasks.register("compileExamples") {
+    group = "verification"
+    description = "Compiles question and demo examples in every code module."
+    dependsOn(provider { subprojects.mapNotNull { it.tasks.findByName("compileExamples") } })
+}

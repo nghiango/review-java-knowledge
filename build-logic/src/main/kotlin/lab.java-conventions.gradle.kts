@@ -50,6 +50,16 @@ configurations.named(brokenExamples.compileOnlyConfigurationName) {
     extendsFrom(configurations.named("compileOnly").get())
 }
 
+val examples = sourceSets.create("examples") {
+    java.srcDir("src/examples/java")
+    resources.srcDir("src/examples/resources")
+    compileClasspath += sourceSets.named("main").get().output
+    runtimeClasspath += output + compileClasspath
+}
+configurations.named(examples.implementationConfigurationName) {
+    extendsFrom(configurations.named("implementation").get())
+}
+
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 }
@@ -66,6 +76,16 @@ tasks.register("compileBrokenExamples") {
     group = "verification"
     description = "Compiles intentionally flawed code without running it or adding it to build."
     dependsOn(tasks.named(brokenExamples.compileJavaTaskName))
+}
+
+tasks.register("compileExamples") {
+    group = "verification"
+    description = "Compiles question and demo example code without packaging or running it."
+    dependsOn(tasks.named(examples.compileJavaTaskName))
+}
+
+tasks.named("check") {
+    dependsOn("compileExamples")
 }
 
 tasks.withType<JavaCompile>().configureEach {
