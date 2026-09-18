@@ -4,7 +4,14 @@ Missing context, unsafe or absent logs, weak metrics and broken trace propagatio
 
 ## Entries
 
-Module 01 entries will be added with the stream review exercise.
+### Asynchronous failure loses operation context
+
+**Type:** Observability issue · **Severity:** High · **Difficulty:** Basic
+
+Replacing an exception without its cause and input identity makes concurrent failures impossible to
+attribute. Preserve the cause and a safe domain identifier in a typed exception.
+
+**Appears in:** [Core Java — stream side effects](../topics/core-java/code-review.md#stream-and-parallel-side-effects)
 
 ## Related
 

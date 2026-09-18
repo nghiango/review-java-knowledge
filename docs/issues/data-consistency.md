@@ -31,6 +31,15 @@ an explicit result locally, then let the application choose atomic, chunked or c
 
 **Appears in:** [Core Java — resource and collection mutation](../topics/core-java/code-review.md#resource-and-collection-mutation)
 
+### Parallel report loses deterministic order and rows
+
+**Type:** Data consistency issue · **Severity:** High · **Difficulty:** Intermediate
+
+Parallel `forEach` does not order side effects, and an unsafe accumulator can lose values. Produce
+one immutable result per input and join in the documented order.
+
+**Appears in:** [Core Java — stream side effects](../topics/core-java/code-review.md#stream-and-parallel-side-effects)
+
 ## Related
 
 - [Issue catalogue](index.md)

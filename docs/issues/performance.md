@@ -15,6 +15,16 @@ OS descriptors on success and failure until the process can no longer open files
 
 **Appears in:** [Core Java — resource and collection mutation](../topics/core-java/code-review.md#resource-and-collection-mutation)
 
+### Blocking I/O in the common ForkJoinPool
+
+**Type:** Performance issue · **Severity:** High · **Difficulty:** Senior
+
+Parallel streams share a process-wide pool tuned for CPU work. Blocking price calls can starve
+unrelated streams and CompletableFuture stages. Prefer sequential work or an explicit bounded,
+monitored executor.
+
+**Appears in:** [Core Java — stream side effects](../topics/core-java/code-review.md#stream-and-parallel-side-effects)
+
 ## Related
 
 - [Issue catalogue](index.md)
