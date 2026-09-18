@@ -198,12 +198,21 @@ inside it.
 
 Every Basic, Intermediate, Senior and Scenario question has exactly one
 `??? question "Reveal answer"` container holding its complete answer, and that answer contains at
-least one nested `??? example "Example"` block. Examples may be:
+least one nested `??? example "Example"` block.
 
-- compiled Java source from `src/examples/java` (package `lab.<topic>.examples`);
-- tested correct source from `src/main/java`;
-- a clean broken review target when the question asks the learner to diagnose it;
-- a shell command block for JVM diagnostics, optionally paired with compiled Java source.
+**Dedicated example rule:**
+- Each question must have its own **dedicated, focused, compilable example class** under
+  `src/examples/java/lab/<topic>/questions/` (e.g. `Q01EqualsVsIdentityExample.java`), rather than grouping multiple questions into a single shared file.
+- Example code must explicitly demonstrate runtime / evaluation results directly in code via trailing comments, such as:
+  ```java
+  boolean identity = (s1 == s2); // false (different heap instances)
+  boolean equality = s1.equals(s2); // true (same character content)
+  ```
+- Examples may be:
+  - compiled Java source from `src/examples/java` (package `lab.<topic>.questions`);
+  - tested correct source from `src/main/java`;
+  - a clean broken review target when the question asks the learner to diagnose it;
+  - a shell command block for JVM diagnostics, optionally paired with compiled Java source.
 
 Source snippets always use `pymdownx.snippets`. Shell commands may be written directly in
 Markdown because they are commands, not duplicated application source.

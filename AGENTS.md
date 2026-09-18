@@ -181,6 +181,7 @@ When working in a track, additionally:
   coroutines over blocking), `kotlin-spring` + `kotlin-jpa` plugins, MockK, ktlint via Spotless.
   Java rules that do not apply to Kotlin (Lombok ban, records) are moot there.
 - Records for DTOs/commands/value objects; explicit constructors for beans; `final` fields.
+- Question examples: live in `src/examples/java/lab.<topic>.questions`, with exactly one dedicated compilable class per question, demonstrating runtime/evaluation results via trailing comments (e.g. `"a".equals("a") // true`).
 - Exceptions: domain exceptions mapped centrally via `@RestControllerAdvice` to `ProblemDetail`.
 - Comments in correct code explain **decisions and trade-offs**, not syntax. Do not add/remove
   comments unrelated to the task.

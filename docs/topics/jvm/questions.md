@@ -12,7 +12,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/ContainerMemoryDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q01JvmJreJdkExample.java"
         ```
 
 ### 2. What is Java bytecode and how does the JVM execute it?
@@ -24,7 +24,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/BytecodeDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q02BytecodeExecutionExample.java"
         ```
 
 ### 3. How is JVM memory divided between Stack and Heap?
@@ -36,7 +36,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/StackDepthDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q03StackVsHeapExample.java"
         ```
 
 ### 4. What is Metaspace and how does it differ from PermGen?
@@ -48,7 +48,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/ClassLoaderLeakDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q04MetaspaceMemoryExample.java"
         ```
 
 ### 5. How does the class loader hierarchy and parent delegation work?
@@ -60,7 +60,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/ClassLoaderDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q05ClassLoaderDelegationExample.java"
         ```
 
 ### 6. What is the role of the Just-In-Time (JIT) compiler?
@@ -72,7 +72,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/BytecodeDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q06JitCompilationExample.java"
         ```
 
 ### 7. What is a Garbage Collection root and object reachability?
@@ -84,7 +84,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/GcRootsDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q07GcRootsReachabilityExample.java"
         ```
 
 ### 8. What is a Stop-The-World (STW) pause in garbage collection?
@@ -96,7 +96,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/HeapPressureDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q08StopTheWorldPauseExample.java"
         ```
 
 <!-- --8<-- [end:basic] -->
@@ -113,7 +113,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/ClassInitializationDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q09ClassLoadingLifecycleExample.java"
         ```
 
 ### 2. What events trigger class initialization in the JVM?
@@ -125,7 +125,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/ClassInitializationDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q10ClassInitializationTriggersExample.java"
         ```
 
 ### 3. What is a TLAB and how does Escape Analysis enable scalar replacement?
@@ -137,7 +137,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/AllocationDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q11TlabAndEscapeAnalysisExample.java"
         ```
 
 ### 4. How does Tiered Compilation (C1 vs C2) and Deoptimization work?
@@ -149,7 +149,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/BytecodeDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q12TieredCompilationDeoptExample.java"
         ```
 
 ### 5. How does the Weak Generational Hypothesis shape GC design?
@@ -161,7 +161,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/AllocationDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q13GenerationalHypothesisExample.java"
         ```
 
 ### 6. How does G1 GC organize memory regions and Remembered Sets?
@@ -173,7 +173,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/HeapPressureDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q14G1RegionsAndRememberedSetsExample.java"
         ```
 
 ### 7. When do you use a Thread Dump, Heap Dump, or Java Flight Recording (JFR)?
@@ -185,7 +185,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/GcRootsDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q15DiagnosticToolsComparisonExample.java"
         ```
 
 ### 8. What are the different types and causes of OutOfMemoryError?
@@ -197,7 +197,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/HeapPressureDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q16OutOfMemoryTaxonomyExample.java"
         ```
 
 <!-- --8<-- [end:intermediate] -->
@@ -226,7 +226,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/ClassLoaderLeakDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q17RedeployClassLoaderLeakExample.java"
         ```
 
 ### 2. A user inherits another user's authentication context after an exception occurs. Diagnose it.
@@ -250,7 +250,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/main/java/lab/jvm/requestcontext/RequestContext.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q18ThreadLocalPollutionExample.java"
         ```
 
 ### 3. Young GC frequency and CPU are high, but heap occupancy after collection remains low and flat. Redesign it.
@@ -274,7 +274,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/main/java/lab/jvm/allocation/MetricLineEncoder.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q19YoungGenChurnAllocationExample.java"
         ```
 
 ### 4. OutOfMemoryError occurs while Java heap occupancy is only 20% of max heap. Diagnose it.
@@ -298,7 +298,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/ContainerMemoryDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q20LowHeapOffHeapOomExample.java"
         ```
 
 ### 5. A containerized Java service is killed by Linux OOMKiller (Exit 137) despite -Xmx being 50% of container limit. Diagnose it.
@@ -322,7 +322,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/examples/ContainerMemoryDemo.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q21ContainerOomKillBudgetExample.java"
         ```
 
 <!-- --8<-- [end:senior] -->
@@ -351,7 +351,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/main/java/lab/jvm/boundedcache/BoundedLruCache.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q22UnboundedCacheGrowthScenarioExample.java"
         ```
 
 ### Scenario 2: Asynchronous task workers leak memory and retain tenant listeners
@@ -375,7 +375,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/02-jvm/src/main/java/lab/jvm/listenerregistry/ListenerRegistry.java"
+        --8<-- "modules/02-jvm/src/examples/java/lab/jvm/questions/Q23StaticListenerRetentionScenarioExample.java"
         ```
 
 <!-- --8<-- [end:scenarios] -->

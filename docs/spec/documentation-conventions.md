@@ -213,7 +213,11 @@ Then explain the differences.
 ## 9. Interview question navigation (`docs/questions/`)
 
 Questions are written once in `docs/topics/<slug>/questions.md` and surfaced by area under
-`docs/questions/` via snippet includes (never duplicated by hand). Each question links to:
+`docs/questions/` via snippet includes (never duplicated by hand).
+
+- Each question displays its question title visible, collapses the complete answer behind `??? question "Reveal answer"`, and nests a collapsed `??? example "Example"`.
+- Each question embeds a **dedicated compilable example class** under `modules/<NN-slug>/src/examples/java/lab/<topic>/questions/` with trailing inline result comments (e.g. `// true`, `// "expected"`).
+- Each question links to:
 
 ```text
 → Concept page

@@ -13,7 +13,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/EqualityExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q01EqualsVsIdentityExample.java"
         ```
 
 ### 2. What contract connects `equals` and `hashCode`?
@@ -26,7 +26,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/EqualityExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q02EqualsHashCodeContractExample.java"
         ```
 
 ### 3. What problem do records solve?
@@ -39,7 +39,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/EqualityExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q03RecordImmutabilityExample.java"
         ```
 
 ### 4. Checked versus unchecked exceptions?
@@ -52,7 +52,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/ResourceExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q04CheckedVsUncheckedExample.java"
         ```
 
 ### 5. What is Optional for?
@@ -65,7 +65,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/ResourceExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q05OptionalUsageExample.java"
         ```
 
 ### 6. List, Set or Map?
@@ -78,7 +78,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/CollectionExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q06CollectionsHierarchyExample.java"
         ```
 
 ### 7. Intermediate versus terminal stream operation?
@@ -91,7 +91,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/StreamExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q08StreamLazinessExample.java"
         ```
 
 ### 8. What do `? extends T` and `? super T` mean?
@@ -104,7 +104,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/GenericExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q07GenericsPecsExample.java"
         ```
 
 <!-- --8<-- [end:basic] -->
@@ -125,7 +125,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/CollectionExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q09HashMapInternalsExample.java"
         ```
 
 ### 2. When does a collision chain treeify?
@@ -141,7 +141,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/CollectionExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q10ArrayListVsLinkedListExample.java"
         ```
 
 ### 3. Why is a mutable HashMap key dangerous?
@@ -158,7 +158,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/EqualityExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q11ComparableVsComparatorExample.java"
         ```
 
 ### 4. What happens when ArrayList grows or inserts in the middle?
@@ -175,7 +175,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/CollectionExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q12ShallowVsDeepImmutabilityExample.java"
         ```
 
 ### 5. Why should Comparator usually agree with equals?
@@ -191,7 +191,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/CollectionExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q13ConcurrentHashMapExample.java"
         ```
 
 ### 6. What does type erasure remove?
@@ -207,7 +207,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/GenericExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q14TypeErasureExample.java"
         ```
 
 ### 7. How do lazy and stateful stream operations differ?
@@ -223,7 +223,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/StreamExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q15StatefulStreamOperationsExample.java"
         ```
 
 ### 8. What happens if both the body and `close()` throw?
@@ -239,7 +239,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/ResourceExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q16SuppressedExceptionsExample.java"
         ```
 
 <!-- --8<-- [end:intermediate] -->
@@ -268,7 +268,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/EqualityExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q17MutableKeyFailureExample.java"
         ```
 
 ### 2. Changing equality breaks deduplication after a release. How do you review it?
@@ -292,7 +292,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/EqualityExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q18EqualityContractEvolutionExample.java"
         ```
 
 ### 3. A parallel stream calls a pricing API and throughput collapses. Redesign it.
@@ -316,7 +316,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/StreamExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q19ParallelStreamStarvationExample.java"
         ```
 
 ### 4. Optional appears in DTOs, entity fields and method parameters. What is wrong?
@@ -340,7 +340,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/ResourceExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q20OptionalMisuseExample.java"
         ```
 
 ### 5. A CSV import leaks descriptors and leaves half the rows applied. Redesign it.
@@ -364,7 +364,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/ResourceExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q21ResourceSafetyAndAtomicityExample.java"
         ```
 
 <!-- --8<-- [end:senior] -->
@@ -393,7 +393,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/ResourceExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q22DescriptorExhaustionScenarioExample.java"
         ```
 
 ### Scenario 2: Reports contain missing and reordered rows while CPU is low
@@ -417,7 +417,7 @@
     ??? example "Example"
 
         ```java
-        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/examples/StreamExamples.java"
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q23StreamConcurrencyBugScenarioExample.java"
         ```
 
 <!-- --8<-- [end:scenarios] -->

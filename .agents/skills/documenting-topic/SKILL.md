@@ -23,38 +23,12 @@ always **included** from `modules/`, never pasted.
 |---|---|
 | Code from source, not copies | ```` ```java\n--8<-- "modules/NN-slug/…/File.java"\n``` ```` |
 | Reveal is collapsed | `??? warning "Reveal issues"` — never annotated code above the fold |
-| Question answers are collapsed | `??? question "Reveal answer"` holding the full answer, with a nested `??? example "Example"` snippet inside — heading/reveal/example counts must match per module |
 | Before/after uses tabs | `=== "Broken"` / `=== "Correct"` with snippets |
 | One canonical page per concept | Other pages link; they do not re-explain |
 | Category strings identical everywhere | Same `Transaction issue` text in code, SOLUTION.md, docs, catalogue |
 | Catalogue has 11 fixed files | Category → file per issue-format §6 table (`JPA issue` → `database.md`); never add a file |
 | Track pages open with a Delta admonition | `!!! info "Delta from baseline"` — unchanged / changed / new |
 | Consistent search terms | `@Transactional`, self invocation, Hikari, N+1, idempotency, … |
-
-## questions.md reveal contract
-
-Only the question shows on the page. The complete answer sits inside one collapsed
-`??? question "Reveal answer"` admonition; its example is a second, independently collapsed
-admonition nested inside it:
-
-```markdown
-### Q: Why must equal objects have equal hash codes?
-
-??? question "Reveal answer"
-
-    **Short Answer:** Hash-based collections choose a bucket before checking equality. Equal
-    objects with different hashes may never be compared.
-
-    ??? example "Example"
-
-        ```java
-        --8<-- "modules/NN-<slug>/src/examples/java/<package>/<Example>.java"
-        ```
-```
-
-Example source comes from compiled `src/examples/java` (`lab.<topic>.examples`), `src/main/java`,
-a clean broken review target, or a shell command block — always via `pymdownx.snippets`, never
-pasted.
 
 ## code-review.md flow (per broken example)
 
