@@ -5,10 +5,8 @@ plugins {
 group = "lab"
 version = "1.0.0-SNAPSHOT"
 
-gradle.projectsEvaluated {
-    tasks.named("build") {
-        dependsOn(subprojects.map { it.tasks.named("build") })
-    }
+tasks.named("build") {
+    dependsOn(provider { subprojects.mapNotNull { it.tasks.findByName("build") } })
 }
 
 tasks.register("integrationTest") {
