@@ -3,6 +3,10 @@ site_description: Senior backend interview preparation and production engineerin
 docs_dir: docs
 strict: true
 
+validation:
+  links:
+    absolute_links: relative_to_docs
+
 theme:
   name: material
   features:
@@ -25,6 +29,17 @@ nav:
       - Interview Checklist: interview-checklist.md
       - Progress: progress.md
       - Repository Architecture: architecture.md
+  - Topics:
+      - Core Java:
+          - Overview: topics/core-java/index.md
+          - Concepts: topics/core-java/concepts.md
+          - Internals: topics/core-java/internals.md
+          - Interview Questions: topics/core-java/questions.md
+          - Code Review: topics/core-java/code-review.md
+          - Solutions: topics/core-java/solutions.md
+          - Tests: topics/core-java/tests.md
+          - Production: topics/core-java/production.md
+          - Exercises: topics/core-java/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
