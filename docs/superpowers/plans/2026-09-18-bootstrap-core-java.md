@@ -86,6 +86,7 @@ Create `gradle/libs.versions.toml`:
 ```toml
 [versions]
 spring-boot = "3.5.16"
+foojay-resolver = "1.0.0"
 junit = "5.14.4"
 assertj = "3.27.7"
 spotless = "8.10.2"
@@ -107,8 +108,9 @@ spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 - [ ] **Step 2: Define project inclusion and repositories**
 
 Create `settings.gradle.kts` with `rootProject.name = "senior-java-spring-interview-lab"`,
-`includeBuild("build-logic")`, Maven Central repositories and `include("modules:01-core-java")`.
-Create `build-logic/settings.gradle.kts` importing `../gradle/libs.versions.toml` as catalog
+apply `org.gradle.toolchains.foojay-resolver-convention` 1.0.0, `includeBuild("build-logic")`,
+Maven Central repositories and `include("modules:01-core-java")`. Create
+`build-logic/settings.gradle.kts` importing `../gradle/libs.versions.toml` as catalog
 `libs`, and `build-logic/build.gradle.kts` with `kotlin-dsl`, Spotless and Error Prone plugin
 artifacts on its implementation classpath.
 
