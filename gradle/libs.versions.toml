@@ -1,6 +1,7 @@
 [versions]
 spring-boot = "3.5.16"
 junit = "5.14.4"
+junit-platform = "1.14.4"
 assertj = "3.27.7"
 spotless = "8.10.2"
 errorprone-plugin = "5.1.1"
@@ -9,6 +10,7 @@ google-java-format = "1.28.0"
 
 [libraries]
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 errorprone-core = { module = "com.google.errorprone:error_prone_core", version.ref = "errorprone-core" }
 spotless-plugin = { module = "com.diffplug.spotless:com.diffplug.spotless.gradle.plugin", version.ref = "spotless" }

@@ -20,6 +20,7 @@ java {
 
 dependencies {
     add("testImplementation", libs.findLibrary("junit-jupiter").get())
+    add("testRuntimeOnly", libs.findLibrary("junit-platform-launcher").get())
     add("testImplementation", libs.findLibrary("assertj-core").get())
     add("errorprone", libs.findLibrary("errorprone-core").get())
 }
