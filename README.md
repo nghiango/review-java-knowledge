@@ -11,10 +11,9 @@ Theory → Interview questions → Broken code (review it yourself) → Reveal t
 The repository is not a collection of snippets. Broken examples look like real pull requests,
 correct implementations follow production practice, and every claim is backed by runnable code.
 
-> **Status:** bootstrap phase. The specification (`docs/spec/`), operating manual (`AGENTS.md`)
-> and agent skills (`.devin/skills/`) are complete; `modules/`, `tracks/` and the MkDocs portal
-> are being built in the order defined in [docs/spec/curriculum.md](docs/spec/curriculum.md).
-> See `docs/progress.md` (once created) for per-module status.
+> **Status:** repository bootstrap and Module 01 Core Java are complete. Module 02 JVM is next;
+> later modules and tracks remain intentionally unscaffolded until their predecessors meet the
+> Definition of Done. See [docs/progress.md](docs/progress.md) for verified status.
 
 ---
 
