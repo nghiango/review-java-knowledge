@@ -25,6 +25,25 @@ monitored executor.
 
 **Appears in:** [Core Java — stream side effects](../topics/core-java/code-review.md#stream-and-parallel-side-effects)
 
+### Static listener retention
+
+**Type:** Memory issue · **Severity:** High · **Difficulty:** Intermediate
+
+A static listener list keeps strong references to listeners and everything they capture for as long
+as the defining class loader remains reachable. Prefer an instance-owned registry whose lifetime is
+bound to the component that owns it.
+
+**Appears in:** `modules/02-jvm/broken-examples/static-listener-leak`
+
+### Missing registration lifecycle
+
+**Type:** Resource leak issue · **Severity:** High · **Difficulty:** Intermediate
+
+Registering a listener without returning a closeable registration handle makes cleanup depend on
+out-of-band knowledge. Return an explicit handle and close it during component shutdown.
+
+**Appears in:** `modules/02-jvm/broken-examples/static-listener-leak`
+
 ## Related
 
 - [Issue catalogue](index.md)

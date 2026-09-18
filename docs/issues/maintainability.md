@@ -65,6 +65,25 @@ cannot be tested or changed independently. Inject a source and return an explici
 
 **Appears in:** [Core Java — resource and collection mutation](../topics/core-java/code-review.md#resource-and-collection-mutation)
 
+### Duplicate listener registration
+
+**Type:** Design issue · **Severity:** Medium · **Difficulty:** Basic
+
+A subscription API that does not model registration identity can retain and invoke the same listener
+multiple times after retries or repeated startup hooks. Return a registration handle and define the
+duplicate policy explicitly.
+
+**Appears in:** `modules/02-jvm/broken-examples/static-listener-leak`
+
+### Listener backing list escapes
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Basic
+
+Returning a registry's mutable listener list lets callers change global state outside the registry
+contract. Return an immutable snapshot for inspection.
+
+**Appears in:** `modules/02-jvm/broken-examples/static-listener-leak`
+
 ## Related
 
 - [Issue catalogue](index.md)
