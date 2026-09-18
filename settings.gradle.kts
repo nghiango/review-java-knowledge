@@ -20,3 +20,4 @@ rootProject.name = "senior-java-spring-interview-lab"
 
 includeBuild("build-logic")
 include("modules:01-core-java")
+include("modules:02-jvm")
