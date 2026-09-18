@@ -1,0 +1,9 @@
+.worktrees/
+.gradle/
+**/build/
+.venv/
+site/
+.idea/
+.vscode/
+*.iml
+.DS_Store
