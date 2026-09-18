@@ -9,23 +9,38 @@ collapsed code examples
 
 Deliver a senior-level JVM learning module that connects runtime internals to reproducible failure
 signals and diagnostic tools without relying on nondeterministic GC/JIT tests. Establish a
-repository-wide convention that every interview answer includes collapsed example code, and bring
-the completed Core Java module into that convention.
+repository-wide convention that every interview answer is hidden behind a collapsed reveal and
+contains separately collapsed example code, then bring the completed Core Java module into that
+convention.
 
-## 2. Repository-wide question example convention
+## 2. Repository-wide question reveal and example convention
 
-Every question in `docs/topics/<slug>/questions.md` includes an example after its answer sections:
+Every question in `docs/topics/<slug>/questions.md` keeps only the question visible. All answer
+sections are nested inside a collapsed `Reveal answer` admonition; its example is a second,
+independently collapsed admonition:
 
 ```markdown
-??? example "Example"
+### Q: Why must equal objects have equal hash codes?
 
-    ```java
-    --8&lt;-- "modules/NN-<slug>/src/examples/java/<package>/<Example>.java"
-    ```
+??? question "Reveal answer"
+
+    **Short Answer:** Hash-based collections choose a bucket before checking equality. Equal
+    objects with different hashes may never be compared.
+
+    ??? example "Example"
+
+        ```java
+        --8&lt;-- "modules/NN-<slug>/src/examples/java/<package>/<Example>.java"
+        ```
 ```
 
-The example is collapsed by default. Basic answers remain short; the collapsed example does not
-count against the five-line Short Answer limit.
+The initial page therefore reveals no answer text, hints, code or root-cause terminology beyond the
+question itself. Opening the answer still leaves its example collapsed so the learner can reason
+from prose before studying code.
+
+Basic answers remain short inside the reveal; neither admonition changes the five-line Short Answer
+limit. Intermediate answers place Short Answer, Internal Mechanism and Common Mistake inside the
+same reveal. Senior and Scenario questions place all seven required answer sections inside it.
 
 ### 2.1 Source and compilation
 
@@ -49,7 +64,8 @@ the whole class is too noisy; use separate focused classes instead.
 
 ### 2.2 Required coverage
 
-Every Basic, Intermediate, Senior and Scenario answer has one collapsed example. Examples may be:
+Every Basic, Intermediate, Senior and Scenario question has exactly one collapsed answer container,
+and that answer has at least one nested collapsed example. Examples may be:
 
 - compiled Java source from `src/examples/java`;
 - tested correct source from `src/main/java`;
@@ -60,7 +76,8 @@ Source snippets always use `pymdownx.snippets`. Shell commands may be written di
 because they are commands, not duplicated application source.
 
 Module 01 receives five cohesive example classes (equality/immutability, collections, generics,
-exceptions/resources, streams) and all 23 existing questions receive collapsed examples.
+exceptions/resources, streams). All 23 existing questions are restructured so the full answer is
+collapsed and each answer contains a separately collapsed compiled example.
 
 ## 3. Hard-to-test JVM behavior policy
 
@@ -178,7 +195,7 @@ allocating until failure or overflowing the stack.
 - `internals.md`: class lifecycle/delegation, bytecode execution, TLAB/escape analysis, tiered JIT,
   GC roots/safepoints and collector trade-offs
 - `questions.md`: at least 8 Basic, 8 Intermediate, 5 Senior, 2 symptom-first Scenarios; every
-  answer has a collapsed example
+  question keeps its complete answer collapsed, with a separately collapsed example nested inside
 - `code-review.md`: four clean targets and complete collapsed reveals
 - `solutions.md`: before/after snippets, issue-to-fix matrix and trade-offs
 - `tests.md`: deterministic contract tests versus opt-in diagnostic experiments
@@ -213,8 +230,10 @@ Acceptance requires:
 2. `build` compiles examples but never compiles broken examples.
 3. Four broken examples each have clean source, REVIEW.md, SOLUTION.md, corresponding tested correct
    package and registered issue backlinks.
-4. JVM question counts meet 8/8/5/2 and every answer contains a collapsed example.
-5. All 23 Core Java questions also contain collapsed examples sourced from compiled code.
+4. JVM question counts meet 8/8/5/2; every question has one collapsed complete answer, and every
+   answer has a nested collapsed example.
+5. All 23 Core Java questions use the same collapsed-answer structure and examples sourced from
+   compiled code.
 6. No dangerous diagnostic demo runs from any lifecycle task.
 7. `mkdocs build --strict` and `scripts/verify-all.sh` pass.
 8. Module 01 remains complete; Module 02 is marked complete only after every code-module DoD item
