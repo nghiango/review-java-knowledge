@@ -22,6 +22,15 @@ Handle only the failure the layer owns; preserve operational failures and their 
 
 **Appears in:** [Core Java — Optional and exceptions](../topics/core-java/code-review.md#optional-and-exception-misuse)
 
+### Structural mutation invalidates iteration
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Basic
+
+Removing through a collection while an enhanced-for Iterator is active changes its modification
+count and fails fast. Use iterator removal, `removeIf`, or derive a new immutable result.
+
+**Appears in:** [Core Java — resource and collection mutation](../topics/core-java/code-review.md#resource-and-collection-mutation)
+
 ## Related
 
 - [Issue catalogue](index.md)

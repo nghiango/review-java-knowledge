@@ -56,6 +56,15 @@ required value and validate it at the boundary; reserve Optional primarily for r
 
 **Appears in:** [Core Java — Optional and exceptions](../topics/core-java/code-review.md#optional-and-exception-misuse)
 
+### Import operation couples I/O, parsing and mutation
+
+**Type:** Design issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+When one method owns resource acquisition, syntax, validation and caller mutation, failure policy
+cannot be tested or changed independently. Inject a source and return an explicit immutable result.
+
+**Appears in:** [Core Java — resource and collection mutation](../topics/core-java/code-review.md#resource-and-collection-mutation)
+
 ## Related
 
 - [Issue catalogue](index.md)

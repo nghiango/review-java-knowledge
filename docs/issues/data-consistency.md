@@ -22,6 +22,15 @@ identity key and explicitly remove/reinsert when identity genuinely changes.
 
 **Interview follow-up:** Why does ConcurrentHashMap not repair a mutated key?
 
+### Import mutates caller state before validation completes
+
+**Type:** Data consistency issue · **Severity:** High · **Difficulty:** Intermediate
+
+Appending directly to caller-owned state makes a later parse failure leave a partial import. Build
+an explicit result locally, then let the application choose atomic, chunked or compensating commit.
+
+**Appears in:** [Core Java — resource and collection mutation](../topics/core-java/code-review.md#resource-and-collection-mutation)
+
 ## Related
 
 - [Issue catalogue](index.md)
