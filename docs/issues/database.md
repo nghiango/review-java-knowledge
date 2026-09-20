@@ -88,7 +88,92 @@ Accepting and returning JPA entities directly in `@RestController` endpoints ena
 
 ---
 
+### Unindexed Foreign Key Column
+
+**Type:** Performance issue · **Severity:** High · **Difficulty:** Intermediate
+
+Declaring a foreign key constraint without creating an explicit B-Tree index causes PostgreSQL to execute sequential table scans when joining or deleting parent records, acquiring table-level locks and triggering severe locking contention.
+
+**Detection:** `EXPLAIN` query plans showing sequential scans on child tables and query logs during parent deletions.
+
+**Appears in:** [Database / SQL — Unindexed Foreign Key](../topics/database-sql/code-review.md#1-unindexed-foreign-key-and-missing-index)
+
+---
+
+### Leftmost Prefix Rule Violation on Composite Index
+
+**Type:** Performance issue · **Severity:** High · **Difficulty:** Intermediate
+
+Placing low-cardinality or un-queried columns at the front of a composite index prevents direct B-Tree index traversal when queries filter on subsequent columns, forcing full index scans or table scans.
+
+**Detection:** `EXPLAIN` query plans showing Bitmap Index Scan or Seq Scan instead of direct Index Scan.
+
+**Appears in:** [Database / SQL — Wrong Composite Index Order](../topics/database-sql/code-review.md#2-wrong-composite-index-column-order)
+
+---
+
+### Deep Offset Pagination Latency Degradation
+
+**Type:** Performance issue · **Severity:** High · **Difficulty:** Intermediate
+
+Using `OFFSET N` requires reading, sorting, and discarding $N$ preceding rows off disk, causing linear $O(N)$ query slowdown on large tables and producing duplicate/missed rows during concurrent inserts.
+
+**Detection:** Query latency increasing proportionally with page depth.
+
+**Appears in:** [Database / SQL — Deep Offset Pagination](../topics/database-sql/code-review.md#3-deep-offset-pagination-performance)
+
+---
+
+### Lost Update Anomaly on Read-Modify-Write
+
+**Type:** Concurrency issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+Reading current balance or inventory into application memory and writing back without row-level locks or atomic updates allows concurrent transactions to overwrite each other's modifications.
+
+**Detection:** Multi-threaded concurrency tests showing final state discrepancies.
+
+**Appears in:** [Database / SQL — Lost Update Without Locking](../topics/database-sql/code-review.md#4-lost-update-without-locking)
+
+---
+
+### Prolonged Row Locks Across Remote I/O
+
+**Type:** Concurrency issue · **Severity:** Critical · **Difficulty:** Senior
+
+Holding exclusive database row locks (`SELECT FOR UPDATE`) across slow external network calls exhausts database connection pools and causes lock wait timeouts in concurrent requests.
+
+**Detection:** APM traces showing long-running transactions and `pg_stat_activity` lock wait queues.
+
+**Appears in:** [Database / SQL — Long Transaction Holding Locks](../topics/database-sql/code-review.md#5-long-transaction-holding-locks)
+
+---
+
+### SQL Injection via String Concatenation
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Basic
+
+Assembling dynamic SQL queries by concatenating user inputs allows attackers to alter query semantics, extract unauthorized records, or execute destructive commands (OWASP A03).
+
+**Detection:** Static security analysis and automated SQL injection vulnerability scanners.
+
+**Appears in:** [Database / SQL — SQL Injection via String Concatenation](../topics/database-sql/code-review.md#6-sql-injection-via-string-concatenation)
+
+---
+
+### Destructive Schema Migration During Rolling Deployment
+
+**Type:** Reliability issue · **Severity:** Critical · **Difficulty:** Senior
+
+Renaming or dropping columns in a single migration script immediately crashes active, in-flight V1 application instances during rolling zero-downtime deployments.
+
+**Detection:** Deployment error spikes with `column does not exist` exceptions.
+
+**Appears in:** [Database / SQL — Destructive Database Migration](../topics/database-sql/code-review.md#7-destructive-database-migration)
+
+---
+
 ## Related
 
 - [Issue catalogue](index.md)
 - [JPA / Hibernate Topics](../topics/jpa-hibernate/index.md)
+- [Database / SQL Topics](../topics/database-sql/index.md)

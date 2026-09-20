@@ -110,6 +110,16 @@ nav:
           - Tests: topics/jpa-hibernate/tests.md
           - Production: topics/jpa-hibernate/production.md
           - Exercises: topics/jpa-hibernate/exercises.md
+      - Database and SQL:
+          - Overview: topics/database-sql/index.md
+          - Concepts: topics/database-sql/concepts.md
+          - Internals: topics/database-sql/internals.md
+          - Interview Questions: topics/database-sql/questions.md
+          - Code Review: topics/database-sql/code-review.md
+          - Solutions: topics/database-sql/solutions.md
+          - Tests: topics/database-sql/tests.md
+          - Production: topics/database-sql/production.md
+          - Exercises: topics/database-sql/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -135,6 +145,7 @@ nav:
       - Spring MVC: questions/spring-mvc.md
       - Spring Transactions: questions/spring-transactions.md
       - JPA and Hibernate: questions/jpa-hibernate.md
+      - Database and SQL: questions/database-sql.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:

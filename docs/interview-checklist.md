@@ -96,6 +96,21 @@
 - [ ] Evaluate Optimistic Locking (`@Version`) vs Pessimistic Locking (`PESSIMISTIC_WRITE`) for concurrent writes
 - [ ] Process large datasets with Hibernate `StatelessSession` or periodic `em.flush()` / `em.clear()`
 
+## Database / SQL
+
+- [ ] Explain 1NF, 2NF, 3NF, BCNF and trade-offs of intentional denormalization
+- [ ] Apply the Leftmost Prefix Rule and Equality-Then-Range principle to composite B-Tree indexes
+- [ ] Utilize Covering Indexes (`INCLUDE`) for Index-Only Scans and Partial Indexes for filtered subsets
+- [ ] Interpret `EXPLAIN (ANALYZE, BUFFERS)` execution plans, shared buffer hits, and I/O reads
+- [ ] Contrast physical SQL join algorithms (Nested Loop, Hash Join, Merge Join)
+- [ ] Differentiate ANSI SQL isolation levels and identify Dirty Reads, Non-Repeatable Reads, Phantoms, and Write Skew
+- [ ] Explain PostgreSQL MVCC mechanics (`xmin`/`xmax`), dead tuples, and Autovacuum maintenance
+- [ ] Eliminate lost updates via atomic database updates (`UPDATE ... WHERE balance >= :amount`) or row locks
+- [ ] Implement Keyset / Seek pagination to eliminate linear $O(N)$ `OFFSET` query degradation and pagination drift
+- [ ] Design lock-free worker queues using `SELECT ... FOR UPDATE SKIP LOCKED`
+- [ ] Prevent schema migration downtime with the 4-phase Expand and Contract (Parallel Run) pattern
+- [ ] Size HikariCP connection pools using the $((\text{CPU Cores} \times 2) + 1)$ formula
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -107,4 +122,5 @@
 - [Spring MVC questions](questions/spring-mvc.md)
 - [Spring Transactions questions](questions/spring-transactions.md)
 - [JPA / Hibernate questions](questions/jpa-hibernate.md)
+- [Database / SQL questions](questions/database-sql.md)
 
