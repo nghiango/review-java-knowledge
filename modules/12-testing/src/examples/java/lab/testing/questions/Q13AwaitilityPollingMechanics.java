@@ -1,70 +1,88 @@
 package lab.testing.questions;
 
-import java.util.function.BooleanSupplier;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+
+import java.time.Duration;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import lab.testing.async.AsyncReportJob;
+import lab.testing.async.ReportStatus;
+import org.awaitility.core.ConditionFactory;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 /**
  * Q13: How Awaitility's polling loop actually works.
  *
- * <p>{@code await().atMost(2, SECONDS).pollInterval(100, MILLISECONDS).until(condition)} is a
- * bounded loop: evaluate the condition, wait one interval, evaluate again, and stop the moment the
- * condition holds or the ceiling is reached. {@code atMost} is a ceiling, not a delay — the fast
- * path costs one poll interval, which is why an awaited test is fast *and* correct. {@code
- * untilAsserted} re-runs the whole assertion chain and swallows {@code AssertionError} between
- * polls; any other exception aborts the wait immediately. The loop below is the same shape with
- * virtual time, so the example never sleeps.
+ * <p>{@code await().atMost(2, SECONDS).pollInterval(100, MILLISECONDS).untilAsserted(...)} is a
+ * bounded loop: wait the poll delay (100 ms by default), evaluate, wait one poll interval, evaluate
+ * again, and stop the moment the condition holds or the {@code atMost} ceiling is reached. So
+ * {@code atMost} is a ceiling, not a delay — the fast path costs a couple of poll intervals, which
+ * is why an awaited test is both fast and correct. {@code untilAsserted} re-runs the whole
+ * assertion chain and swallows {@code AssertionError} between polls; any other exception aborts the
+ * wait unless {@code ignoreExceptions()} says otherwise. The nested class is the shape the module's
+ * {@code AsyncReportJobTest} uses; {@code main} builds the same configuration and does the
+ * arithmetic without polling anything.
  */
 public class Q13AwaitilityPollingMechanics {
 
-    /**
-     * What a poll loop observed: evaluations made, virtual time passed, and whether it succeeded.
-     */
-    record PollResult(int evaluations, long elapsedMillis, boolean satisfied) {}
+    /** The awaited assertion, in the shape this module's async test uses. */
+    static class AwaitedReportTest {
 
-    /** The loop Awaitility runs, with a virtual clock instead of a real one. */
-    static PollResult poll(BooleanSupplier condition, long atMostMillis, long pollIntervalMillis) {
-        long elapsed = 0;
-        int evaluations = 0;
-        while (elapsed <= atMostMillis) {
-            evaluations++;
-            if (condition.getAsBoolean()) {
-                return new PollResult(evaluations, elapsed, true);
-            }
-            elapsed += pollIntervalMillis;
+        private ExecutorService executor;
+        private AsyncReportJob job;
+
+        @BeforeEach
+        void setUp() {
+            executor = Executors.newSingleThreadExecutor();
+            job = new AsyncReportJob(executor, Duration.ofMillis(20));
         }
-        return new PollResult(evaluations, elapsed, false);
+
+        @AfterEach
+        void tearDown() {
+            job.close(); // shuts the executor down, so no worker thread survives the test
+        }
+
+        @Test
+        @DisplayName("a submitted report reaches COMPLETED")
+        void submit_report_reachesCompleted() {
+            job.submit("RPT-1");
+
+            await().atMost(Duration.ofSeconds(2))
+                    .pollInterval(Duration.ofMillis(100))
+                    .untilAsserted(
+                            () ->
+                                    assertThat(job.status("RPT-1"))
+                                            .isEqualTo(ReportStatus.COMPLETED));
+        }
     }
 
     public static void main(String[] args) {
-        // The condition holds on its third evaluation: the loop returns as soon as it does.
-        int[] evaluations = {0};
-        PollResult released = poll(() -> ++evaluations[0] >= 3, 2_000, 100);
+        Duration atMost = Duration.ofSeconds(2);
+        Duration pollInterval = Duration.ofMillis(100);
+        Duration pollDelay = Duration.ZERO;
 
-        // A condition that never holds runs out the ceiling and fails instead of hanging.
-        PollResult exhausted = poll(() -> false, 500, 100);
+        // await() only builds a ConditionFactory: nothing is polled until a condition is given.
+        ConditionFactory configured =
+                await().atMost(atMost).pollDelay(pollDelay).pollInterval(pollInterval);
+        String factory = configured.getClass().getSimpleName(); // "ConditionFactory"
 
-        // untilAsserted: the assertion throws AssertionError until the data arrives.
-        int[] attempts = {0};
-        PollResult asserted = poll(() -> ++attempts[0] > 2, 2_000, 100);
-        int swallowedAssertionErrors = asserted.evaluations() - 1; // 2
-
-        int releasedEvaluations = released.evaluations(); // 3
-        long fastPathMillis = released.elapsedMillis(); // 200
-        long ceilingMillis = 2_000; // what the author wrote in atMost()
+        long ceilingMillis = atMost.toMillis(); // 2000
+        long intervalMillis = pollInterval.toMillis(); // 100
+        long evaluationsWithinTheCeiling = ceilingMillis / intervalMillis + 1; // 21
+        long fastPathMillis = 2 * intervalMillis; // the condition held on the third evaluation
         long sleepWasteMillis = ceilingMillis - fastPathMillis; // 1800
-        int exhaustedEvaluations = exhausted.evaluations(); // 6
-        long exhaustedMillis = exhausted.elapsedMillis(); // 600
-        boolean timedOut = !exhausted.satisfied(); // true
-        boolean atMostIsACeiling = released.satisfied() && fastPathMillis < ceilingMillis; // true
+        boolean atMostIsACeiling = fastPathMillis < ceilingMillis; // true
 
-        System.out.println("Evaluations: " + releasedEvaluations); // Evaluations: 3
-        System.out.println("Elapsed: " + fastPathMillis + " ms"); // Elapsed: 200 ms
-        System.out.println("Satisfied: " + released.satisfied()); // Satisfied: true
-        System.out.println("Timeout polls: " + exhaustedEvaluations); // Timeout polls: 6
-        System.out.println(
-                "Timeout elapsed: " + exhaustedMillis + " ms"); // Timeout elapsed: 600 ms
-        System.out.println("Timed out: " + timedOut); // Timed out: true
-        System.out.println("Swallowed errors: " + swallowedAssertionErrors); // Swallowed errors: 2
-        System.out.println("Ceiling: " + atMostIsACeiling); // Ceiling: true
+        System.out.println("Factory: " + factory); // Factory: ConditionFactory
+        System.out.println("Ceiling: " + ceilingMillis + " ms"); // Ceiling: 2000 ms
+        System.out.println("Interval: " + intervalMillis + " ms"); // Interval: 100 ms
+        System.out.println("Evaluations: " + evaluationsWithinTheCeiling); // Evaluations: 21
+        System.out.println("Fast path: " + fastPathMillis + " ms"); // Fast path: 200 ms
         System.out.println("Sleep waste: " + sleepWasteMillis + " ms"); // Sleep waste: 1800 ms
+        System.out.println("Is a ceiling: " + atMostIsACeiling); // Is a ceiling: true
     }
 }
