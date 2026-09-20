@@ -189,6 +189,15 @@ nav:
           - Solutions: topics/aws-messaging/solutions.md
           - Production: topics/aws-messaging/production.md
           - Exercises: topics/aws-messaging/exercises.md
+      - Distributed Systems:
+          - Overview: topics/distributed-systems/index.md
+          - Concepts: topics/distributed-systems/concepts.md
+          - Internals: topics/distributed-systems/internals.md
+          - Interview Questions: topics/distributed-systems/questions.md
+          - Code Review: topics/distributed-systems/code-review.md
+          - Solutions: topics/distributed-systems/solutions.md
+          - Production: topics/distributed-systems/production.md
+          - Exercises: topics/distributed-systems/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -222,6 +231,7 @@ nav:
       - Kafka: questions/kafka.md
       - RabbitMQ: questions/rabbitmq.md
       - AWS Messaging: questions/aws-messaging.md
+      - Distributed Systems: questions/distributed-systems.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:

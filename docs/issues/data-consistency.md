@@ -56,6 +56,19 @@ Mutating external Redis caches synchronously inside an active relational databas
 
 **Appears in:** `modules/13-caching-redis/broken-examples/dual-write-consistency-ordering`
 
+---
+
+### Physical Wall-Clock Last-Write-Wins (LWW) Causing Lost Updates
+
+**Type:** Data consistency issue · **Severity:** Critical · **Difficulty:** Senior
+
+**Technology:** Distributed Systems, Multi-Region Replication, NTP · **Interview frequency:** High · **Production impact:** Critical
+
+Using physical server timestamps (`System.currentTimeMillis()`) for Last-Write-Wins (LWW) conflict resolution across distributed replicas causes silent data loss. Quartz oscillators drift by milliseconds per day, and NTP synchronization across geographic regions has 5–50+ ms uncertainty bounds. A transaction executed later in real wall-clock time will be assigned an earlier timestamp if its node's clock runs slow, causing LWW to discard the fresh update. Replace physical LWW with Hybrid Logical Clocks (HLC) or single-master account affinity.
+
+**Appears in:** `modules/17-distributed-systems/broken-examples/wall-clock-order-assumption`
+
 ## Related
 
 - [Issue catalogue](index.md)
+- [Distributed Systems topic documentation](../topics/distributed-systems/index.md)

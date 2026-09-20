@@ -53,6 +53,31 @@ Invoking `.join()` on `CompletableFuture` inside each loop iteration eliminates 
 
 **Appears in:** [Concurrency — completable future unhandled join](../topics/concurrency/code-review.md#completablefuture-unhandled-join)
 
+---
+
+### Distributed Lock Lease Expiration During Client Pause (GC / Network Stall)
+
+**Type:** Concurrency issue · **Severity:** Critical · **Difficulty:** Senior
+
+**Technology:** Redis, Distributed Locking, etcd · **Interview frequency:** High · **Production impact:** Critical
+
+When a worker acquires a distributed lock lease with a fixed TTL and experiences a Stop-The-World (STW) GC pause, hypervisor descheduling, or network buffer delay exceeding that TTL, the coordination service expires the lock and grants it to a second worker. When the first worker resumes, it executes writes concurrently with the new lock holder, corrupting shared storage. Protect distributed locks with monotonic fencing tokens validated at the storage boundary.
+
+**Appears in:** `modules/17-distributed-systems/broken-examples/distributed-lock-no-fencing`
+
+---
+
+### Holding Database Row Locks Across Network Boundaries in Two-Phase Commit
+
+**Type:** Concurrency issue · **Severity:** High · **Difficulty:** Senior
+
+**Technology:** Two-Phase Commit, Distributed Transactions · **Interview frequency:** High · **Production impact:** Critical
+
+Holding pessimistic database row locks (`SELECT ... FOR UPDATE`) while waiting for multiple network RPCs across independent microservices creates severe lock contention, thread starvation, and connection pool exhaustion. Any transient network delay or crash in a downstream participant blocks database rows across the entire cluster. Replace synchronous 2PC locking with asynchronous Saga orchestration and compensating transactions.
+
+**Appears in:** `modules/17-distributed-systems/broken-examples/two-phase-commit-coordinator`
+
 ## Related
 
 - [Issue catalogue](index.md)
+- [Distributed Systems topic documentation](../topics/distributed-systems/index.md)

@@ -195,6 +195,17 @@
 - [ ] Evaluate architectural trade-offs across Kafka, RabbitMQ, SQS, SNS, and EventBridge for microservice workloads
 - [ ] Scale consumer worker fleets based on backlog per worker instance (`ApproximateNumberOfMessagesVisible`) rather than CPU
 
+## Distributed Systems
+
+- [ ] Identify and remediate the 8 fallacies of distributed computing in network microservice designs
+- [ ] Evaluate CAP and PACELC trade-offs to select appropriate consistency models (linearizability vs eventual)
+- [ ] Calculate replica quorum overlap using $R + W > N$ to guarantee fresh read state
+- [ ] Prevent silent data loss and lost updates caused by physical wall-clock drift and NTP skew
+- [ ] Sequence distributed events causally using Lamport Timestamps, Vector Clocks, and Hybrid Logical Clocks (HLC)
+- [ ] Eliminate dual-write split-brain hazards in distributed locking using monotonic fencing tokens
+- [ ] Contrast quorum consensus protocols (Raft, Paxos) with blocking Two-Phase Commit (2PC)
+- [ ] Protect services against cascading failure using load shedding, backpressure, and jittered retries
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -214,4 +225,5 @@
 - [Kafka questions](questions/kafka.md)
 - [RabbitMQ questions](questions/rabbitmq.md)
 - [AWS Messaging questions](questions/aws-messaging.md)
+- [Distributed Systems questions](questions/distributed-systems.md)
 
