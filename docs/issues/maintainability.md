@@ -295,6 +295,18 @@ the tests independent instead of ordering around the coupling.
 
 **Appears in:** `modules/12-testing/broken-examples/order-dependent-test-suite`
 
+---
+
+### Breaking Reactive Chain with .block() Forfeits Backpressure and Cancellation
+
+**Type:** Design issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Project Reactor, Reactive Streams · **Interview frequency:** High · **Production impact:** High
+
+Breaking a reactive stream by invoking `.block()` or `toFuture().get()` decouples the downstream consumer from upstream publishers. This eliminates the Reactive Streams demand signaling mechanism (backpressure), breaks distributed tracing context propagation across operators, and prevents client cancellations (such as closed HTTP browser connections) from propagating upstream to abort redundant backend processing. Preserve end-to-end reactive composition using `.flatMap()` and `.map()`.
+
+**Appears in:** `modules/21-webclient-webflux/broken-examples/block-in-request-flow`
+
 ## Related
 
 - [Issue catalogue](index.md)

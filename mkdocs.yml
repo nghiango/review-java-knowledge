@@ -227,6 +227,16 @@ nav:
           - Solutions: topics/spring-cloud/solutions.md
           - Production: topics/spring-cloud/production.md
           - Exercises: topics/spring-cloud/exercises.md
+      - WebClient / WebFlux:
+          - Overview: topics/webclient-webflux/index.md
+          - Concepts: topics/webclient-webflux/concepts.md
+          - Internals: topics/webclient-webflux/internals.md
+          - Interview Questions: topics/webclient-webflux/questions.md
+          - Code Review: topics/webclient-webflux/code-review.md
+          - Solutions: topics/webclient-webflux/solutions.md
+          - Tests: topics/webclient-webflux/tests.md
+          - Production: topics/webclient-webflux/production.md
+          - Exercises: topics/webclient-webflux/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -264,6 +274,7 @@ nav:
       - Distributed Data Patterns: questions/distributed-data-patterns.md
       - Resilience: questions/resilience.md
       - Spring Cloud: questions/spring-cloud.md
+      - WebClient / WebFlux: questions/webclient-webflux.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:

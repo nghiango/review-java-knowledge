@@ -252,6 +252,18 @@ OpenFeign's default `ErrorDecoder` converts all non-2xx HTTP responses into gene
 
 **Appears in:** [Spring Cloud — Feign missing error decoder](../topics/spring-cloud/code-review.md#openfeign-missing-timeouts-and-custom-error-decoder)
 
+---
+
+### Missing Timeout Protection on Parallel Reactive Publishers in Mono.zip
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Spring WebFlux, Project Reactor · **Interview frequency:** High · **Production impact:** Critical
+
+`Mono.zip` waits for all combined inner publishers to complete before producing its tuple result. If any of the combined publishers lacks an explicit timeout, a single hanging remote service stalls the entire composite response indefinitely. Each parallel publisher orchestrated by `Mono.zip` must define an individual bounded `.timeout(Duration)` and fallback behavior.
+
+**Appears in:** `modules/21-webclient-webflux/broken-examples/chain-without-error-handling`
+
 ## Related
 
 - [Issue catalogue](index.md)

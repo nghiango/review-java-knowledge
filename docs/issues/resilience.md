@@ -74,6 +74,54 @@ Configuring OpenFeign clients without explicit `Request.Options` timeouts allows
 
 **Appears in:** [Spring Cloud — Feign missing timeouts](../topics/spring-cloud/code-review.md#openfeign-missing-timeouts-and-custom-error-decoder)
 
+---
+
+### Missing Inner Stream Error Isolation Cancelling Entire Reactive Batch
+
+**Type:** Resilience issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Project Reactor, Spring WebFlux · **Interview frequency:** High · **Production impact:** High
+
+In Project Reactor, when an inner publisher inside `flatMap` emits an `onError` signal, the outer `Flux` terminates and cancels all other in-flight child subscriptions by default. If a batch process dispatches 1,000 notifications and item #3 encounters a network error, items #4 through #1,000 are immediately aborted. To isolate failures, wrap the inner publisher with `.onErrorResume()` or `.onErrorReturn()` before flattening.
+
+**Appears in:** `modules/21-webclient-webflux/broken-examples/uncontrolled-flatmap-concurrency`
+
+---
+
+### Missing Netty Channel Connect and Response Timeouts on WebClient
+
+**Type:** Resilience issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** WebClient, Reactor Netty · **Interview frequency:** High · **Production impact:** Critical
+
+A default `WebClient` instance created via `WebClient.builder()` does not configure explicit TCP connection or HTTP response timeouts on the underlying Reactor Netty `HttpClient`. If a remote downstream server leaves TCP connections half-open or stalls on transmitting body bytes, Netty connection pool channels remain leased indefinitely, exhausting available sockets and leading to `PoolAcquireTimeoutException`. Always configure `HttpClient.create().responseTimeout(...)` and channel connect timeouts.
+
+**Appears in:** `modules/21-webclient-webflux/broken-examples/missing-webclient-timeout`
+
+---
+
+### Missing Stream-Level Timeout Operator on Reactive WebClient Calls
+
+**Type:** Resilience issue · **Severity:** High · **Difficulty:** Basic
+
+**Technology:** WebClient, Project Reactor · **Interview frequency:** High · **Production impact:** High
+
+While transport-level timeouts guard TCP sockets, reactive pipelines requiring business SLA guarantees must enforce stream-level deadlines. Invoking `webClient.get().retrieve().bodyToMono(...)` without an explicit `.timeout(Duration)` operator leaves callers vulnerable to indefinite delays during slow streaming, TLS handshakes, or proxy buffering. Always chain `.timeout()` with fallback degradation via `.onErrorResume()`.
+
+**Appears in:** `modules/21-webclient-webflux/broken-examples/missing-webclient-timeout`
+
+---
+
+### Terminal onError in Reactive Zip Operators Aborting Multi-Service Composition
+
+**Type:** Resilience issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Spring WebFlux, Project Reactor (`Mono.zip`) · **Interview frequency:** High · **Production impact:** High
+
+In Reactive Streams, the `onError` signal is terminal. When using `Mono.zip()` to execute parallel calls to multiple microservices (e.g. cart price, loyalty discounts, promo coupons), any unhandled error from an optional service (such as coupon recommendation failure) causes `Mono.zip` to immediately abort the entire composite stream and emit an HTTP 500 error, crashing the user's primary checkout journey. Apply `.onErrorReturn()` or `.onErrorResume()` to non-critical upstream dependencies.
+
+**Appears in:** `modules/21-webclient-webflux/broken-examples/chain-without-error-handling`
+
 ## Related
 
 - [Issue catalogue](index.md)

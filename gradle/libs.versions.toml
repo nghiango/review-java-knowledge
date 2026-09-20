@@ -28,6 +28,7 @@ spring-jdbc = { module = "org.springframework:spring-jdbc", version.ref = "sprin
 spring-test = { module = "org.springframework:spring-test", version.ref = "spring-framework" }
 spring-web = { module = "org.springframework:spring-web", version.ref = "spring-framework" }
 spring-webmvc = { module = "org.springframework:spring-webmvc", version.ref = "spring-framework" }
+spring-webflux = { module = "org.springframework:spring-webflux", version.ref = "spring-framework" }
 spring-security-core = { module = "org.springframework.security:spring-security-core", version.ref = "spring-security" }
 spring-security-web = { module = "org.springframework.security:spring-security-web", version.ref = "spring-security" }
 spring-security-config = { module = "org.springframework.security:spring-security-config", version.ref = "spring-security" }
@@ -54,6 +55,8 @@ junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 mockito-core = { module = "org.mockito:mockito-core", version = "5.15.2" }
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version = "5.15.2" }
+reactor-core = { module = "io.projectreactor:reactor-core", version = "3.7.3" }
+reactor-test = { module = "io.projectreactor:reactor-test", version = "3.7.3" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers", version.ref = "spring-boot" }

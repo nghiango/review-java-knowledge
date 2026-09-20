@@ -113,6 +113,30 @@ When a high-traffic cached resource expires, all concurrent incoming requests ob
 
 **Appears in:** `modules/13-caching-redis/broken-examples/cache-stampede-on-expiry`
 
+---
+
+### Missing Scheduler Offloading for Blocking I/O Causing Event Loop Starvation
+
+**Type:** Performance issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Spring WebFlux, Project Reactor, Schedulers · **Interview frequency:** High · **Production impact:** Critical
+
+Wrapping synchronous blocking operations inside `Mono.fromCallable` or `Mono.fromSupplier` without chaining `.subscribeOn(Schedulers.boundedElastic())` causes the blocking work to execute directly on the subscriber's thread (Netty worker). Even a modest load of 10–20 concurrent slow queries exhausts the few available event loops, resulting in catastrophic latency degradation across the entire WebFlux application.
+
+**Appears in:** `modules/21-webclient-webflux/broken-examples/blocking-jdbc-in-webflux`
+
+---
+
+### Uncontrolled flatMap Concurrency Oversubscribes Outbound Connection Pool
+
+**Type:** Scalability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Project Reactor, WebClient, Netty Connection Pool · **Interview frequency:** High · **Production impact:** Critical
+
+By default, `Flux.flatMap(Function)` uses an internal prefetch and concurrency limit of `Queues.SMALL_BUFFER_SIZE` (256 concurrent subscribers). When processing large collections of items (e.g. 5,000 notifications), `flatMap` eagerly spins up 256 parallel outbound HTTP requests. If connection pools are capped lower or downstream services are rate-limited, requests fail with `PoolAcquireTimeoutException` or trigger 429/503 errors. Always supply an explicit concurrency limit via `flatMap(mapper, maxConcurrency)`.
+
+**Appears in:** `modules/21-webclient-webflux/broken-examples/uncontrolled-flatmap-concurrency`
+
 ## Related
 
 - [Issue catalogue](index.md)

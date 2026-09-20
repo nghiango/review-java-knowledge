@@ -245,6 +245,21 @@
 - [ ] Contrast Spring Cloud components with modern Kubernetes and AWS infrastructure (CoreDNS vs Eureka, K8s Service vs Ribbon, ConfigMaps vs Config Server)
 - [ ] Evaluate migration paths from OpenFeign to Spring 6 native `HttpInterfaces` and `RestClient`
 
+## WebClient / WebFlux
+
+- [ ] Explain event loop architecture vs thread-per-request, epoll/kqueue socket multiplexing, and the cardinal rule of non-blocking
+- [ ] Understand the 4 core Reactive Streams interfaces (`Publisher`, `Subscriber`, `Subscription`, `Processor`) and the `request(n)` contract
+- [ ] Contrast `Mono<T>` (0..1) vs `Flux<T>` (0..N) and explain the three pipeline phases (Assembly, Subscription, Execution)
+- [ ] Differentiate `subscribeOn(Scheduler)` (upstream source thread) from `publishOn(Scheduler)` (downstream operator thread)
+- [ ] Implement backpressure overflow strategies (`onBackpressureBuffer`, `onBackpressureDrop`, `onBackpressureLatest`)
+- [ ] Configure multi-layer WebClient timeouts (Netty TCP connect timeout, response timeout, and stream-level `.timeout(Duration)`)
+- [ ] Bound `Flux.flatMap(fn, maxConcurrency)` concurrency to prevent connection pool exhaustion and `PoolAcquireTimeoutException`
+- [ ] Isolate errors in multi-publisher composition (`Mono.zip`) using `.onErrorReturn()` and `.onErrorResume()`
+- [ ] Understand Reactor `Schedulers` (`parallel()`, `boundedElastic()`, `single()`) and safely offload blocking I/O (JDBC, legacy clients)
+- [ ] Diagnose and prevent event loop blocking using BlockHound bytecode instrumentation in CI/CD pipelines
+- [ ] Compare R2DBC vs JDBC and evaluate trade-offs (loss of JPA/Hibernate, reactive transactions via Reactor Context)
+- [ ] Evaluate Spring WebFlux vs Spring MVC with Java 21 Virtual Threads (when to use each, when WebFlux is an anti-pattern)
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -268,4 +283,5 @@
 - [Distributed Data Patterns questions](questions/distributed-data-patterns.md)
 - [Resilience questions](questions/resilience.md)
 - [Spring Cloud questions](questions/spring-cloud.md)
+- [WebClient / WebFlux questions](questions/webclient-webflux.md)
 

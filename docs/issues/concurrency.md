@@ -77,6 +77,30 @@ Holding pessimistic database row locks (`SELECT ... FOR UPDATE`) while waiting f
 
 **Appears in:** `modules/17-distributed-systems/broken-examples/two-phase-commit-coordinator`
 
+---
+
+### Invoking .block() Inside WebFlux Request Flow Freezes Netty Event Loops
+
+**Type:** Concurrency issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Spring WebFlux, Project Reactor, Netty · **Interview frequency:** High · **Production impact:** Critical
+
+In Spring WebFlux, Netty runs a fixed number of event loop worker threads (typically 1 per CPU core) to service all concurrent incoming HTTP connections. Calling `.block()` or `.toFuture().get()` inside an event loop handler pauses that thread until the asynchronous publisher yields a value. If downstream latency spikes, all event loop threads quickly become blocked, causing the server to stop accepting new TCP connections and freezing all multiplexed requests.
+
+**Appears in:** `modules/21-webclient-webflux/broken-examples/block-in-request-flow`
+
+---
+
+### Synchronous Blocking JDBC Executed on Reactive Netty Event Loop
+
+**Type:** Concurrency issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Spring WebFlux, Spring JDBC, Project Reactor · **Interview frequency:** High · **Production impact:** Critical
+
+Executing blocking JDBC queries (`JdbcClient`, `JdbcTemplate`, or Hibernate) directly inside `Mono.fromSupplier(...)` executes the query on the calling subscriber thread (the Netty event loop). Traditional JDBC drivers block the thread on socket reads and connection pool acquisition. Slow queries or HikariCP pool exhaustion instantly stall the event loop, causing severe latency spikes for completely unrelated HTTP requests. Offload blocking calls to `Schedulers.boundedElastic()` or adopt non-blocking R2DBC drivers.
+
+**Appears in:** `modules/21-webclient-webflux/broken-examples/blocking-jdbc-in-webflux`
+
 ## Related
 
 - [Issue catalogue](index.md)
