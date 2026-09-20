@@ -8,20 +8,25 @@ import java.util.List;
  * <p>A slice is a small, curated auto-configuration: {@code @WebMvcTest} loads the web layer and
  * mocks the service layer, {@code @DataJpaTest} loads JPA plus a DataSource and rolls back,
  * {@code @JsonTest} loads only the Jackson testers. {@code @SpringBootTest} loads the whole
- * application. The cost difference below is the reason a suite is built from slices, and Spring's
- * per-context-key cache is the reason slices are cheap only when the test classes share a key.
+ * application, but its default {@code webEnvironment} is {@code MOCK}: the web layer is loaded and
+ * driven through {@code MockMvc}, and no embedded server starts unless {@code RANDOM_PORT} or
+ * {@code DEFINED_PORT} is requested. The cost difference below is the reason a suite is built from
+ * slices, and Spring's per-context-key cache is the reason slices are cheap only when the test
+ * classes share a key.
  */
 public class Q07SpringBootTestVsSliceTests {
 
-    /** What a test context actually starts, and what that costs. */
+    /** What a test context actually loads, and what that costs. */
     record TestContext(
             String annotation,
             int beans,
-            boolean startsWebServer,
+            boolean loadsWebEnvironment,
             boolean startsDatabase,
             int startupMillis) {}
 
     public static void main(String[] args) {
+        // No embedded server starts here: @SpringBootTest defaults to webEnvironment = MOCK, and
+        // @WebMvcTest drives the web layer through MockMvc rather than a real connector.
         TestContext full = new TestContext("@SpringBootTest", 320, true, true, 4_200);
         TestContext webSlice = new TestContext("@WebMvcTest", 45, true, false, 900);
         TestContext jpaSlice = new TestContext("@DataJpaTest", 30, false, true, 700);
@@ -30,6 +35,7 @@ public class Q07SpringBootTestVsSliceTests {
         List<TestContext> contexts = List.of(full, webSlice, jpaSlice, jsonSlice);
 
         long databaseContexts = contexts.stream().filter(TestContext::startsDatabase).count(); // 2
+        long webContexts = contexts.stream().filter(TestContext::loadsWebEnvironment).count(); // 2
         int fullContextBeans = full.beans(); // 320
         int sliceBeans = webSlice.beans() + jpaSlice.beans() + jsonSlice.beans(); // 90
 
@@ -46,6 +52,7 @@ public class Q07SpringBootTestVsSliceTests {
         System.out.println("Full context beans: " + fullContextBeans); // Full context beans: 320
         System.out.println("Slice beans: " + sliceBeans); // Slice beans: 90
         System.out.println("Database contexts: " + databaseContexts); // Database contexts: 2
+        System.out.println("Web contexts: " + webContexts); // Web contexts: 2
         System.out.println("Distinct keys: " + distinctKeys); // Distinct keys: 3
         System.out.println("Cached: " + cachedStartupMillis + " ms"); // Cached: 2700 ms
         System.out.println("Uncached: " + uncachedStartupMillis + " ms"); // Uncached: 6300 ms

@@ -1,8 +1,8 @@
 # Testing Tests
 
 The module's own suite is the worked example of the lesson: fast, deterministic unit tests that run
-under `build` with no Docker, and a small set of Docker-backed integration tests that exercise the
-semantics only real infrastructure can prove. This page separates the two, lists the exact commands,
+under `build` with no Docker, and a small set of integration tests that exercise the semantics only
+real infrastructure can prove. This page separates the two, lists the exact commands,
 and documents the shared-container contract.
 
 ## What each level proves
@@ -65,7 +65,7 @@ The integration tests are a separate task and a separate source set; nothing in 
 --8<-- "modules/12-testing/src/test/java/lab/testing/sequence/SequenceAllocatorTest.java"
 ```
 
-## Docker-backed integration tests
+## Integration tests (Docker for the PostgreSQL slice)
 
 | Test class | Invariant proved | Technique |
 |---|---|---|

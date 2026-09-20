@@ -68,7 +68,7 @@ Four levels of interview questions covering the testing pyramid and test levels,
 ### 7. `@SpringBootTest` versus a test slice — what does each load?
 
 ??? question "Reveal answer"
-    **Short Answer:** `@SpringBootTest` loads the whole application: every bean, a web server and a real DataSource. A slice loads a curated auto-configuration — `@WebMvcTest` the web layer with the service replaced by a mock bean, `@DataJpaTest` JPA plus a DataSource, `@JsonTest` only the Jackson testers. Spring caches one context per context key, so slices are cheap only when the test classes share a key. [Concept](/topics/testing/concepts.md#8-spring-test-slices-webmvctest-datajpatest-springboottest)
+    **Short Answer:** `@SpringBootTest` loads the whole application: every bean and a real DataSource, with a mock web environment by default (`webEnvironment = MOCK`, so no embedded server starts unless you ask for `RANDOM_PORT`). A slice loads a curated auto-configuration — `@WebMvcTest` the web layer with the service replaced by a mock bean, `@DataJpaTest` JPA plus a DataSource, `@JsonTest` only the Jackson testers. Spring caches one context per context key, so slices are cheap only when the test classes share a key. [Concept](/topics/testing/concepts.md#8-spring-test-slices-webmvctest-datajpatest-springboottest)
 
     ??? example "Example"
         ```java

@@ -1,7 +1,7 @@
 package lab.testing.questions;
 
 /**
- * Q04: Why a fixed {@code Thread.sleep} in a test is harmful.
+ * Q04: Why a fixed sleep in a test is harmful.
  *
  * <p>A sleep is a guess about how long work takes. Guess low and the assertion runs against
  * unfinished work — the test is flaky on a loaded CI agent. Guess high and every run of the suite

@@ -41,7 +41,11 @@ import org.springframework.test.web.client.MockRestServiceServer;
  */
 public class Q11SliceTestContentsAndAutoConfiguration {
 
-    /** The whole application: every bean, a web server and a real DataSource. */
+    /**
+     * The whole application: every bean, the web layer and a real DataSource. The default {@code
+     * webEnvironment} is {@code MOCK}, so the web layer is driven through {@code MockMvc} and no
+     * embedded server starts unless {@code RANDOM_PORT} is requested.
+     */
     @SpringBootTest
     @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
     static class FullContextTest {

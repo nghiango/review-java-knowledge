@@ -77,11 +77,11 @@ The canonical module table is in [Progress](../../progress.md); this page tracks
 | Step | Pages | State |
 |---|---|---|
 | Theory | [Concepts](concepts.md) · [Internals](internals.md) | ✅ |
-| Interview questions | [Questions](questions.md) | 🟨 |
-| Review exercises | [Code review](code-review.md) | 🟨 |
-| Correct implementations | [Solutions](solutions.md) · [Tests](tests.md) | 🟨 |
-| Production | [Production](production.md) | 🟨 |
-| Practice | [Exercises](exercises.md) | 🟨 |
+| Interview questions | [Questions](questions.md) | ✅ |
+| Review exercises | [Code review](code-review.md) | ✅ |
+| Correct implementations | [Solutions](solutions.md) · [Tests](tests.md) | ✅ |
+| Production | [Production](production.md) | ✅ |
+| Practice | [Exercises](exercises.md) | ✅ |
 
 ## Related
 
