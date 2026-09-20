@@ -15,7 +15,7 @@ flowchart TD
 
 | Level | Crosses a process boundary | Typical share | Feedback | What it can catch |
 |---|---|---|---|---|
-| Unit | No | ~85 % | milliseconds | Logic, arithmetic, validation, edge cases |
+| Unit | No | ~86 % | milliseconds | Logic, arithmetic, validation, edge cases |
 | Component / slice | Maybe (DB, HTTP) | ~10 % | seconds | Wiring, mapping, persistence semantics |
 | Contract | Yes | ~4 % | seconds | Wire-format drift between consumer and provider |
 | End-to-end | Yes, all of them | ~1 % | minutes | Deployment, configuration, cross-service flow |
@@ -62,7 +62,7 @@ makes a service test fast but proves nothing about the constraint the database e
 !!! warning "Failure"
     A repository test that runs against an in-memory substitute is labelled "integration" but never
     crosses a boundary — it verifies the substitute's semantics. See
-    [exercise 5](code-review.md#embedded-substitute-hides-postgresql-semantics).
+    [exercise 5](code-review.md#embedded-substitute-hides-postgres-semantics).
 
 **Fix:** name each test for what it actually crosses, and choose the level by the *risk* being covered.
 **Trade-off:** the higher the level, the more realistic and the slower and more brittle it is.

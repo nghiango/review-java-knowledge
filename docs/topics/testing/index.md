@@ -50,7 +50,7 @@ before expanding the reveal, then study the corrected suite and its tests.
 | 2 | Mocking away the integration | That a mocked `InventoryClient` returns a hand-written map — never the request path, the `Accept` header or the JSON field names | `lab.testing.fulfilment` + `OrderFulfilmentWireMockIT` | [Review](code-review.md#mocking-away-the-integration) |
 | 3 | Shared mutable test fixtures | That one static fixture happens to hold what each test expects after the previous test mutated it | `lab.testing.orders` + `OrderTestData` builders | [Review](code-review.md#shared-mutable-test-fixtures) |
 | 4 | Sleep-based async assertions | That the background work finished within a fixed delay on this machine, and never that a failure is distinguishable from a slow run | `lab.testing.async` + Awaitility-based tests | [Review](code-review.md#sleep-based-async-assertions) |
-| 5 | Embedded substitute hides PostgreSQL semantics | That a case-insensitive map behaves like a case-sensitive unique index on PostgreSQL | `lab.testing.accounts` + `AccountRepositoryIT` on Testcontainers | [Review](code-review.md#embedded-substitute-hides-postgresql-semantics) |
+| 5 | Embedded substitute hides PostgreSQL semantics | That a case-insensitive map behaves like a case-sensitive unique index on PostgreSQL | `lab.testing.accounts` + `AccountRepositoryIT` on Testcontainers | [Review](code-review.md#embedded-substitute-hides-postgres-semantics) |
 | 6 | Order-dependent test suite | That the method's position in the class matches the absolute value it asserts | `lab.testing.sequence` + independent tests | [Review](code-review.md#order-dependent-test-suite) |
 
 ## Correct implementations
