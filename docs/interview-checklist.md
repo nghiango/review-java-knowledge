@@ -71,6 +71,18 @@
 - [ ] Harden CORS policies with explicit origin whitelists; prevent wildcard origin with credentials vulnerabilities
 - [ ] Build custom `HandlerMethodArgumentResolver` and `ResponseBodyAdvice` extensions
 
+## Spring Transactions
+
+- [ ] Trace `@Transactional` AOP proxy mechanics and resolve self-invocation proxy bypasses
+- [ ] Contrast `PlatformTransactionManager`, `TransactionDefinition`, and `TransactionStatus`
+- [ ] Evaluate Propagation levels (`REQUIRED`, `REQUIRES_NEW`, `NESTED`, `MANDATORY`, `SUPPORTS`)
+- [ ] Prevent HikariCP pool exhaustion deadlocks caused by `REQUIRES_NEW` or remote network I/O
+- [ ] Diagnose `UnexpectedRollbackException` in shared multi-service transaction propagation
+- [ ] Configure explicit `rollbackFor = Exception.class` for checked exceptions vs unchecked defaults
+- [ ] Optimize read-only queries with `@Transactional(readOnly = true)` to disable dirty checking
+- [ ] Coordinate transactional side effects using `@TransactionalEventListener(phase = AFTER_COMMIT)`
+- [ ] Implement Transactional Outbox pattern for atomic database persistence and message publishing
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -80,4 +92,5 @@
 - [Spring Core questions](questions/spring-core.md)
 - [Spring Boot questions](questions/spring-boot.md)
 - [Spring MVC questions](questions/spring-mvc.md)
+- [Spring Transactions questions](questions/spring-transactions.md)
 
