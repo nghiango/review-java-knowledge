@@ -1,6 +1,14 @@
 # Testing Interview Questions
 
-This page is completed later in this module.
+Questions are authored in the topic page and included here so answers cannot drift.
+
+--8<-- "docs/topics/testing/questions.md:basic"
+
+--8<-- "docs/topics/testing/questions.md:intermediate"
+
+--8<-- "docs/topics/testing/questions.md:senior"
+
+--8<-- "docs/topics/testing/questions.md:scenarios"
 
 ## Related
 

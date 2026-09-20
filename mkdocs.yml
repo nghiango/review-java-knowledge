@@ -181,7 +181,6 @@ nav:
       - Testing: questions/testing.md
   - Reference:
       - Overview: reference/index.md
-      - Testing Plan: superpowers/plans/2026-09-20-testing-module.md
   - Contributing:
       - Specification Index: spec/README.md
       - Module Conventions: spec/module-conventions.md
@@ -193,6 +192,7 @@ nav:
       - Bootstrap Plan: superpowers/plans/2026-09-18-bootstrap-core-java.md
       - JVM Design: superpowers/specs/2026-09-18-jvm-module-design.md
       - JVM Plan: superpowers/plans/2026-09-18-jvm-module.md
+      - Testing Plan: superpowers/plans/2026-09-20-testing-module.md
 
 markdown_extensions:
   - admonition
