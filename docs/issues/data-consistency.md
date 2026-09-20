@@ -80,6 +80,30 @@ Retrying mutating operations (`POST /charges`) upon encountering a network socke
 
 **Appears in:** `modules/18-resilience/broken-examples/retrying-non-idempotent-call`
 
+---
+
+### Non-Idempotent Saga Compensation (Duplicate Refunds on Redelivery)
+
+**Type:** Data consistency issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Distributed Sagas, Microservices · **Interview frequency:** High · **Production impact:** Critical
+
+In distributed Sagas, compensating transactions (such as customer refunds or inventory unreservations) can be redelivered due to network timeouts or consumer rebalances. If compensation methods credit balances or undo state mutations without recording prior execution in a deduplication ledger, redeliveries cause catastrophic double payouts or negative inventory counts. Ensure all Saga compensations are strictly idempotent.
+
+**Appears in:** `modules/19-distributed-data-patterns/broken-examples/non-idempotent-compensation`
+
+---
+
+### Consumer Missing Inbox Deduplication Table (Duplicate Processing)
+
+**Type:** Data consistency issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Kafka, Spring Kafka, Event-Driven Architecture · **Interview frequency:** High · **Production impact:** Critical
+
+Because message brokers provide at-least-once delivery, consumer rebalances and container restarts cause events to be redelivered. Consumers that apply state mutations directly without verifying an atomic inbox store process identical events multiple times. Implement the Inbox Pattern using `INSERT ON CONFLICT DO NOTHING` in the same database transaction as the business state mutation.
+
+**Appears in:** `modules/19-distributed-data-patterns/broken-examples/inbox-without-dedup-key`
+
 ## Related
 
 - [Issue catalogue](index.md)

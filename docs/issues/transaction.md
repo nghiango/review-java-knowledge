@@ -52,6 +52,18 @@ Spring AOP dynamic proxies (CGLIB and JDK dynamic proxies) only intercept `publi
 
 **Appears in:** `modules/07-spring-transactions/broken-examples/transaction-on-private-method`
 
+---
+
+### Dual Write to Database and Message Broker (Dual Write Problem)
+
+**Type:** Data consistency issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Spring Transactions, Kafka, PostgreSQL · **Interview frequency:** High · **Production impact:** Critical
+
+Writing to both an RDBMS and a message broker (Kafka, RabbitMQ) within an application service method inevitably leads to state corruption because local database transactions cannot atomically coordinate with remote network protocols. If the broker call fails, the database rolls back, but if the database commit fails after publishing, phantom events are consumed downstream. Implement the Transactional Outbox pattern so business state mutations and outbox records commit in the same local database transaction.
+
+**Appears in:** `modules/19-distributed-data-patterns/broken-examples/dual-write-db-broker`
+
 ## Related
 
 - [Issue catalogue](index.md)

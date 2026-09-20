@@ -208,6 +208,16 @@ nav:
           - Tests: topics/resilience/tests.md
           - Production: topics/resilience/production.md
           - Exercises: topics/resilience/exercises.md
+      - Distributed Data Patterns:
+          - Overview: topics/distributed-data-patterns/index.md
+          - Concepts: topics/distributed-data-patterns/concepts.md
+          - Internals: topics/distributed-data-patterns/internals.md
+          - Interview Questions: topics/distributed-data-patterns/questions.md
+          - Code Review: topics/distributed-data-patterns/code-review.md
+          - Solutions: topics/distributed-data-patterns/solutions.md
+          - Tests: topics/distributed-data-patterns/tests.md
+          - Production: topics/distributed-data-patterns/production.md
+          - Exercises: topics/distributed-data-patterns/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -242,6 +252,7 @@ nav:
       - RabbitMQ: questions/rabbitmq.md
       - AWS Messaging: questions/aws-messaging.md
       - Distributed Systems: questions/distributed-systems.md
+      - Distributed Data Patterns: questions/distributed-data-patterns.md
       - Resilience: questions/resilience.md
   - Reference:
       - Overview: reference/index.md

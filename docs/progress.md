@@ -24,7 +24,7 @@
 | 16 | AWS Messaging | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
 | 17 | Distributed Systems | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
 | 18 | Resilience | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 19 | Distributed Data Patterns | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 19 | Distributed Data Patterns | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 20 | Spring Cloud | doc | ⬜ | ⬜ | ⬜ | ⬜ | — | ⬜ | ⬜ |
 | 21 | WebClient / WebFlux | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 22 | Observability | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |

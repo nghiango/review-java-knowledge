@@ -206,6 +206,19 @@
 - [ ] Contrast quorum consensus protocols (Raft, Paxos) with blocking Two-Phase Commit (2PC)
 - [ ] Protect services against cascading failure using load shedding, backpressure, and jittered retries
 
+## Distributed Data Patterns
+
+- [ ] Identify the blocking coordinator problem and CAP availability penalties that make Two-Phase Commit (2PC) unsuitable for microservices
+- [ ] Eliminate the Dual Write problem by implementing the Transactional Outbox pattern
+- [ ] Commit domain entity state changes and outbox event insertions in the exact same local database transaction
+- [ ] Contrast Polling Outbox (`SELECT FOR UPDATE SKIP LOCKED`) with Change Data Capture (Debezium WAL streaming)
+- [ ] Guarantee idempotent consumer execution by implementing the Inbox Pattern backed by unique constraints (`message_id`, `consumer_group`)
+- [ ] Recognize that true end-to-end exactly-once delivery is achieved via At-Least-Once Delivery + Idempotent Processing
+- [ ] Contrast Saga Orchestration (central state machine) with Saga Choreography (event-driven reactions)
+- [ ] Guarantee that all Saga compensating transactions are strictly idempotent to prevent catastrophic double refunds on message redelivery
+- [ ] Identify the Pivot Transaction in a distributed Saga, separating compensatable steps from forward-retryable steps
+- [ ] Design outbox tables with date/time range partitioning to eliminate PostgreSQL MVCC dead-tuple table bloat
+
 ## Resilience
 
 - [ ] Establish explicit multi-layer timeouts: Connect Timeout ($\le 1\text{s}$), Socket Read Timeout ($\le 3\text{s}$), and End-to-End Execution Timeout
@@ -239,5 +252,6 @@
 - [RabbitMQ questions](questions/rabbitmq.md)
 - [AWS Messaging questions](questions/aws-messaging.md)
 - [Distributed Systems questions](questions/distributed-systems.md)
+- [Distributed Data Patterns questions](questions/distributed-data-patterns.md)
 - [Resilience questions](questions/resilience.md)
 
