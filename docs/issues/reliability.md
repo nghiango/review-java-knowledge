@@ -194,6 +194,35 @@ domain error, and test the conflicting write against the real engine.
 
 **Appears in:** `modules/12-testing/broken-examples/embedded-substitute-hides-postgres-semantics`
 
+### Absolute assertions pinned to the declaration order
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5 `@TestMethodOrder`, `@Order` · **Interview frequency:** High · **Production impact:** High
+
+Each method of the class asserts the absolute value it expects to be handed out next from a shared
+counter, so those values are positions in one sequence rather than properties of the code under test.
+`@TestMethodOrder(OrderAnnotation.class)` supplies the single execution order that makes them line up,
+and the class stays green until a method is run alone, reordered or picked by a random orderer. Create
+the state a test asserts on inside that test, and assert consequences of the calls the test itself
+makes.
+
+**Appears in:** `modules/12-testing/broken-examples/order-dependent-test-suite`
+
+### Static counter shared across test methods
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5 static state · **Interview frequency:** High · **Production impact:** High
+
+A `static final` allocator — or any counter kept in static state — makes every test method advance and
+read the same value: what one method observes depends on how many times the methods that ran before it
+called `next()`, and the state survives into a second run of the class in the same JVM. The reference
+being `final` protects nothing. Give each test its own instance of the state it asserts on, and keep
+that state in instance fields so two instances cannot observe each other.
+
+**Appears in:** `modules/12-testing/broken-examples/order-dependent-test-suite`
+
 ## Related
 
 - [Issue catalogue](index.md)

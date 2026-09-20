@@ -281,6 +281,20 @@ doubles for interactions, and test the store's semantics against the store.
 
 **Appears in:** `modules/12-testing/broken-examples/embedded-substitute-hides-postgres-semantics`
 
+### Order-dependent test class cannot run in parallel
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Basic
+
+**Technology:** JUnit 5 parallel execution · **Interview frequency:** Medium · **Production impact:** Medium
+
+A class whose methods share a counter and assert absolute values can only be executed as one ordered
+run: it cannot be split, reordered, selected method-by-method, sharded across CI agents or run with
+JUnit's parallel execution enabled. The cost appears only once the build is optimised — and by then the
+suite is treated as correct, so parallelism is switched off again "because the suite is flaky". Keep
+the tests independent instead of ordering around the coupling.
+
+**Appears in:** `modules/12-testing/broken-examples/order-dependent-test-suite`
+
 ## Related
 
 - [Issue catalogue](index.md)
