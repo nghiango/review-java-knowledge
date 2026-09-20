@@ -171,7 +171,17 @@
 - [ ] Prevent consumer group rebalance storms by offloading heavy processing and respecting `max.poll.interval.ms`
 - [ ] Eliminate stop-the-world partition revocations using `CooperativeStickyAssignor`
 - [ ] Prevent dual-write race conditions between databases and Kafka using the Transactional Outbox pattern or post-commit events
-- [ ] Monitor consumer group health using consumer lag metrics (`records.lag`) and rebalance rates
+## RabbitMQ
+
+- [ ] Differentiate Direct, Topic, Fanout, and Headers AMQP exchange routing semantics
+- [ ] Ensure at-least-once processing via manual acknowledgments (`basicAck`) issued strictly after downstream mutations complete
+- [ ] Eliminate poison pill crash loops by rejecting deterministic errors (`basicReject(requeue = false)`) to Dead Letter Exchanges
+- [ ] Configure DLX and parking lot queues via `x-dead-letter-exchange` and `x-dead-letter-routing-key` queue arguments
+- [ ] Optimize consumer throughput and JVM memory using bounded QoS prefetch (`basicQos(prefetchCount)`)
+- [ ] Guarantee producer message delivery using Correlated Publisher Confirms and mandatory unroutable returns handling
+- [ ] Implement atomic message deduplication on consumer command IDs to guarantee idempotency across network redeliveries
+- [ ] Contrast Quorum Queues (Raft consensus) with Classic Mirrored Queues for high availability and network partition resilience
+- [ ] Handle broker memory and disk alarms (`vm_memory_high_watermark`, `disk_free_limit`) by sizing queues and provisioning monitoring alerts
 
 ## Related
 
@@ -190,4 +200,5 @@
 - [Testing questions](questions/testing.md)
 - [Caching / Redis questions](questions/caching-redis.md)
 - [Kafka questions](questions/kafka.md)
+- [RabbitMQ questions](questions/rabbitmq.md)
 

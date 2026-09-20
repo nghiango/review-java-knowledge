@@ -17,6 +17,7 @@ Answer each question before reading its explanation.
 - [Testing](testing.md)
 - [Caching / Redis](caching-redis.md)
 - [Kafka](kafka.md)
+- [RabbitMQ](rabbitmq.md)
 
 ## Related
 

@@ -70,6 +70,10 @@ spring-kafka = { module = "org.springframework.kafka:spring-kafka", version = "3
 spring-kafka-test = { module = "org.springframework.kafka:spring-kafka-test", version = "3.3.3" }
 kafka-clients = { module = "org.apache.kafka:kafka-clients", version = "3.9.0" }
 testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
+spring-rabbit = { module = "org.springframework.amqp:spring-rabbit", version = "3.2.3" }
+spring-rabbit-test = { module = "org.springframework.amqp:spring-rabbit-test", version = "3.2.3" }
+amqp-client = { module = "com.rabbitmq:amqp-client", version = "5.21.0" }
+testcontainers-rabbitmq = { module = "org.testcontainers:rabbitmq", version.ref = "testcontainers" }
 errorprone-core = { module = "com.google.errorprone:error_prone_core", version.ref = "errorprone-core" }
 spotless-plugin = { module = "com.diffplug.spotless:com.diffplug.spotless.gradle.plugin", version.ref = "spotless" }
 errorprone-plugin = { module = "net.ltgt.errorprone:net.ltgt.errorprone.gradle.plugin", version.ref = "errorprone-plugin" }

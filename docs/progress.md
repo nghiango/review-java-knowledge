@@ -20,7 +20,7 @@
 | 12 | Testing | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 13 | Caching / Redis | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 14 | Kafka | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 15 | RabbitMQ | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 15 | RabbitMQ | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 16 | AWS Messaging | doc | ⬜ | ⬜ | ⬜ | ⬜ | — | ⬜ | ⬜ |
 | 17 | Distributed Systems | doc | ⬜ | ⬜ | ⬜ | ⬜ | — | ⬜ | ⬜ |
 | 18 | Resilience | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |

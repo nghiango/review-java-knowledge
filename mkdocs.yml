@@ -170,6 +170,16 @@ nav:
           - Tests: topics/kafka/tests.md
           - Production: topics/kafka/production.md
           - Exercises: topics/kafka/exercises.md
+      - RabbitMQ:
+          - Overview: topics/rabbitmq/index.md
+          - Concepts: topics/rabbitmq/concepts.md
+          - Internals: topics/rabbitmq/internals.md
+          - Interview Questions: topics/rabbitmq/questions.md
+          - Code Review: topics/rabbitmq/code-review.md
+          - Solutions: topics/rabbitmq/solutions.md
+          - Tests: topics/rabbitmq/tests.md
+          - Production: topics/rabbitmq/production.md
+          - Exercises: topics/rabbitmq/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -201,6 +211,7 @@ nav:
       - Testing: questions/testing.md
       - Caching and Redis: questions/caching-redis.md
       - Kafka: questions/kafka.md
+      - RabbitMQ: questions/rabbitmq.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:
