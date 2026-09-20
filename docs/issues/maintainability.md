@@ -176,6 +176,22 @@ Defining raw custom beans without using auto-configured builders or customizer c
 
 **Appears in:** `modules/05-spring-boot/broken-examples/accidental-autoconfig-override`
 
+### God Controller with Embedded Business Logic
+
+**Type:** Maintainability issue · **Severity:** High · **Difficulty:** Intermediate
+
+Embedding pricing algorithms, discount rules, external payment gateway calls, and database transactions inside HTTP controllers violates Single Responsibility and impairs testability. Extract domain logic into dedicated domain services and keep controllers thin.
+
+**Appears in:** `modules/06-spring-mvc/broken-examples/god-controller-business-logic`
+
+### Wrong HTTP Status Codes and Custom Envelopes
+
+**Type:** Architecture issue · **Severity:** Medium · **Difficulty:** Basic
+
+Returning universal `200 OK` responses with buried error messages or lacking `Location` headers on resource creation misleads caching proxies, API gateways, and monitoring dashboards. Use standard semantic HTTP status codes (`201 Created`, `204 No Content`, `400 Bad Request`, `404 Not Found`).
+
+**Appears in:** `modules/06-spring-mvc/broken-examples/wrong-http-status-codes`
+
 ## Related
 
 - [Issue catalogue](index.md)

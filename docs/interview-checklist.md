@@ -59,6 +59,18 @@
 - [ ] Enable Java 21 Virtual Threads via `spring.threads.virtual.enabled=true` for embedded Tomcat workers
 - [ ] Utilize Testcontainers `@ServiceConnection` and Docker Compose integration for automated local development
 
+## Spring MVC
+
+- [ ] Trace the `DispatcherServlet` request dispatching loop (`HandlerMapping`, `HandlerAdapter`, `HandlerInterceptor`)
+- [ ] Contrast `@Controller` vs `@RestController` and configure `HttpMessageConverter` pipelines
+- [ ] Enforce request validation using Jakarta `@Valid` on records and handle `MethodArgumentNotValidException`
+- [ ] Return semantic HTTP status codes (`201 Created` with `Location`, `204 No Content`, `400 Bad Request`, `404 Not Found`)
+- [ ] Centralize error handling with `@RestControllerAdvice` and RFC 9457 `ProblemDetail` without leaking internal traces
+- [ ] Keep controllers thin by delegating domain logic, pricing, and transactions to domain services
+- [ ] Offload long-running operations asynchronously using `DeferredResult` and `CompletableFuture` on isolated thread pools
+- [ ] Harden CORS policies with explicit origin whitelists; prevent wildcard origin with credentials vulnerabilities
+- [ ] Build custom `HandlerMethodArgumentResolver` and `ResponseBodyAdvice` extensions
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -67,4 +79,5 @@
 - [Concurrency questions](questions/concurrency.md)
 - [Spring Core questions](questions/spring-core.md)
 - [Spring Boot questions](questions/spring-boot.md)
+- [Spring MVC questions](questions/spring-mvc.md)
 

@@ -11,7 +11,7 @@
 | 03 | Concurrency | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 04 | Spring Core | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 05 | Spring Boot | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 06 | Spring MVC | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 06 | Spring MVC | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 07 | Spring Transactions | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 08 | JPA / Hibernate | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 09 | Database / SQL | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |

@@ -33,6 +33,30 @@ using runtime environment variables with placeholder defaults and fail-fast `@No
 
 **Appears in:** `modules/05-spring-boot/broken-examples/profile-secrets-in-repo`
 
+### Missing Input Validation on Request Payload
+
+**Type:** Security issue · **Severity:** High · **Difficulty:** Basic
+
+Unvalidated controller endpoints accept blank or malformed data into business processing and persistence layers. Enforce declarative validation via Jakarta annotations (`@NotBlank`, `@Email`, `@Size`, `@Min`) and `@Valid` on controller arguments.
+
+**Appears in:** `modules/06-spring-mvc/broken-examples/missing-input-validation`
+
+### Internal Exception Details Leaked in HTTP Response
+
+**Type:** Security issue · **Severity:** High · **Difficulty:** Intermediate
+
+Exposing raw database error messages and stack traces in HTTP responses reveals database schemas, driver implementations, and internal class names to attackers. Map exceptions via `@RestControllerAdvice` to RFC 9457 `ProblemDetail` with sanitized user-facing descriptions.
+
+**Appears in:** `modules/06-spring-mvc/broken-examples/leaking-stack-traces`
+
+### Wildcard CORS with Credentials Allowed
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+Configuring wildcard origins (`*`) paired with credentials (`allowCredentials: true`) exposes authenticated user sessions to cross-origin extraction by malicious websites. Enforce explicit trusted origin whitelisting.
+
+**Appears in:** `modules/06-spring-mvc/broken-examples/cors-wildcard-credentials`
+
 ## Related
 
 - [Issue catalogue](index.md)

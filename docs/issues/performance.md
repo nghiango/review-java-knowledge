@@ -91,6 +91,14 @@ formatting paths creates high TLAB churn and frequent minor GCs. Use a single op
 
 **Appears in:** `modules/02-jvm/broken-examples/excessive-hot-path-allocation`
 
+### Blocking Servlet Worker Thread in Controller
+
+**Type:** Performance issue · **Severity:** High · **Difficulty:** Intermediate
+
+Performing long-running, multi-second calculations or un-timed blocking downstream calls directly on the Servlet worker thread starves the Tomcat HTTP thread pool under concurrent load. Offload long operations asynchronously via `DeferredResult` or `CompletableFuture` using a dedicated bounded `ExecutorService`.
+
+**Appears in:** `modules/06-spring-mvc/broken-examples/blocking-request-thread`
+
 ## Related
 
 - [Issue catalogue](index.md)
