@@ -174,10 +174,16 @@ public final class SharedPostgresContainer { public static PostgreSQLContainer<?
 // accounts
 @Entity public class Account { Long id; String email; String displayName; long balanceCents; }
 public interface AccountRepository extends JpaRepository<Account, Long> { Optional<Account> findByEmail(String email); }
-public final class AccountService { AccountService(AccountRepository repository); public Account register(String email, String displayName); public long balance(String email); }
+public final class AccountService { AccountService(AccountRepository repository); public Account register(String email, String displayName); /* normalises email: trim + lowercase, then rejects duplicates explicitly */ public long balance(String email); }
 ```
 
-- [ ] RED: write `AccountRepositoryIT` with `@DataJpaTest`, `@AutoConfigureTestDatabase(replace = Replace.NONE)`, a `@TestConfiguration` exposing `@ServiceConnection PostgreSQLContainer<?>` from `SharedPostgresContainer`, and assertions that only PostgreSQL satisfies: duplicate email with different case is rejected by the unique constraint, `findByEmail` is case-sensitive, and `balance` reflects persisted state. Observe failure (module, container helper and repository absent).
+- [ ] RED: write `AccountRepositoryIT` with `@DataJpaTest`, `@AutoConfigureTestDatabase(replace = Replace.NONE)`, a `@SpringBootConfiguration` test application, and a `@TestConfiguration` exposing `@ServiceConnection PostgreSQLContainer<?>` from `SharedPostgresContainer`. Assertions must state the divergence precisely:
+  (1) saving two accounts whose emails differ only by case succeeds at the repository level, proving PostgreSQL's unique index is case-sensitive and that the fake's case-insensitive matching was accidental;
+  (2) `AccountService.register` rejects the second registration because it normalises email (trim + lowercase) before saving, so case-insensitive uniqueness is an explicit application rule rather than a fake's accident;
+  (3) `repository.findByEmail` is case-sensitive, so the normalised value is what callers must query with;
+  (4) `findAll(Sort.by(ASC, "email"))` returns email-sorted rows, proving ordering must be requested explicitly instead of assumed from insertion order;
+  (5) `balance` reflects persisted state across a flush/clear boundary.
+  Observe failure (module, container helper and repository absent).
 - [ ] Implement `SharedPostgresContainer` (started singleton, `postgres:17-alpine`), the entity/repository/service, and `TestingJpaConfiguration`; run `./gradlew :modules:12-testing:integrationTest` green.
 - [ ] Broken target: `InMemoryAccountRepository` with a `Map`, case-insensitive email matching, insertion-order results and no constraint enforcement, plus an `AccountServiceTest` that asserts those fake-only semantics. Issues: Testing issue (substitute diverges from production semantics), Database issue (constraint and collation assumptions unverified), Reliability issue (defects reach production undetected), Maintainability issue (fake duplicates repository logic).
 - [ ] Document the H2 manifestation of the same failure in `SOLUTION.md` and note that H2 stays banned in this repository.
