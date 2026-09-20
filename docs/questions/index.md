@@ -4,6 +4,8 @@ Questions are organized by subject and link back to concepts, review exercises a
 Answer each question before reading its explanation.
 
 - [Java](java.md)
+- [JVM & Performance](jvm.md)
+- [Concurrency](concurrency.md)
 
 ## Related
 

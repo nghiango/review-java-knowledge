@@ -24,8 +24,22 @@
 - [ ] Analyze heap dump dominator trees and JFR allocation profiles
 - [ ] Account for container memory limits, `-XX:MaxRAMPercentage` and cgroup limits
 
+## Concurrency
+
+- [ ] Explain Java Memory Model happens-before rules, visibility, atomicity, and instruction reordering
+- [ ] Contrast `volatile`, `synchronized`, `AtomicInteger` (CAS), and `LongAdder` cell striping
+- [ ] Evaluate `ReentrantLock` features (tryLock, fairness, conditions) vs `StampedLock` optimistic reads
+- [ ] Compare coordination primitives (`CountDownLatch`, `CyclicBarrier`, `Semaphore`, `Phaser`)
+- [ ] Configure `ThreadPoolExecutor` parameters, bounded queues, and rejection policies (`CallerRunsPolicy`)
+- [ ] Compose non-blocking pipelines with `CompletableFuture` (`thenCompose`, `thenCombine`, `allOf`, `orTimeout`)
+- [ ] Diagnose Coffman deadlock conditions and apply canonical resource ordering
+- [ ] Explain Java 21 Virtual Threads, carrier thread scheduling, and pinning on `synchronized` / native JNI
+- [ ] Contrast `ThreadLocal` memory leaks with `ScopedValue` lexical lifetimes
+
 ## Related
 
 - [Roadmap](roadmap.md)
 - [Java questions](questions/java.md)
+- [JVM & Performance questions](questions/jvm.md)
+- [Concurrency questions](questions/concurrency.md)
 
