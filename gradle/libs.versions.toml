@@ -14,6 +14,11 @@ spotless = "8.10.2"
 errorprone-plugin = "5.1.1"
 errorprone-core = "2.50.0"
 google-java-format = "1.28.0"
+testcontainers = "1.20.6"
+awaitility = "4.2.2"
+wiremock = "3.12.1"
+archunit = "1.4.0"
+postgresql = "42.7.5"
 
 [libraries]
 spring-context = { module = "org.springframework:spring-context", version.ref = "spring-framework" }
@@ -48,6 +53,14 @@ junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 mockito-core = { module = "org.mockito:mockito-core", version = "5.15.2" }
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version = "5.15.2" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
+spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers", version.ref = "spring-boot" }
+spring-boot-test-autoconfigure = { module = "org.springframework.boot:spring-boot-test-autoconfigure", version.ref = "spring-boot" }
+awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
+wiremock-standalone = { module = "org.wiremock:wiremock-standalone", version.ref = "wiremock" }
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
 errorprone-core = { module = "com.google.errorprone:error_prone_core", version.ref = "errorprone-core" }
 spotless-plugin = { module = "com.diffplug.spotless:com.diffplug.spotless.gradle.plugin", version.ref = "spotless" }
 errorprone-plugin = { module = "net.ltgt.errorprone:net.ltgt.errorprone.gradle.plugin", version.ref = "errorprone-plugin" }

@@ -40,6 +40,190 @@ running worker threads and sever active HTTP connections upon receiving `SIGTERM
 
 **Appears in:** `modules/05-spring-boot/broken-examples/no-graceful-shutdown`
 
+### Assertions coupled to implementation details
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5, Mockito · **Interview frequency:** High · **Production impact:** High
+
+Verifying call order, call counts and exact argument lists restates the implementation instead of the
+observable outcome. The test then fails on behaviour-preserving refactors and still passes when the
+business result is wrong. Assert the returned value or a captured side effect.
+
+**Appears in:** `modules/12-testing/broken-examples/asserting-implementation-not-behaviour`
+
+### Mocking a value collaborator removes the rule under test
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Mockito · **Interview frequency:** High · **Production impact:** High
+
+Doubling a pure, in-process collaborator and stubbing its result deletes the code path the test
+claims to verify; the test can only prove that the stub was called. Use the real collaborator and
+reserve test doubles for I/O boundaries, time and randomness.
+
+**Appears in:** `modules/12-testing/broken-examples/asserting-implementation-not-behaviour`
+
+### Mocking the HTTP boundary hides contract drift
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Mockito, WireMock · **Interview frequency:** High · **Production impact:** High
+
+Doubling the outbound HTTP client makes the suite green while the real request path and JSON field
+names are never exercised, so a renamed endpoint or field ships undetected. Replace the boundary with
+a stub server (WireMock) and assert the recorded request and the deserialized response.
+
+**Appears in:** `modules/12-testing/broken-examples/mocking-away-the-integration`
+
+### No assertion on the wire contract
+
+**Type:** Testing issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Technology:** WireMock, Spring `RestClient` · **Interview frequency:** Medium · **Production impact:** Medium
+
+A test that stubs the client cannot verify the URL path, the `Accept` header or that the response body
+deserializes into the expected type. Against a stub server, assert `verify(getRequestedFor(...))` with
+the header and let Jackson bind the real payload.
+
+**Appears in:** `modules/12-testing/broken-examples/mocking-away-the-integration`
+
+### No timeout or error-path coverage on an outbound call
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Spring `RestClient` · **Interview frequency:** High · **Production impact:** High
+
+An outbound HTTP client built without connect or read timeouts, tested only on the happy path, blocks a
+request thread for the container's default and surfaces a 5xx or malformed body as a raw exception. Set
+explicit timeouts and test the failure paths (timeout, 5xx, unparseable body).
+
+**Appears in:** `modules/12-testing/broken-examples/mocking-away-the-integration`
+
+### Tests share a mutable static fixture
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5 · **Interview frequency:** High · **Production impact:** High
+
+A static mutable collection of test data makes one test's output another test's input: the result depends
+on what ran before, failures are attributed to the wrong test, and a broken unit can stay green on data a
+previous test left behind. Build the data a test asserts on inside that test, and share only immutable
+values or genuinely expensive started resources.
+
+**Appears in:** `modules/12-testing/broken-examples/shared-mutable-test-fixtures`
+
+### Test order dependence hidden by an explicit method order
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5 `@TestMethodOrder`, `@Order` · **Interview frequency:** High · **Production impact:** High
+
+`@TestMethodOrder(MethodOrderer.OrderAnnotation.class)` with `@Order(n)` pins the execution order and
+conceals a test that reads state another test wrote. The class is green, but the method fails when run
+alone, under a random orderer or in parallel. Remove the shared state instead of ordering around it, and
+express a real shared-resource dependency once with `@BeforeAll` or an extension.
+
+**Appears in:** `modules/12-testing/broken-examples/shared-mutable-test-fixtures`
+
+### Sleep-based waiting for asynchronous work
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Basic
+
+**Technology:** JUnit 5, Awaitility · **Interview frequency:** High · **Production impact:** High
+
+A fixed `Thread.sleep` before asserting on a background result guesses how long the work takes instead
+of waiting for the condition: the test fails on a loaded machine, passes on a fast one, and passes even
+if the work ran synchronously, so the asynchronous contract is never verified. Poll the state under
+test with Awaitility (`atMost` + `untilAsserted`) so the test returns as soon as the condition holds
+and fails with the value it actually observed.
+
+**Appears in:** `modules/12-testing/broken-examples/sleep-based-async-assertions`
+
+### Unbounded polling loop masks a hang
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5, `Thread.sleep` polling · **Interview frequency:** High · **Production impact:** High
+
+A `while (status != EXPECTED) { Thread.sleep(...); }` loop has no timeout and no exit for any other
+terminal state, so a report that fails or hangs keeps the loop spinning until the CI job timeout kills
+the build — no assertion message, no observed status, and the run is written off as infrastructure
+flake. Replace the loop with a bounded `await().atMost(...).untilAsserted(...)` that reports the state
+it saw.
+
+**Appears in:** `modules/12-testing/broken-examples/sleep-based-async-assertions`
+
+### No failure-path assertion on an asynchronous job
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5, asynchronous job lifecycle · **Interview frequency:** High · **Production impact:** High
+
+A suite that only asserts the happy-path status never executes the branch that records failure, so a job
+that swallows the exception and stays `RUNNING` (or reports `COMPLETED`) ships green while callers poll
+for ever and nothing is retried or alerted. Make the work throw through an injectable seam and assert the
+terminal failure state.
+
+**Appears in:** `modules/12-testing/broken-examples/sleep-based-async-assertions`
+
+### Embedded substitute diverges from production semantics
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Spring Data JPA, PostgreSQL, test doubles · **Interview frequency:** High · **Production impact:** High
+
+A hand-written in-memory repository replaces the real store, so the suite asserts the substitute's
+matching, ordering and constraint behaviour instead of PostgreSQL's. The fake answers lookups
+case-insensitively, returns insertion order and overwrites duplicates silently; PostgreSQL compares
+case-sensitively, guarantees no row order without a `Sort`, and rejects a duplicate with a constraint
+violation. The service ships green against a store it never runs on.
+
+**Appears in:** `modules/12-testing/broken-examples/embedded-substitute-hides-postgres-semantics`
+
+### Duplicate rule enforced only by a fake that cannot fail
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Spring Data JPA, PostgreSQL · **Interview frequency:** High · **Production impact:** High
+
+A read-then-write uniqueness check backed only by a substitute that cannot raise a constraint
+violation: concurrent registrations both pass the check, and the failure the database will produce is
+never exercised. Put the rule in the database as a unique constraint, translate its violation into a
+domain error, and test the conflicting write against the real engine.
+
+**Appears in:** `modules/12-testing/broken-examples/embedded-substitute-hides-postgres-semantics`
+
+### Absolute assertions pinned to the declaration order
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5 `@TestMethodOrder`, `@Order` · **Interview frequency:** High · **Production impact:** High
+
+Each method of the class asserts the absolute value it expects to be handed out next from a shared
+counter, so those values are positions in one sequence rather than properties of the code under test.
+`@TestMethodOrder(OrderAnnotation.class)` supplies an execution order that makes them line up, and the
+class stays green until a method is run alone, reordered or picked by a random orderer. Create the
+state a test asserts on inside that test, and assert consequences of the calls the test itself makes.
+
+**Appears in:** `modules/12-testing/broken-examples/order-dependent-test-suite`
+
+### Static counter shared across allocators
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5 static state · **Interview frequency:** High · **Production impact:** High
+
+A counter kept in production static state belongs to the class, not to an allocator: every instance
+shares one sequence, and a newly constructed allocator does not start from the value it was given but
+continues wherever the process already is. Tests that build a fresh instance per method still share the
+counter with each other, with other test classes and with previous runs in the same JVM, so what one
+method observes depends on how many times the methods before it called `next()`. Keep mutable state in
+instance fields seeded from the constructor argument, and reserve static state for genuinely process-wide
+services that are modelled explicitly.
+
+**Appears in:** `modules/12-testing/broken-examples/order-dependent-test-suite`
+
 ## Related
 
 - [Issue catalogue](index.md)

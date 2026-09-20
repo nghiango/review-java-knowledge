@@ -60,8 +60,21 @@ configurations.named(examples.implementationConfigurationName) {
     extendsFrom(configurations.named("implementation").get())
 }
 
+// Gradle applies `-D` to the daemon JVM, not to the forked test worker, so a documented triage
+// command such as `./gradlew test -Djunit.jupiter.testmethod.order.default=...` is otherwise a
+// silent no-op. Forward the JUnit keys the flake-triage docs rely on to the test process whenever
+// the caller sets them, mirroring the `api.version` system property on `integrationTest`.
+val junitForwardedProperties =
+        listOf(
+                "junit.jupiter.testmethod.order.default",
+                "junit.jupiter.execution.parallel.enabled",
+        )
+
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+    junitForwardedProperties.forEach { key ->
+        System.getProperty(key)?.let { value -> systemProperty(key, value) }
+    }
 }
 
 tasks.register<Test>("integrationTest") {
@@ -70,6 +83,11 @@ tasks.register<Test>("integrationTest") {
     testClassesDirs = integrationTest.output.classesDirs
     classpath = integrationTest.runtimeClasspath
     shouldRunAfter(tasks.named("test"))
+    // Testcontainers pins docker-java's Docker API version to 1.32 unless the user chooses one, and
+    // Docker Engine >= 29 rejects anything below API 1.40 with HTTP 400. Pin the lowest version
+    // Docker 19.03+ still serves so container tests run against new and old daemons alike;
+    // Testcontainers keeps a user-supplied `api.version` instead of overriding it.
+    systemProperty("api.version", "1.40")
 }
 
 tasks.register("compileBrokenExamples") {

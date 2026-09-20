@@ -174,10 +174,16 @@ public final class SharedPostgresContainer { public static PostgreSQLContainer<?
 // accounts
 @Entity public class Account { Long id; String email; String displayName; long balanceCents; }
 public interface AccountRepository extends JpaRepository<Account, Long> { Optional<Account> findByEmail(String email); }
-public final class AccountService { AccountService(AccountRepository repository); public Account register(String email, String displayName); public long balance(String email); }
+public final class AccountService { AccountService(AccountRepository repository); public Account register(String email, String displayName); /* normalises email: trim + lowercase, then rejects duplicates explicitly */ public long balance(String email); }
 ```
 
-- [ ] RED: write `AccountRepositoryIT` with `@DataJpaTest`, `@AutoConfigureTestDatabase(replace = Replace.NONE)`, a `@TestConfiguration` exposing `@ServiceConnection PostgreSQLContainer<?>` from `SharedPostgresContainer`, and assertions that only PostgreSQL satisfies: duplicate email with different case is rejected by the unique constraint, `findByEmail` is case-sensitive, and `balance` reflects persisted state. Observe failure (module, container helper and repository absent).
+- [ ] RED: write `AccountRepositoryIT` with `@DataJpaTest`, `@AutoConfigureTestDatabase(replace = Replace.NONE)`, a `@SpringBootConfiguration` test application, and a `@TestConfiguration` exposing `@ServiceConnection PostgreSQLContainer<?>` from `SharedPostgresContainer`. Assertions must state the divergence precisely:
+  (1) saving two accounts whose emails differ only by case succeeds at the repository level, proving PostgreSQL's unique index is case-sensitive and that the fake's case-insensitive matching was accidental;
+  (2) `AccountService.register` rejects the second registration because it normalises email (trim + lowercase) before saving, so case-insensitive uniqueness is an explicit application rule rather than a fake's accident;
+  (3) `repository.findByEmail` is case-sensitive, so the normalised value is what callers must query with;
+  (4) `findAll(Sort.by(ASC, "email"))` returns email-sorted rows, proving ordering must be requested explicitly instead of assumed from insertion order;
+  (5) `balance` reflects persisted state across a flush/clear boundary.
+  Observe failure (module, container helper and repository absent).
 - [ ] Implement `SharedPostgresContainer` (started singleton, `postgres:17-alpine`), the entity/repository/service, and `TestingJpaConfiguration`; run `./gradlew :modules:12-testing:integrationTest` green.
 - [ ] Broken target: `InMemoryAccountRepository` with a `Map`, case-insensitive email matching, insertion-order results and no constraint enforcement, plus an `AccountServiceTest` that asserts those fake-only semantics. Issues: Testing issue (substitute diverges from production semantics), Database issue (constraint and collation assumptions unverified), Reliability issue (defects reach production undetected), Maintainability issue (fake duplicates repository logic).
 - [ ] Document the H2 manifestation of the same failure in `SOLUTION.md` and note that H2 stays banned in this repository.
@@ -210,8 +216,13 @@ public final class SequenceAllocator { public SequenceAllocator(long start); pub
 **Files:**
 - Create: `src/examples/java/lab/testing/questions/Q01…Q23*.java` (23 classes)
 
-- [ ] One `final` class per question with a private constructor and a `main` method that prints or computes the concept, each demonstrating runtime results in trailing comments (e.g. `// true`, `// "expected"`).
-- [ ] Coverage maps to Task 11's questions: pyramid and test levels; behaviour vs implementation assertions; test doubles; Mockito strictness; JUnit 5 lifecycle and extensions; parameterized tests; slices; Testcontainers lifecycle and `@ServiceConnection`; Awaitility polling; WireMock matching and verification; test data builders; ArchUnit rules; determinism and flakiness; mutation testing; contract testing; CI parallelism; incident diagnostics.
+- [ ] Follow the shape already used by every completed module (e.g. `modules/11-spring-security/src/examples/java/lab/springsecurity/questions/Q01AuthenticationVsAuthorization.java`): `public class Qnn<Topic>` in package `lab.testing.questions` with a `public static void main` that computes or prints the concept, each meaningful expression carrying a trailing result comment (`// true`, `// "expected"`, `// 3 tests`). Do not invent a different shape.
+- [ ] Exactly one class per question, named and mapped 1:1 to Task 11:
+  Basic — `Q01TestingPyramidAndLevels`, `Q02UnitVsIntegrationVsComponentVsE2e`, `Q03BehaviourVsImplementationAssertions`, `Q04WhySleepInTestsIsHarmful`, `Q05TestDoublesTaxonomy`, `Q06MockitoStrictStubs`, `Q07SpringBootTestVsSliceTests`, `Q08DeterministicAndFlakyTests`
+  Intermediate — `Q09MockitoArgumentCaptorsAndVerification`, `Q10Junit5ExtensionsAndParameterizedTests`, `Q11SliceTestContentsAndAutoConfiguration`, `Q12TestcontainersLifecycleAndServiceConnection`, `Q13AwaitilityPollingMechanics`, `Q14WiremockStubbingAndVerification`, `Q15TestDataBuildersAndFixtureIsolation`, `Q16ArchunitRulesAndPackageDependencies`
+  Senior — `Q17FlakySuiteTriageAndDeterminismStrategy`, `Q18MockingVsIntegrationAndContractTesting`, `Q19TestcontainersInCiAtScale`, `Q20MutationTestingWithPit`, `Q21ConsumerDrivenContractsInMicroservices`
+  Scenario — `Q22CiIntermittentFailureIncident`, `Q23PostUpgradeProductionFailureIncident`
+- [ ] The `examples` source set sees only `src/main` output plus `implementation` dependencies, so JUnit/Mockito/AssertJ types are NOT visible to these classes. Add `examplesImplementation` entries for `libs.junit.jupiter`, `libs.mockito.core` and `libs.assertj.core` in `modules/12-testing/build.gradle.kts` (existing catalog aliases, no new dependencies) and state why in the report. Examples are compiled, never run.
 - [ ] No external I/O; no Docker; no sleeps.
 - [ ] Run `./gradlew :modules:12-testing:compileExamples`; commit: `Add compiled testing question examples`.
 
@@ -233,11 +244,11 @@ public final class SequenceAllocator { public SequenceAllocator(long start); pub
 
 **Files:** `docs/topics/testing/questions.md`, `docs/questions/testing.md`
 
-- [ ] 8 Basic: testing pyramid; unit vs integration vs component vs E2E; behaviour vs implementation assertions; why `Thread.sleep` is banned; test doubles taxonomy; Mockito strict stubs; `@SpringBootTest` vs slices; what makes a test deterministic.
-- [ ] 8 Intermediate: Mockito captors and strictness; JUnit 5 lifecycle and extensions; parameterized tests; slice contents; Testcontainers lifecycle and `@ServiceConnection`; Awaitility mechanics; WireMock matching and verification; builders and fixture isolation; ArchUnit rules.
-- [ ] 5 Senior: triaging a flaky suite; balancing mocking against integration and contract tests; Testcontainers in CI at scale; mutation testing to expose weak assertions; consumer-driven contracts in a microservice fleet.
+- [ ] 8 Basic, in the same order as Task 9's classes: testing pyramid and test levels; unit vs integration vs component vs E2E; behaviour vs implementation assertions; why `Thread.sleep` is banned; test doubles taxonomy; Mockito strict stubs; `@SpringBootTest` vs slices; what makes a test deterministic.
+- [ ] 8 Intermediate, in the same order as Task 9's classes: Mockito argument captors and verification; JUnit 5 extensions and parameterized tests; slice contents and auto-configuration; Testcontainers lifecycle and `@ServiceConnection`; Awaitility mechanics; WireMock matching and verification; test data builders and fixture isolation; ArchUnit rules.
+- [ ] 5 Senior, in the same order as Task 9's classes: triaging a flaky suite; balancing mocking against integration and contract tests; Testcontainers in CI at scale; mutation testing with PIT to expose weak assertions; consumer-driven contracts in a microservice fleet.
 - [ ] 2 Scenario, symptom-first: suite passes locally but fails intermittently in CI; integration tests pass while production fails after a database upgrade.
-- [ ] Every question: visible heading only, one collapsed full answer, nested collapsed snippet pointing at its dedicated `Qnn…` class; links to concept page, `code-review.md` anchor and `solutions.md` anchor.
+- [ ] Every question: visible heading only, one collapsed full answer, nested collapsed snippet pointing at its dedicated `Qnn…` class named in Task 9; links to concept page, `code-review.md` anchor and `solutions.md` anchor.
 - [ ] Surface via `docs/questions/testing.md` snippet includes with docs-root-relative links; verify 23/23/23 counts and strict build; commit: `Add hidden testing interview answers`.
 
 ---
@@ -261,6 +272,7 @@ public final class SequenceAllocator { public SequenceAllocator(long start); pub
 
 - [ ] Run `./gradlew spotlessApply build integrationTest compileExamples compileBrokenExamples`.
 - [ ] Run `.venv/bin/mkdocs build --strict` and `scripts/verify-all.sh`.
+- [ ] Hoist the Docker API-version workaround (`systemProperty("api.version", "1.40")`) from `modules/12-testing/build.gradle.kts` into the `integrationTest` task registered in `build-logic/src/main/kotlin/lab.java-conventions.gradle.kts`, then remove the module-level duplication and confirm `:modules:12-testing:integrationTest` still passes.
 - [ ] Structural checks: exactly six Module 12 broken examples; each has `REVIEW.md`, `SOLUTION.md` and a clean source; no ` issue:` in clean targets; each recorded correct package exists with tests; 23 testing questions with matching answer/example counts; no `Thread.sleep` in `src/test` or `src/integrationTest`; no `com.h2database` anywhere; `build` succeeds without Docker.
 - [ ] Invoke `/reviewing-lab-change` and `/verifying-module 12-testing`; fix every Blocking/Should-fix finding and rerun all checks.
 - [ ] Set the Module 12 progress cells to ✅ and update the README study instructions if they list module status.

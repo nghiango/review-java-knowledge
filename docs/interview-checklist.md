@@ -134,6 +134,19 @@
 - [ ] Sanitize security audit logs to prevent `Authorization` header, cookie, and password exposure
 - [ ] Manage `SecurityContextHolder` lifecycle across asynchronous and Virtual Thread boundaries
 
+## Testing
+
+- [ ] Assert observable behaviour at the service boundary instead of mocking value collaborators or verifying internal call order
+- [ ] Replace boundary mocks with real contract checks so HTTP path, payload and serialization drift cannot pass unnoticed
+- [ ] Build per-test immutable fixtures with test data builders instead of shared mutable state
+- [ ] Await asynchronous outcomes with Awaitility bounded timeouts instead of `Thread.sleep`
+- [ ] Test persistence against real PostgreSQL via Testcontainers `@ServiceConnection` instead of H2 or in-memory substitutes that diverge from production semantics
+- [ ] Keep suites order-independent and parallel-safe by isolating all state per test
+- [ ] Reuse a singleton PostgreSQL container across integration tests to bound startup cost
+- [ ] Verify consumer expectations with WireMock stubs and recorded request assertions
+- [ ] Model test data with explicit builders that make valid, minimal and edge-case inputs obvious
+- [ ] Use mutation testing (PIT) to measure assertion strength instead of chasing line coverage
+
 ## Related
 
 - [Roadmap](roadmap.md)

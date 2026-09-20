@@ -192,6 +192,109 @@ Returning universal `200 OK` responses with buried error messages or lacking `Lo
 
 **Appears in:** `modules/06-spring-mvc/broken-examples/wrong-http-status-codes`
 
+### Service boundary with no observable behaviour
+
+**Type:** Design issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5, Mockito · **Interview frequency:** High · **Production impact:** High
+
+When the outcome of a use case is only expressed as an outbound call, tests cannot pin it down and
+match it with `any()`. Return the value the caller depends on (or capture the side effect) so the
+boundary has a contract that a test can assert — otherwise a wrong charge or wrong total ships
+green.
+
+**Appears in:** `modules/12-testing/broken-examples/asserting-implementation-not-behaviour`
+
+### Test coupled to internal call structure
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Basic
+
+**Technology:** Mockito `InOrder` · **Interview frequency:** Medium · **Production impact:** Medium
+
+`InOrder` and `times(n)` verification encode today's control flow, so extract-method and reorder
+refactors fail without any behaviour change. Reserve order verification for sequences that are
+themselves the contract (authenticate before authorise, commit before ack).
+
+**Appears in:** `modules/12-testing/broken-examples/asserting-implementation-not-behaviour`
+
+### HTTP client interface leaks the wire format
+
+**Type:** Design issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Technology:** Spring `RestClient`, Jackson · **Interview frequency:** Medium · **Production impact:** Medium
+
+Returning the raw JSON body as an untyped `Map` forces every caller to know the field names and cast
+the values, so a wire-format change ripples through the domain layer and nulls surface as NPEs far from
+the boundary. Return a typed record and let the client own (de)serialization.
+
+**Appears in:** `modules/12-testing/broken-examples/mocking-away-the-integration`
+
+### No per-test data builder; a test edits a shared fixture
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Basic
+
+**Technology:** JUnit 5 test data builders · **Interview frequency:** Medium · **Production impact:** Medium
+
+Without a builder, a test that needs different data mutates the shared fixture and reads its own entry
+back. What the test depends on becomes implicit, the suite must be read in execution order, and changing
+the fixture breaks tests that never mentioned it. Give each test a fluent builder that returns a fresh
+value stating exactly the input the test needs.
+
+**Appears in:** `modules/12-testing/broken-examples/shared-mutable-test-fixtures`
+
+### Test fixture has no ownership or lifecycle
+
+**Type:** Design issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5 static fixtures · **Interview frequency:** Medium · **Production impact:** Medium
+
+A `static final` collection of test data protects the reference, not the contents: it lives for the whole
+JVM, any test in the package can change it, and nothing resets it between tests — so adding one test file
+changes another file's outcome. Model fixtures as factories that return fresh immutable values, and share
+only started resources with an explicit lifecycle.
+
+**Appears in:** `modules/12-testing/broken-examples/shared-mutable-test-fixtures`
+
+### Fixed delays slow the suite and encode machine speed
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Basic
+
+**Technology:** JUnit 5, `Duration` constants · **Interview frequency:** Medium · **Production impact:** Medium
+
+Hard-coded sleeps make every test pay the full simulated duration and copy the implementation's timing
+into the test: change the production constant and the tests fail, shorten it and the sleeps stay behind,
+and each run buys seconds of dead wall-clock time. Wait on the condition with a bound instead, and release
+the work where the transition itself is what the test is about.
+
+**Appears in:** `modules/12-testing/broken-examples/sleep-based-async-assertions`
+
+### Test double duplicates the repository contract
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Technology:** Spring Data JPA test doubles · **Interview frequency:** Medium · **Production impact:** Medium
+
+An `InMemory…Repository` in the test sources is a second implementation of the repository contract,
+with its own persistence semantics, kept in step with the real interface by hand and owned by nobody.
+Change a query or a constraint and only the fake — which the tests read — is now wrong. Reserve test
+doubles for interactions, and test the store's semantics against the store.
+
+**Appears in:** `modules/12-testing/broken-examples/embedded-substitute-hides-postgres-semantics`
+
+### Order-dependent test class cannot run in parallel
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Basic
+
+**Technology:** JUnit 5 parallel execution · **Interview frequency:** Medium · **Production impact:** Medium
+
+A class whose methods share a counter and assert absolute values can only be executed as one ordered
+run: it cannot be split, reordered, selected method-by-method, sharded across CI agents or run with
+JUnit's parallel execution enabled. The cost appears only once the build is optimised — and by then the
+suite is treated as correct, so parallelism is switched off again "because the suite is flaky". Keep
+the tests independent instead of ordering around the coupling.
+
+**Appears in:** `modules/12-testing/broken-examples/order-dependent-test-suite`
+
 ## Related
 
 - [Issue catalogue](index.md)
