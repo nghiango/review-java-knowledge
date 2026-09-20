@@ -56,12 +56,3 @@ dependencies {
     integrationTestImplementation(libs.spring.boot.testcontainers)
     integrationTestImplementation(libs.postgresql)
 }
-
-// Testcontainers 1.20.6 pins docker-java's Docker API version to 1.32 whenever the user has not
-// chosen one, and this environment's Docker Engine (29.x) rejects any request below API 1.40 with
-// HTTP 400. Pin the API version for the container tests to the lowest one Docker >= 19.03 serves,
-// so the suite works here and on older daemons alike. docker-java reads this as the `api.version`
-// system property; Testcontainers keeps a user-supplied version instead of overriding it.
-tasks.named<Test>("integrationTest") {
-    systemProperty("api.version", "1.40")
-}

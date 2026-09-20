@@ -70,6 +70,11 @@ tasks.register<Test>("integrationTest") {
     testClassesDirs = integrationTest.output.classesDirs
     classpath = integrationTest.runtimeClasspath
     shouldRunAfter(tasks.named("test"))
+    // Testcontainers pins docker-java's Docker API version to 1.32 unless the user chooses one, and
+    // Docker Engine >= 29 rejects anything below API 1.40 with HTTP 400. Pin the lowest version
+    // Docker 19.03+ still serves so container tests run against new and old daemons alike;
+    // Testcontainers keeps a user-supplied `api.version` instead of overriding it.
+    systemProperty("api.version", "1.40")
 }
 
 tasks.register("compileBrokenExamples") {
