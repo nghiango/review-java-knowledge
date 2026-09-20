@@ -32,6 +32,14 @@ dependencies {
     add("brokenExamplesImplementation", libs.mockito.core)
     add("brokenExamplesImplementation", libs.mockito.junit.jupiter)
 
+    // The question examples are about testing, so the API under discussion is JUnit, Mockito and
+    // AssertJ itself. The examples source set only sees `implementation` plus `src/main` output, so
+    // without these the Qnn classes could not show a single assertion or stub. Compile-only in
+    // effect: examples are compiled by `compileExamples` and never run, packaged or published.
+    add("examplesImplementation", libs.junit.jupiter)
+    add("examplesImplementation", libs.mockito.core)
+    add("examplesImplementation", libs.assertj.core)
+
     integrationTestImplementation(project(":modules:test-support"))
     integrationTestImplementation(libs.testcontainers.junit.jupiter)
     integrationTestImplementation(libs.testcontainers.postgresql)
