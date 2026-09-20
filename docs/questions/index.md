@@ -13,6 +13,7 @@ Answer each question before reading its explanation.
 - [JPA / Hibernate](jpa-hibernate.md)
 - [Database / SQL](database-sql.md)
 - [REST API](rest-api.md)
+- [Spring Security](spring-security.md)
 
 ## Related
 

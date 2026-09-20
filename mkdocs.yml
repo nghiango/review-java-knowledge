@@ -130,6 +130,16 @@ nav:
           - Tests: topics/rest-api/tests.md
           - Production: topics/rest-api/production.md
           - Exercises: topics/rest-api/exercises.md
+      - Spring Security:
+          - Overview: topics/spring-security/index.md
+          - Concepts: topics/spring-security/concepts.md
+          - Internals: topics/spring-security/internals.md
+          - Interview Questions: topics/spring-security/questions.md
+          - Code Review: topics/spring-security/code-review.md
+          - Solutions: topics/spring-security/solutions.md
+          - Tests: topics/spring-security/tests.md
+          - Production: topics/spring-security/production.md
+          - Exercises: topics/spring-security/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -157,6 +167,7 @@ nav:
       - JPA and Hibernate: questions/jpa-hibernate.md
       - Database and SQL: questions/database-sql.md
       - REST API: questions/rest-api.md
+      - Spring Security: questions/spring-security.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:

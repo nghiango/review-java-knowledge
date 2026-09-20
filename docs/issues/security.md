@@ -65,6 +65,62 @@ Binding incoming JSON request bodies directly to JPA entities (CWE-915) allows u
 
 **Appears in:** `modules/10-rest-api/broken-examples/entity-leakage-and-mass-assignment`
 
+### Weak Password Hashing & Non-Constant-Time Comparison
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Basic
+
+Storing passwords using broken/unsalted hash algorithms (MD5) without adaptive work factors allows rainbow table cracking (CWE-328, CWE-916). Comparing secret hashes using `String.equals()` creates timing side-channels (CWE-208). Use `BCryptPasswordEncoder` with constant-time matching.
+
+**Appears in:** `modules/11-spring-security/broken-examples/plaintext-password-storage`
+
+### Insecure Direct Object Reference (IDOR / BOLA)
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+Exposing private resources through user-supplied identifier parameters without verifying ownership against the authenticated `Principal` allows horizontal privilege escalation across tenants (CWE-639, OWASP API1:2023). Enforce ownership validation in repository queries.
+
+**Appears in:** `modules/11-spring-security/broken-examples/idor-unauthorized-access`
+
+### Overly Broad permitAll & RequestMatcher Ordering Bypass
+
+**Type:** Security issue · **Severity:** High · **Difficulty:** Intermediate
+
+Declaring broad wildcard `permitAll()` rules before specific administrative paths in `authorizeHttpRequests` evaluates rules sequentially (first match wins), inadvertently exposing privileged endpoints without authentication (CWE-285). Order rules from most-specific to least-specific.
+
+**Appears in:** `modules/11-spring-security/broken-examples/overly-broad-permitall`
+
+### Unvalidated JWT Digital Signature & Expiration
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Senior
+
+Parsing JWT payloads without cryptographic HMAC/RSA signature verification allows attackers to forge tokens with arbitrary claims and administrative privileges (CWE-347, OWASP API2:2023). Validate cryptographic signatures, algorithms, and expiration timestamps before trusting claims.
+
+**Appears in:** `modules/11-spring-security/broken-examples/unvalidated-jwt-signature`
+
+### Missing Method Security & Identity Spoofing
+
+**Type:** Security issue · **Severity:** High · **Difficulty:** Senior
+
+Relying solely on URL filter security leaves service methods unprotected when invoked internally or via background jobs. Accepting caller usernames as unverified method parameters enables identity spoofing (CWE-285, CWE-290). Enforce defense-in-depth method security via `@EnableMethodSecurity` and `@PreAuthorize`.
+
+**Appears in:** `modules/11-spring-security/broken-examples/missing-method-security`
+
+### Disabling CSRF on Stateful Cookie Sessions
+
+**Type:** Security issue · **Severity:** High · **Difficulty:** Intermediate
+
+Disabling CSRF protection on applications using session cookies allows malicious third-party websites to execute unauthorized state-changing operations on behalf of authenticated victims (CWE-352). Enable CSRF tokens for cookie-based stateful sessions.
+
+**Appears in:** `modules/11-spring-security/broken-examples/cors-and-csrf-misconfiguration`
+
+### Credential Logging & Sensitive Data Exposure
+
+**Type:** Security issue · **Severity:** High · **Difficulty:** Basic
+
+Writing raw `Authorization` headers, passwords, or session tokens to server logs or echoing passwords back in error responses commits credentials to log stores and client logs (CWE-532, CWE-209). Sanitize and redact sensitive headers and payload fields before logging.
+
+**Appears in:** `modules/11-spring-security/broken-examples/credential-logging-and-exposure`
+
 ## Related
 
 - [Issue catalogue](index.md)

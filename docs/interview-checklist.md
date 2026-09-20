@@ -121,6 +121,19 @@
 - [ ] Enforce strict pagination bounds (`@Max(100)`) and return envelope metadata with next/prev cursors
 - [ ] Prevent Lost Update race conditions on concurrent mutations using `ETag` and `If-Match` headers
 
+## Spring Security
+
+- [ ] Explain the Servlet Filter architecture: `DelegatingFilterProxy` and `FilterChainProxy` (`SecurityFilterChain`)
+- [ ] Configure `authorizeHttpRequests` with strict top-down ordering from most-specific to least-specific
+- [ ] Implement robust password hashing with `BCryptPasswordEncoder(12)` or `Argon2PasswordEncoder` using constant-time verification
+- [ ] Prevent Insecure Direct Object References (IDOR / BOLA) by validating resource ownership against authenticated `Principal`
+- [ ] Apply defense-in-depth method security using `@EnableMethodSecurity` and SpEL `@PreAuthorize`
+- [ ] Implement stateless cryptographic JWT validation with signature verification, algorithm whitelisting, and expiration checks
+- [ ] Distinguish CSRF protection requirements for cookie-based stateful sessions vs purely stateless Bearer token APIs
+- [ ] Whitelist explicit CORS origins; prevent wildcard `*` with `allowCredentials(true)`
+- [ ] Sanitize security audit logs to prevent `Authorization` header, cookie, and password exposure
+- [ ] Manage `SecurityContextHolder` lifecycle across asynchronous and Virtual Thread boundaries
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -134,4 +147,5 @@
 - [JPA / Hibernate questions](questions/jpa-hibernate.md)
 - [Database / SQL questions](questions/database-sql.md)
 - [REST API questions](questions/rest-api.md)
+- [Spring Security questions](questions/spring-security.md)
 

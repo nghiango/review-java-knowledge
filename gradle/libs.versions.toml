@@ -1,6 +1,7 @@
 [versions]
 spring-boot = "3.4.3"
 spring-framework = "6.2.4"
+spring-security = "6.4.3"
 aspectj = "1.9.22.1"
 jakarta-annotation = "3.0.0"
 jakarta-validation = "3.0.2"
@@ -21,6 +22,11 @@ spring-jdbc = { module = "org.springframework:spring-jdbc", version.ref = "sprin
 spring-test = { module = "org.springframework:spring-test", version.ref = "spring-framework" }
 spring-web = { module = "org.springframework:spring-web", version.ref = "spring-framework" }
 spring-webmvc = { module = "org.springframework:spring-webmvc", version.ref = "spring-framework" }
+spring-security-core = { module = "org.springframework.security:spring-security-core", version.ref = "spring-security" }
+spring-security-web = { module = "org.springframework.security:spring-security-web", version.ref = "spring-security" }
+spring-security-config = { module = "org.springframework.security:spring-security-config", version.ref = "spring-security" }
+spring-security-crypto = { module = "org.springframework.security:spring-security-crypto", version.ref = "spring-security" }
+spring-security-test = { module = "org.springframework.security:spring-security-test", version.ref = "spring-security" }
 spring-boot = { module = "org.springframework.boot:spring-boot", version.ref = "spring-boot" }
 spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "spring-boot" }
 spring-boot-actuator = { module = "org.springframework.boot:spring-boot-actuator", version.ref = "spring-boot" }
