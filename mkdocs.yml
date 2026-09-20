@@ -150,6 +150,16 @@ nav:
           - Tests: topics/testing/tests.md
           - Production: topics/testing/production.md
           - Exercises: topics/testing/exercises.md
+      - Caching and Redis:
+          - Overview: topics/caching-redis/index.md
+          - Concepts: topics/caching-redis/concepts.md
+          - Internals: topics/caching-redis/internals.md
+          - Interview Questions: topics/caching-redis/questions.md
+          - Code Review: topics/caching-redis/code-review.md
+          - Solutions: topics/caching-redis/solutions.md
+          - Tests: topics/caching-redis/tests.md
+          - Production: topics/caching-redis/production.md
+          - Exercises: topics/caching-redis/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -179,6 +189,7 @@ nav:
       - REST API: questions/rest-api.md
       - Spring Security: questions/spring-security.md
       - Testing: questions/testing.md
+      - Caching and Redis: questions/caching-redis.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:

@@ -224,6 +224,22 @@ services that are modelled explicitly.
 
 **Appears in:** `modules/12-testing/broken-examples/order-dependent-test-suite`
 
+### Infinite TTL on Dynamic Keys Leading to Redis OOM
+
+**Type:** Reliability issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+Writing high-cardinality keys (such as user session tokens or search queries) without an expiration TTL causes unbounded memory growth in Redis. Under the default `noeviction` policy, Redis rejects all mutating writes once `maxmemory` is reached. Under `volatile-lru`, immortal keys without TTL are exempt from eviction, causing the eviction of unrelated TTL-protected caches. Enforce mandatory TTLs on all writes.
+
+**Appears in:** `modules/13-caching-redis/broken-examples/infinite-ttl-memory-leak`
+
+### Cache Penetration on Non-Existent Keys
+
+**Type:** Resilience issue · **Severity:** High · **Difficulty:** Intermediate
+
+When an entity is not found in persistent storage, returning `null` without caching a sentinel value causes repeated requests for invalid or malicious IDs to bypass the caching layer entirely and query the primary database every time, exposing the database to denial of service. Cache a sentinel null object with a short TTL or filter with an in-memory Bloom filter.
+
+**Appears in:** `modules/13-caching-redis/broken-examples/caching-null-and-exceptions`
+
 ## Related
 
 - [Issue catalogue](index.md)

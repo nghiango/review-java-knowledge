@@ -147,6 +147,19 @@
 - [ ] Model test data with explicit builders that make valid, minimal and edge-case inputs obvious
 - [ ] Use mutation testing (PIT) to measure assertion strength instead of chasing line coverage
 
+## Caching / Redis
+
+- [ ] Contrast Cache-Aside, Read-Through, Write-Through, and Write-Behind caching patterns
+- [ ] Evaluate trade-offs between local in-memory (Caffeine) and distributed (Redis) caches
+- [ ] Master Spring Cache annotations (`@Cacheable`, `@CachePut`, `@CacheEvict`, `condition`, `unless`)
+- [ ] Prevent Cache Stampede (Thundering Herd) on hot keys via distributed mutexes or probabilistic early refresh
+- [ ] Defend against Cache Penetration via short-lived sentinel null caching and Bloom filters
+- [ ] Eliminate Cache Avalanche through randomized TTL jitter and clustered topology
+- [ ] Select appropriate Redis memory eviction policies (`allkeys-lru`, `volatile-lru`, `noeviction`)
+- [ ] Namespace all cache keys with tenant identifiers to enforce strict multi-tenant isolation
+- [ ] Implement atomic distributed locks using `SET key token NX PX` with Lua script release
+- [ ] Defer cache invalidations to `afterCommit` in `@Transactional` methods to prevent dirty reads on rollback
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -161,4 +174,6 @@
 - [Database / SQL questions](questions/database-sql.md)
 - [REST API questions](questions/rest-api.md)
 - [Spring Security questions](questions/spring-security.md)
+- [Testing questions](questions/testing.md)
+- [Caching / Redis questions](questions/caching-redis.md)
 

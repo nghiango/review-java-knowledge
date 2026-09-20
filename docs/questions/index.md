@@ -15,6 +15,7 @@ Answer each question before reading its explanation.
 - [REST API](rest-api.md)
 - [Spring Security](spring-security.md)
 - [Testing](testing.md)
+- [Caching / Redis](caching-redis.md)
 
 ## Related
 

@@ -105,6 +105,14 @@ Querying and returning full collections without bounds causes JVM `OutOfMemoryEr
 
 **Appears in:** `modules/10-rest-api/broken-examples/missing-pagination-unbounded-list`
 
+### Cache Stampede on Hot Key Expiration (Thundering Herd)
+
+**Type:** Concurrency issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+When a high-traffic cached resource expires, all concurrent incoming requests observe a cache miss simultaneously. Hundreds of application threads bypass the cache and run expensive database joins concurrently, exhausting database connection pools and causing system-wide timeouts. Implement single-flight mutex locking (distributed lock via `SET key token NX PX`) or probabilistic early refresh (XFetch).
+
+**Appears in:** `modules/13-caching-redis/broken-examples/cache-stampede-on-expiry`
+
 ## Related
 
 - [Issue catalogue](index.md)

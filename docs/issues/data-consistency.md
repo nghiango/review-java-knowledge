@@ -40,14 +40,21 @@ one immutable result per input and join in the documented order.
 
 **Appears in:** [Core Java — stream side effects](../topics/core-java/code-review.md#stream-and-parallel-side-effects)
 
-### Request context not cleared after failure
+### Missing Cache Invalidation on Mutation (Stale Cache)
 
-**Type:** Data consistency issue · **Severity:** High · **Difficulty:** Intermediate
+**Type:** Data consistency issue · **Severity:** High · **Difficulty:** Basic
 
-When request context cleanup is not tied to `finally` or try-with-resources, exceptions leave stale
-identity on the worker thread. Use a closeable scope so cleanup runs on success and failure.
+Modifying or deleting an entity in persistent storage without invalidating or updating the corresponding cache entry (`@CacheEvict`) leaves stale data in the cache until TTL expiration or causes zombie reads of deleted records. Evict the cache key upon successful database mutation with `beforeInvocation = false`.
 
-**Appears in:** `modules/02-jvm/broken-examples/threadlocal-pool-leak`
+**Appears in:** `modules/13-caching-redis/broken-examples/stale-cache-after-update`
+
+### Dirty Cache Writes on Database Transaction Rollback
+
+**Type:** Data consistency issue · **Severity:** Critical · **Difficulty:** Senior
+
+Mutating external Redis caches synchronously inside an active relational database transaction leaves phantom, uncommitted data in Redis if the database transaction rolls back. External caches cannot be rolled back by Spring's `PlatformTransactionManager`. Defer cache evictions to `TransactionSynchronization.afterCommit()`.
+
+**Appears in:** `modules/13-caching-redis/broken-examples/dual-write-consistency-ordering`
 
 ## Related
 
