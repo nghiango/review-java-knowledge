@@ -23,7 +23,7 @@
 | 15 | RabbitMQ | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 16 | AWS Messaging | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
 | 17 | Distributed Systems | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
-| 18 | Resilience | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 18 | Resilience | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 19 | Distributed Data Patterns | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 20 | Spring Cloud | doc | ⬜ | ⬜ | ⬜ | ⬜ | — | ⬜ | ⬜ |
 | 21 | WebClient / WebFlux | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |

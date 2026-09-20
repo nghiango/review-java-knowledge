@@ -206,6 +206,19 @@
 - [ ] Contrast quorum consensus protocols (Raft, Paxos) with blocking Two-Phase Commit (2PC)
 - [ ] Protect services against cascading failure using load shedding, backpressure, and jittered retries
 
+## Resilience
+
+- [ ] Establish explicit multi-layer timeouts: Connect Timeout ($\le 1\text{s}$), Socket Read Timeout ($\le 3\text{s}$), and End-to-End Execution Timeout
+- [ ] Bound retries ($\le 3$ attempts) and apply Exponential Backoff with randomized Full Jitter to prevent synchronized thundering herds
+- [ ] Enforce client-generated `Idempotency-Key` headers on mutating requests retried across ambiguous socket read timeouts
+- [ ] Classify transient network failures (503, 504) versus permanent poison pills (400, 401, 402) to fail fast immediately
+- [ ] Configure Circuit Breaker state transitions (`CLOSED` $\to$ `OPEN` $\to$ `HALF_OPEN`) with failure rate and slow call rate thresholds
+- [ ] Select appropriate sliding window types: Count-Based for high throughput, Time-Based for low/bursty traffic
+- [ ] Isolate critical downstream dependencies using Semaphore Bulkheads (ideal for Java 21 Virtual Threads) or ThreadPool Bulkheads
+- [ ] Protect internal server capacity during saturation events using dynamic Load Shedding based on Little's Law and RTT gradients
+- [ ] Understand Resilience4j Spring AOP aspect evaluation order: $\text{Retry} \to \text{CircuitBreaker} \to \text{RateLimiter} \to \text{TimeLimiter} \to \text{Bulkhead}$
+- [ ] Distinguish Fail-Closed security authorization requirements from Fail-Open UI and recommendation graceful degradation
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -226,4 +239,5 @@
 - [RabbitMQ questions](questions/rabbitmq.md)
 - [AWS Messaging questions](questions/aws-messaging.md)
 - [Distributed Systems questions](questions/distributed-systems.md)
+- [Resilience questions](questions/resilience.md)
 

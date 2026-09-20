@@ -198,6 +198,16 @@ nav:
           - Solutions: topics/distributed-systems/solutions.md
           - Production: topics/distributed-systems/production.md
           - Exercises: topics/distributed-systems/exercises.md
+      - Resilience:
+          - Overview: topics/resilience/index.md
+          - Concepts: topics/resilience/concepts.md
+          - Internals: topics/resilience/internals.md
+          - Interview Questions: topics/resilience/questions.md
+          - Code Review: topics/resilience/code-review.md
+          - Solutions: topics/resilience/solutions.md
+          - Tests: topics/resilience/tests.md
+          - Production: topics/resilience/production.md
+          - Exercises: topics/resilience/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -232,6 +242,7 @@ nav:
       - RabbitMQ: questions/rabbitmq.md
       - AWS Messaging: questions/aws-messaging.md
       - Distributed Systems: questions/distributed-systems.md
+      - Resilience: questions/resilience.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:

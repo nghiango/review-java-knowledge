@@ -68,6 +68,18 @@ Using physical server timestamps (`System.currentTimeMillis()`) for Last-Write-W
 
 **Appears in:** `modules/17-distributed-systems/broken-examples/wall-clock-order-assumption`
 
+---
+
+### Retrying Non-Idempotent HTTP POST Causing Duplicate Mutations
+
+**Type:** Data consistency issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** HTTP, REST, Distributed Systems · **Interview frequency:** High · **Production impact:** High
+
+Retrying mutating operations (`POST /charges`) upon encountering a network socket read timeout causes duplicate executions (such as double credit card charges). In distributed systems, a socket timeout indicates an unknown outcome: the downstream server may have successfully committed the transaction before the network connection dropped. Always enforce client-generated unique `Idempotency-Key` headers on mutating requests retried across network boundaries.
+
+**Appears in:** `modules/18-resilience/broken-examples/retrying-non-idempotent-call`
+
 ## Related
 
 - [Issue catalogue](index.md)

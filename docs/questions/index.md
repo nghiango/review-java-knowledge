@@ -20,6 +20,7 @@ Answer each question before reading its explanation.
 - [RabbitMQ](rabbitmq.md)
 - [AWS Messaging](aws-messaging.md)
 - [Distributed Systems](distributed-systems.md)
+- [Resilience](resilience.md)
 
 ## Related
 
