@@ -126,6 +126,47 @@ express a real shared-resource dependency once with `@BeforeAll` or an extension
 
 **Appears in:** `modules/12-testing/broken-examples/shared-mutable-test-fixtures`
 
+### Sleep-based waiting for asynchronous work
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Basic
+
+**Technology:** JUnit 5, Awaitility · **Interview frequency:** High · **Production impact:** High
+
+A fixed `Thread.sleep` before asserting on a background result guesses how long the work takes instead
+of waiting for the condition: the test fails on a loaded machine, passes on a fast one, and passes even
+if the work ran synchronously, so the asynchronous contract is never verified. Poll the state under
+test with Awaitility (`atMost` + `untilAsserted`) so the test returns as soon as the condition holds
+and fails with the value it actually observed.
+
+**Appears in:** `modules/12-testing/broken-examples/sleep-based-async-assertions`
+
+### Unbounded polling loop masks a hang
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5, `Thread.sleep` polling · **Interview frequency:** High · **Production impact:** High
+
+A `while (status != EXPECTED) { Thread.sleep(...); }` loop has no timeout and no exit for any other
+terminal state, so a report that fails or hangs keeps the loop spinning until the CI job timeout kills
+the build — no assertion message, no observed status, and the run is written off as infrastructure
+flake. Replace the loop with a bounded `await().atMost(...).untilAsserted(...)` that reports the state
+it saw.
+
+**Appears in:** `modules/12-testing/broken-examples/sleep-based-async-assertions`
+
+### No failure-path assertion on an asynchronous job
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5, asynchronous job lifecycle · **Interview frequency:** High · **Production impact:** High
+
+A suite that only asserts the happy-path status never executes the branch that records failure, so a job
+that swallows the exception and stays `RUNNING` (or reports `COMPLETED`) ships green while callers poll
+for ever and nothing is retried or alerted. Make the work throw through an injectable seam and assert the
+terminal failure state.
+
+**Appears in:** `modules/12-testing/broken-examples/sleep-based-async-assertions`
+
 ## Related
 
 - [Issue catalogue](index.md)

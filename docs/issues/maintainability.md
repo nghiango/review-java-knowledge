@@ -255,6 +255,19 @@ only started resources with an explicit lifecycle.
 
 **Appears in:** `modules/12-testing/broken-examples/shared-mutable-test-fixtures`
 
+### Fixed delays slow the suite and encode machine speed
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Basic
+
+**Technology:** JUnit 5, `Duration` constants · **Interview frequency:** Medium · **Production impact:** Medium
+
+Hard-coded sleeps make every test pay the full simulated duration and copy the implementation's timing
+into the test: change the production constant and the tests fail, shorten it and the sleeps stay behind,
+and each run buys seconds of dead wall-clock time. Wait on the condition with a bound instead, and release
+the work where the transition itself is what the test is about.
+
+**Appears in:** `modules/12-testing/broken-examples/sleep-based-async-assertions`
+
 ## Related
 
 - [Issue catalogue](index.md)
