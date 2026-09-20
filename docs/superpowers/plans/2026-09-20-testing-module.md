@@ -267,6 +267,7 @@ public final class SequenceAllocator { public SequenceAllocator(long start); pub
 
 - [ ] Run `./gradlew spotlessApply build integrationTest compileExamples compileBrokenExamples`.
 - [ ] Run `.venv/bin/mkdocs build --strict` and `scripts/verify-all.sh`.
+- [ ] Hoist the Docker API-version workaround (`systemProperty("api.version", "1.40")`) from `modules/12-testing/build.gradle.kts` into the `integrationTest` task registered in `build-logic/src/main/kotlin/lab.java-conventions.gradle.kts`, then remove the module-level duplication and confirm `:modules:12-testing:integrationTest` still passes.
 - [ ] Structural checks: exactly six Module 12 broken examples; each has `REVIEW.md`, `SOLUTION.md` and a clean source; no ` issue:` in clean targets; each recorded correct package exists with tests; 23 testing questions with matching answer/example counts; no `Thread.sleep` in `src/test` or `src/integrationTest`; no `com.h2database` anywhere; `build` succeeds without Docker.
 - [ ] Invoke `/reviewing-lab-change` and `/verifying-module 12-testing`; fix every Blocking/Should-fix finding and rerun all checks.
 - [ ] Set the Module 12 progress cells to ✅ and update the README study instructions if they list module status.
