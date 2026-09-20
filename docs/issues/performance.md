@@ -137,6 +137,18 @@ By default, `Flux.flatMap(Function)` uses an internal prefetch and concurrency l
 
 **Appears in:** `modules/21-webclient-webflux/broken-examples/uncontrolled-flatmap-concurrency`
 
+---
+
+### High-Cardinality Tags Cause MetricRegistry Memory Explosion
+
+**Type:** Performance issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Micrometer, Prometheus, JVM Memory · **Interview frequency:** High · **Production impact:** Critical
+
+In Micrometer, meter instances (`Counter`, `Timer`, `Gauge`) are cached permanently in the `MeterRegistry`'s internal map indexed by their unique combination of name and tag key-values. Tagging metrics with high-cardinality attributes like `order_id` (UUID), `user_id`, or `email` causes the registry to retain millions of meter objects. Over time, this leads to continuous tenured heap bloat, major garbage collection pauses, and eventually an unrecoverable `OutOfMemoryError`. Keep metric dimensions strictly bounded to low-cardinality enums ($< 100$ combinations).
+
+**Appears in:** `modules/22-observability/broken-examples/high-cardinality-metric-tags`
+
 ## Related
 
 - [Issue catalogue](index.md)

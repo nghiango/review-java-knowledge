@@ -237,6 +237,16 @@ nav:
           - Tests: topics/webclient-webflux/tests.md
           - Production: topics/webclient-webflux/production.md
           - Exercises: topics/webclient-webflux/exercises.md
+      - Observability:
+          - Overview: topics/observability/index.md
+          - Concepts: topics/observability/concepts.md
+          - Internals: topics/observability/internals.md
+          - Interview Questions: topics/observability/questions.md
+          - Code Review: topics/observability/code-review.md
+          - Solutions: topics/observability/solutions.md
+          - Tests: topics/observability/tests.md
+          - Production: topics/observability/production.md
+          - Exercises: topics/observability/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -275,6 +285,7 @@ nav:
       - Resilience: questions/resilience.md
       - Spring Cloud: questions/spring-cloud.md
       - WebClient / WebFlux: questions/webclient-webflux.md
+      - Observability: questions/observability.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:

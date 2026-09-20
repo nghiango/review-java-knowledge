@@ -119,7 +119,19 @@ Disabling CSRF protection on applications using session cookies allows malicious
 
 Writing raw `Authorization` headers, passwords, or session tokens to server logs or echoing passwords back in error responses commits credentials to log stores and client logs (CWE-532, CWE-209). Sanitize and redact sensitive headers and payload fields before logging.
 
-**Appears in:** `modules/11-spring-security/broken-examples/credential-logging-and-exposure`
+**Appears in:** `modules/11-spring-security/broken-examples/credential-logging-and-exposure`, `modules/22-observability/broken-examples/logging-secrets-pii`
+
+---
+
+### Unmasked Credit Card PAN and CVV Logged in Violation of PCI-DSS
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Logging, PCI-DSS Compliance · **Interview frequency:** High · **Production impact:** Critical
+
+Writing raw 16-digit primary account numbers (PAN) and card verification values (CVV) into application debug logs directly violates PCI-DSS Requirement 3.2. Log data is frequently indexed in unencrypted development or centralized logging stores, exposing customer payment instruments to breach. Never log CVV under any circumstances and mask card numbers so only the last four digits are visible (`****-****-****-1234`).
+
+**Appears in:** `modules/22-observability/broken-examples/logging-secrets-pii`
 
 ## Related
 

@@ -27,7 +27,7 @@
 | 19 | Distributed Data Patterns | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 20 | Spring Cloud | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
 | 21 | WebClient / WebFlux | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 22 | Observability | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 22 | Observability | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 23 | Performance | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 24 | Docker | doc | ⬜ | ⬜ | ⬜ | ⬜ | — | ⬜ | ⬜ |
 | 25 | AWS | doc | ⬜ | ⬜ | ⬜ | ⬜ | — | ⬜ | ⬜ |

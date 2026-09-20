@@ -264,6 +264,18 @@ OpenFeign's default `ErrorDecoder` converts all non-2xx HTTP responses into gene
 
 **Appears in:** `modules/21-webclient-webflux/broken-examples/chain-without-error-handling`
 
+---
+
+### Silent Failure Suppression Masks Persistent Data Drift
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Exception Handling, Data Integrity · **Interview frequency:** High · **Production impact:** High
+
+Catching checked or unchecked exceptions inside database update or reconciliation pipelines and returning a generic `false` without re-throwing or raising domain alerts conceals persistent data corruption from transactional callers. Because the method does not throw, the outer transaction commits successfully, leaving accounting books or inventory ledgers in an inconsistent state. Always propagate domain exceptions or return explicit, strongly-typed failure results.
+
+**Appears in:** `modules/22-observability/broken-examples/swallowed-exceptions-observability`
+
 ## Related
 
 - [Issue catalogue](index.md)

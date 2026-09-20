@@ -57,6 +57,12 @@ mockito-core = { module = "org.mockito:mockito-core", version = "5.15.2" }
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version = "5.15.2" }
 reactor-core = { module = "io.projectreactor:reactor-core", version = "3.7.3" }
 reactor-test = { module = "io.projectreactor:reactor-test", version = "3.7.3" }
+micrometer-core = { module = "io.micrometer:micrometer-core", version = "1.14.4" }
+micrometer-observation = { module = "io.micrometer:micrometer-observation", version = "1.14.4" }
+micrometer-observation-test = { module = "io.micrometer:micrometer-observation-test", version = "1.14.4" }
+micrometer-tracing = { module = "io.micrometer:micrometer-tracing", version = "1.4.3" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version = "2.0.16" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.5.16" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers", version.ref = "spring-boot" }

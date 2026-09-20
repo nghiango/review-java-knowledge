@@ -101,6 +101,18 @@ Executing blocking JDBC queries (`JdbcClient`, `JdbcTemplate`, or Hibernate) dir
 
 **Appears in:** `modules/21-webclient-webflux/broken-examples/blocking-jdbc-in-webflux`
 
+---
+
+### Thread Pool Reuse Leaks Dirty MDC State Across Requests
+
+**Type:** Concurrency issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** SLF4J MDC, Thread Pools, ExecutorService · **Interview frequency:** High · **Production impact:** High
+
+Because `ThreadPoolExecutor` worker threads are continuously reused across requests, any value written to `MDC.put()` remains bound to the thread's `ThreadLocal` storage if not explicitly cleared. When that pooled worker thread executes a subsequent, unrelated task from a different user or tenant, it inherits the stale `correlationId` and `userId`. This causes cross-tenant log pollution where logs from User B appear tagged with User A's identifiers. Always wrap tasks in a try-finally block and invoke `MDC.clear()`.
+
+**Appears in:** `modules/22-observability/broken-examples/missing-correlation-id-async`
+
 ## Related
 
 - [Issue catalogue](index.md)

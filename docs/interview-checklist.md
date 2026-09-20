@@ -260,6 +260,21 @@
 - [ ] Compare R2DBC vs JDBC and evaluate trade-offs (loss of JPA/Hibernate, reactive transactions via Reactor Context)
 - [ ] Evaluate Spring WebFlux vs Spring MVC with Java 21 Virtual Threads (when to use each, when WebFlux is an anti-pattern)
 
+## Observability
+
+- [ ] Explain the three pillars of observability (logs, metrics, traces), their data models, storage costs, and diagnostic trade-offs
+- [ ] Implement structured JSON logging using Logstash encoder and prevent log injection risks
+- [ ] Propagate SLF4J Mapped Diagnostic Context (MDC) across asynchronous thread pools using `TaskDecorator` and prevent thread context leaks
+- [ ] Understand Micrometer core meter types (`Counter`, `Timer`, `Gauge`, `DistributionSummary`) and know when to use each
+- [ ] Prevent metric cardinality explosion in Prometheus/Micrometer by restricting dimensions to low-cardinality enums ($< 100$ combinations)
+- [ ] Explain why arithmetic mean latency obscures tail latency and configure Micrometer `Timer` with percentiles (p50, p95, p99) and SLO buckets
+- [ ] Understand the W3C TraceContext standard (`traceparent: 00-{traceId}-{spanId}-{flags}`) and trace propagation across HTTP and Kafka headers
+- [ ] Apply the Micrometer Observation API to unify metrics and distributed tracing under a single lifecycle
+- [ ] Differentiate the RED method (Rate, Errors, Duration) for services from the USE method (Utilization, Saturation, Errors) for resources
+- [ ] Enforce data privacy and PII masking rules in Logback (PCI-DSS PAN masking, omitting CVVs and passwords)
+- [ ] Architect multi-window multi-burn-rate alerting strategies based on Google SRE Error Budget consumption
+- [ ] Diagnose and troubleshoot thread pool starvation and deadlocks using ThreadMXBean and Actuator thread dumps
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -284,4 +299,5 @@
 - [Resilience questions](questions/resilience.md)
 - [Spring Cloud questions](questions/spring-cloud.md)
 - [WebClient / WebFlux questions](questions/webclient-webflux.md)
+- [Observability questions](questions/observability.md)
 
