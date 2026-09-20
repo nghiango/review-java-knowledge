@@ -22,6 +22,7 @@ Answer each question before reading its explanation.
 - [Distributed Systems](distributed-systems.md)
 - [Distributed Data Patterns](distributed-data-patterns.md)
 - [Resilience](resilience.md)
+- [Spring Cloud](spring-cloud.md)
 
 ## Related
 

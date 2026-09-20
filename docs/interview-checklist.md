@@ -232,6 +232,19 @@
 - [ ] Understand Resilience4j Spring AOP aspect evaluation order: $\text{Retry} \to \text{CircuitBreaker} \to \text{RateLimiter} \to \text{TimeLimiter} \to \text{Bulkhead}$
 - [ ] Distinguish Fail-Closed security authorization requirements from Fail-Open UI and recommendation graceful degradation
 
+## Spring Cloud
+
+- [ ] Prevent Netty event loop starvation in Spring Cloud Gateway by eliminating all blocking calls (`block()`, `get()`, synchronous JDBC)
+- [ ] Configure multi-layer gateway timeouts (global connect/response timeouts in Netty client + per-route metadata overrides)
+- [ ] Implement Redis-backed token bucket rate limiting (`RequestRateLimiter`) with custom `KeyResolver` on edge routes
+- [ ] Sanitize external requests by stripping sensitive internal routing headers (`X-User-Id`, `X-Internal-Secret`) via `RemoveRequestHeader`
+- [ ] Enforce explicit `Request.Options` timeouts (connect $\le 500\text{ms}$, read $\le 2000\text{ms}$) on all OpenFeign clients
+- [ ] Implement custom Feign `ErrorDecoder` to translate 4xx client errors into domain exceptions and mark 503/504 as `RetryableException`
+- [ ] Eliminate blind retries (`Retryer.NEVER_RETRY`) in Feign to prevent retry storms and duplicate mutations
+- [ ] Understand `@RefreshScope` CGLIB proxy eviction mechanics and evaluate thundering herd hazards during dynamic config reloads
+- [ ] Contrast Spring Cloud components with modern Kubernetes and AWS infrastructure (CoreDNS vs Eureka, K8s Service vs Ribbon, ConfigMaps vs Config Server)
+- [ ] Evaluate migration paths from OpenFeign to Spring 6 native `HttpInterfaces` and `RestClient`
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -254,4 +267,5 @@
 - [Distributed Systems questions](questions/distributed-systems.md)
 - [Distributed Data Patterns questions](questions/distributed-data-patterns.md)
 - [Resilience questions](questions/resilience.md)
+- [Spring Cloud questions](questions/spring-cloud.md)
 

@@ -1,0 +1,74 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: edge-gateway
+  cloud:
+    gateway:
+      httpclient:
+        connect-timeout: 1000
+        response-timeout: 3s
+        pool:
+          type: ELASTIC
+          max-connections: 500
+          max-idle-time: 30s
+      default-filters:
+        - RemoveRequestHeader=X-Internal-Secret
+        - RemoveRequestHeader=X-User-Id
+      routes:
+        - id: order-service-route
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: orderCircuitBreaker
+                fallbackUri: forward:/fallback/orders
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@apiKeyResolver}"
+        - id: payment-service-route
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/payments/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: paymentCircuitBreaker
+                fallbackUri: forward:/fallback/payments
+            - AddRequestHeader=X-Internal-Secret, ${INTERNAL_GATEWAY_SECRET}
+        - id: catalog-service-route
+          uri: lb://catalog-service
+          predicates:
+            - Path=/api/catalog/**
+          metadata:
+            response-timeout: 2000
+            connect-timeout: 500
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 500
+                redis-rate-limiter.burstCapacity: 1000
+                key-resolver: "#{@ipKeyResolver}"
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      orderCircuitBreaker:
+        slidingWindowSize: 50
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 5
+      paymentCircuitBreaker:
+        slidingWindowSize: 20
+        failureRateThreshold: 40
+        waitDurationInOpenState: 15s
+        permittedNumberOfCallsInHalfOpenState: 3

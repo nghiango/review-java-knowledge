@@ -240,6 +240,18 @@ When an entity is not found in persistent storage, returning `null` without cach
 
 **Appears in:** `modules/13-caching-redis/broken-examples/caching-null-and-exceptions`
 
+---
+
+### Feign Default ErrorDecoder Masking 4xx Client Errors into Generic 500s
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** OpenFeign, Spring Cloud · **Interview frequency:** High · **Production impact:** High
+
+OpenFeign's default `ErrorDecoder` converts all non-2xx HTTP responses into generic runtime `FeignException` instances without domain translation. Expected business conditions such as 404 (Item Not Found) or 409/422 (Insufficient Stock) bubble up unhandled and trigger generic HTTP 500 Internal Server Error responses to end users. Implement a custom `ErrorDecoder` that maps 4xx status codes into explicit domain exceptions and marks transient 503/504 errors as `RetryableException`.
+
+**Appears in:** [Spring Cloud — Feign missing error decoder](../topics/spring-cloud/code-review.md#openfeign-missing-timeouts-and-custom-error-decoder)
+
 ## Related
 
 - [Issue catalogue](index.md)

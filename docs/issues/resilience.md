@@ -50,6 +50,30 @@ Wrapping remote calls in internal `try-catch` blocks that swallow exceptions ins
 
 **Appears in:** `modules/18-resilience/broken-examples/catch-and-ignore-failures`
 
+---
+
+### Unbounded Netty HTTP Client Timeouts in Edge Gateway
+
+**Type:** Resilience issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Spring Cloud Gateway, Reactor Netty · **Interview frequency:** High · **Production impact:** Critical
+
+Spring Cloud Gateway routes relying on default Netty `HttpClient` settings operate with unbounded response timeouts and long connect timeouts. When a downstream microservice experiences high latency or hangs, pending gateway connections never complete, consuming outbound TCP sockets and event loop memory until the edge gateway suffers a total cascading outage. Configure global `httpclient.connect-timeout` ($\le 1000\text{ms}$) and `httpclient.response-timeout` ($\le 5\text{s}$) with route-level metadata overrides.
+
+**Appears in:** [Spring Cloud — Gateway unbounded routing](../topics/spring-cloud/code-review.md#spring-cloud-gateway-unbounded-routing)
+
+---
+
+### Missing Declarative Client Timeouts and Blind Feign Retries
+
+**Type:** Resilience issue · **Severity:** High · **Difficulty:** Basic
+
+**Technology:** OpenFeign, Spring Cloud · **Interview frequency:** High · **Production impact:** Critical
+
+Configuring OpenFeign clients without explicit `Request.Options` timeouts allows slow socket reads to hold Tomcat worker threads for up to 60+ seconds. Furthermore, applying Feign's default `Retryer` indiscriminately across mutating POST endpoints generates retry storms and causes duplicate downstream mutations upon socket read timeouts. Enforce explicit multi-layer deadlines (connect $\le 500\text{ms}$, read $\le 2000\text{ms}$) and disable Feign-level retries (`Retryer.NEVER_RETRY`).
+
+**Appears in:** [Spring Cloud — Feign missing timeouts](../topics/spring-cloud/code-review.md#openfeign-missing-timeouts-and-custom-error-decoder)
+
 ## Related
 
 - [Issue catalogue](index.md)

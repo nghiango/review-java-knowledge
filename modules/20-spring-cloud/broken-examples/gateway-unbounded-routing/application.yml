@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: edge-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: order-service-route
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - StripPrefix=1
+        - id: payment-service-route
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/payments/**
+          filters:
+            - StripPrefix=1
+            - AddRequestHeader=X-Internal-Secret, super-secret-token
+        - id: catalog-service-route
+          uri: lb://catalog-service
+          predicates:
+            - Path=/api/catalog/**
+          filters:
+            - StripPrefix=1

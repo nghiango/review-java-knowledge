@@ -218,6 +218,15 @@ nav:
           - Tests: topics/distributed-data-patterns/tests.md
           - Production: topics/distributed-data-patterns/production.md
           - Exercises: topics/distributed-data-patterns/exercises.md
+      - Spring Cloud:
+          - Overview: topics/spring-cloud/index.md
+          - Concepts: topics/spring-cloud/concepts.md
+          - Internals: topics/spring-cloud/internals.md
+          - Interview Questions: topics/spring-cloud/questions.md
+          - Code Review: topics/spring-cloud/code-review.md
+          - Solutions: topics/spring-cloud/solutions.md
+          - Production: topics/spring-cloud/production.md
+          - Exercises: topics/spring-cloud/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -254,6 +263,7 @@ nav:
       - Distributed Systems: questions/distributed-systems.md
       - Distributed Data Patterns: questions/distributed-data-patterns.md
       - Resilience: questions/resilience.md
+      - Spring Cloud: questions/spring-cloud.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:
