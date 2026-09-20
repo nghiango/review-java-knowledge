@@ -217,6 +217,18 @@ themselves the contract (authenticate before authorise, commit before ack).
 
 **Appears in:** `modules/12-testing/broken-examples/asserting-implementation-not-behaviour`
 
+### HTTP client interface leaks the wire format
+
+**Type:** Design issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Technology:** Spring `RestClient`, Jackson · **Interview frequency:** Medium · **Production impact:** Medium
+
+Returning the raw JSON body as an untyped `Map` forces every caller to know the field names and cast
+the values, so a wire-format change ripples through the domain layer and nulls surface as NPEs far from
+the boundary. Return a typed record and let the client own (de)serialization.
+
+**Appears in:** `modules/12-testing/broken-examples/mocking-away-the-integration`
+
 ## Related
 
 - [Issue catalogue](index.md)

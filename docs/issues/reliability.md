@@ -64,6 +64,42 @@ reserve test doubles for I/O boundaries, time and randomness.
 
 **Appears in:** `modules/12-testing/broken-examples/asserting-implementation-not-behaviour`
 
+### Mocking the HTTP boundary hides contract drift
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Mockito, WireMock · **Interview frequency:** High · **Production impact:** High
+
+Doubling the outbound HTTP client makes the suite green while the real request path and JSON field
+names are never exercised, so a renamed endpoint or field ships undetected. Replace the boundary with
+a stub server (WireMock) and assert the recorded request and the deserialized response.
+
+**Appears in:** `modules/12-testing/broken-examples/mocking-away-the-integration`
+
+### No assertion on the wire contract
+
+**Type:** Testing issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Technology:** WireMock, Spring `RestClient` · **Interview frequency:** Medium · **Production impact:** Medium
+
+A test that stubs the client cannot verify the URL path, the `Accept` header or that the response body
+deserializes into the expected type. Against a stub server, assert `verify(getRequestedFor(...))` with
+the header and let Jackson bind the real payload.
+
+**Appears in:** `modules/12-testing/broken-examples/mocking-away-the-integration`
+
+### No timeout or error-path coverage on an outbound call
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Spring `RestClient` · **Interview frequency:** High · **Production impact:** High
+
+An outbound HTTP client built without connect or read timeouts, tested only on the happy path, blocks a
+request thread for the container's default and surfaces a 5xx or malformed body as a raw exception. Set
+explicit timeouts and test the failure paths (timeout, 5xx, unparseable body).
+
+**Appears in:** `modules/12-testing/broken-examples/mocking-away-the-integration`
+
 ## Related
 
 - [Issue catalogue](index.md)
