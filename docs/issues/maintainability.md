@@ -268,6 +268,19 @@ the work where the transition itself is what the test is about.
 
 **Appears in:** `modules/12-testing/broken-examples/sleep-based-async-assertions`
 
+### Test double duplicates the repository contract
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Technology:** Spring Data JPA test doubles · **Interview frequency:** Medium · **Production impact:** Medium
+
+An `InMemory…Repository` in the test sources is a second implementation of the repository contract,
+with its own persistence semantics, kept in step with the real interface by hand and owned by nobody.
+Change a query or a constraint and only the fake — which the tests read — is now wrong. Reserve test
+doubles for interactions, and test the store's semantics against the store.
+
+**Appears in:** `modules/12-testing/broken-examples/embedded-substitute-hides-postgres-semantics`
+
 ## Related
 
 - [Issue catalogue](index.md)

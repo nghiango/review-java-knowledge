@@ -167,6 +167,33 @@ terminal failure state.
 
 **Appears in:** `modules/12-testing/broken-examples/sleep-based-async-assertions`
 
+### Embedded substitute diverges from production semantics
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Spring Data JPA, PostgreSQL, test doubles · **Interview frequency:** High · **Production impact:** High
+
+A hand-written in-memory repository replaces the real store, so the suite asserts the substitute's
+matching, ordering and constraint behaviour instead of PostgreSQL's. The fake answers lookups
+case-insensitively, returns insertion order and overwrites duplicates silently; PostgreSQL compares
+case-sensitively, guarantees no row order without a `Sort`, and rejects a duplicate with a constraint
+violation. The service ships green against a store it never runs on.
+
+**Appears in:** `modules/12-testing/broken-examples/embedded-substitute-hides-postgres-semantics`
+
+### Duplicate rule enforced only by a fake that cannot fail
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Spring Data JPA, PostgreSQL · **Interview frequency:** High · **Production impact:** High
+
+A read-then-write uniqueness check backed only by a substitute that cannot raise a constraint
+violation: concurrent registrations both pass the check, and the failure the database will produce is
+never exercised. Put the rule in the database as a unique constraint, translate its violation into a
+domain error, and test the conflicting write against the real engine.
+
+**Appears in:** `modules/12-testing/broken-examples/embedded-substitute-hides-postgres-semantics`
+
 ## Related
 
 - [Issue catalogue](index.md)

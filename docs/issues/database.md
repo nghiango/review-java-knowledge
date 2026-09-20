@@ -172,6 +172,22 @@ Renaming or dropping columns in a single migration script immediately crashes ac
 
 ---
 
+### Collation and constraint assumptions unverified by an embedded substitute
+
+**Type:** Database issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** PostgreSQL, Spring Data JPA · **Interview frequency:** High · **Production impact:** High
+
+An in-memory repository assumes a unique index on `email` is case-insensitive, that a duplicate insert
+fails, and that `findAll()` returns insertion order. PostgreSQL's default `text` comparison is
+case-sensitive, so two addresses differing only by case both persist, and no row order is guaranteed
+without a `Sort`. Assert the collation and the constraint against the real engine instead of inferring
+them from a map.
+
+**Appears in:** `modules/12-testing/broken-examples/embedded-substitute-hides-postgres-semantics`
+
+---
+
 ## Related
 
 - [Issue catalogue](index.md)

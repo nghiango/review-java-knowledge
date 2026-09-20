@@ -19,6 +19,7 @@ dependencyResolutionManagement {
 rootProject.name = "senior-java-spring-interview-lab"
 
 includeBuild("build-logic")
+include("modules:test-support")
 include("modules:01-core-java")
 include("modules:02-jvm")
 include("modules:03-concurrency")
