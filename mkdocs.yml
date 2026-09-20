@@ -247,6 +247,16 @@ nav:
           - Tests: topics/observability/tests.md
           - Production: topics/observability/production.md
           - Exercises: topics/observability/exercises.md
+      - Performance:
+          - Overview: topics/performance/index.md
+          - Concepts: topics/performance/concepts.md
+          - Internals: topics/performance/internals.md
+          - Interview Questions: topics/performance/questions.md
+          - Code Review: topics/performance/code-review.md
+          - Solutions: topics/performance/solutions.md
+          - Tests: topics/performance/tests.md
+          - Production: topics/performance/production.md
+          - Exercises: topics/performance/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -286,6 +296,7 @@ nav:
       - Spring Cloud: questions/spring-cloud.md
       - WebClient / WebFlux: questions/webclient-webflux.md
       - Observability: questions/observability.md
+      - Performance: questions/performance.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:

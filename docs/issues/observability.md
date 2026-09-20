@@ -125,6 +125,17 @@ Without defining explicit latency histogram buckets (`serviceLevelObjectives(...
 
 **Appears in:** `modules/22-observability/broken-examples/missing-latency-histogram`
 
+### Per-Event Logging on a Telemetry Hot Path
+
+**Type:** Observability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Java logging · **Interview frequency:** High · **Production impact:** High
+
+Logging every encoded metric duplicates a high-volume stream and adds formatting, I/O, and storage
+pressure. Prefer aggregate counters and sampled diagnostics while preserving unsampled errors.
+
+**Appears in:** `modules/23-performance/broken-examples/excessive-allocation`
+
 ## Related
 
 - [Issue catalogue](index.md)

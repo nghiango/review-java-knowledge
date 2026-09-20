@@ -307,6 +307,17 @@ Breaking a reactive stream by invoking `.block()` or `toFuture().get()` decouple
 
 **Appears in:** `modules/21-webclient-webflux/broken-examples/block-in-request-flow`
 
+### Caller-Controlled Performance Work Limit
+
+**Type:** API design issue · **Severity:** Medium · **Difficulty:** Basic
+
+**Technology:** Pagination · **Interview frequency:** Medium · **Production impact:** Medium
+
+Passing an arbitrary limit to persistence lets one request select an unsafe amount of work. Enforce
+a service maximum and require pagination to keep a stable memory and latency envelope.
+
+**Appears in:** `modules/23-performance/broken-examples/n-plus-one-summary`
+
 ## Related
 
 - [Issue catalogue](index.md)

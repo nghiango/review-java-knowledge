@@ -113,6 +113,17 @@ Because `ThreadPoolExecutor` worker threads are continuously reused across reque
 
 **Appears in:** `modules/22-observability/broken-examples/missing-correlation-id-async`
 
+### Independent Metric Keys Share One Monitor
+
+**Type:** Concurrency issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Intrinsic locks, LongAdder · **Interview frequency:** High · **Production impact:** High
+
+A synchronized accumulator forces unrelated writers through one monitor. Use per-key striped
+counters when eventually observed sums are acceptable; diagnose with JFR monitor-blocked events.
+
+**Appears in:** `modules/23-performance/broken-examples/lock-contention`
+
 ## Related
 
 - [Issue catalogue](index.md)

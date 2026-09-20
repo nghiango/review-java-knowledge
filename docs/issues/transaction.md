@@ -64,6 +64,18 @@ Writing to both an RDBMS and a message broker (Kafka, RabbitMQ) within an applic
 
 **Appears in:** `modules/19-distributed-data-patterns/broken-examples/dual-write-db-broker`
 
+### Remote Call Extends a Local Database Transaction
+
+**Type:** Transaction issue · **Severity:** High · **Difficulty:** Senior
+
+**Technology:** JDBC, HikariCP · **Interview frequency:** High · **Production impact:** High
+
+The payment call makes lock, connection, and transaction lifetimes depend on network latency.
+Persist pending state, perform remote I/O without a connection, and finalize in a second short
+transaction. This requires idempotency and reconciliation.
+
+**Appears in:** `modules/23-performance/broken-examples/hikari-exhaustion`
+
 ## Related
 
 - [Issue catalogue](index.md)

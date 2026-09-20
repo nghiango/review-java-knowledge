@@ -149,6 +149,109 @@ In Micrometer, meter instances (`Counter`, `Timer`, `Gauge`) are cached permanen
 
 **Appears in:** `modules/22-observability/broken-examples/high-cardinality-metric-tags`
 
+### Connection Retained Across Remote I/O
+
+**Type:** Resource leak issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** HikariCP, JDBC · **Interview frequency:** High · **Production impact:** High
+
+A checked-out connection sits idle while a payment call runs. Keep remote I/O outside the
+connection scope and budget pool capacity across instances. Detect it with Hikari active, pending,
+and timeout metrics. The corrected workflow needs explicit state and reconciliation.
+
+**Appears in:** `modules/23-performance/broken-examples/hikari-exhaustion`
+
+### CPU Pool Greatly Exceeds Available Processors
+
+**Type:** Performance issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** ExecutorService · **Interview frequency:** High · **Production impact:** High
+
+Hundreds of runnable CPU workers increase scheduling and cache contention. Size from processors and
+measured blocking ratio, then verify with throughput, p99, runnable threads, and context switches.
+
+**Appears in:** `modules/23-performance/broken-examples/oversized-thread-pool`
+
+### Unbounded Executor Queue Retains Overload
+
+**Type:** Scalability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** ThreadPoolExecutor · **Interview frequency:** High · **Production impact:** High
+
+An unbounded queue converts overload into growing latency and retained heap. Bound capacity and
+reject explicitly; monitor queue depth, oldest task age, and rejection rate.
+
+**Appears in:** `modules/23-performance/broken-examples/oversized-thread-pool`
+
+### Duplicate Batch Keys Repeat Database I/O
+
+**Type:** Performance issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** SQL batching · **Interview frequency:** Medium · **Production impact:** Medium
+
+Repeated foreign keys trigger identical lookups. Deduplicate keys before one bounded batch query
+and confirm the improvement with statement counts and traces.
+
+**Appears in:** `modules/23-performance/broken-examples/n-plus-one-summary`
+
+### Hot-Path Intermediate Allocation Chain
+
+**Type:** Performance issue · **Severity:** High · **Difficulty:** Senior
+
+**Technology:** Java streams, GC · **Interview frequency:** High · **Production impact:** High
+
+Intermediate maps, regex objects, formatted strings, and boxing raise allocation rate and young-GC
+pressure. Use JFR allocation profiles before replacing the measured path with one local builder.
+
+**Appears in:** `modules/23-performance/broken-examples/excessive-allocation`
+
+### Regular Expression Compiled Per Event
+
+**Type:** Performance issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Java regex · **Interview frequency:** Medium · **Production impact:** High
+
+Compiling an invariant pattern for every event repeats parsing and allocation at traffic rate.
+Precompile immutable patterns or use a focused character loop, and confirm the effect in a JFR
+allocation and CPU profile.
+
+**Appears in:** `modules/23-performance/broken-examples/excessive-allocation`
+
+### General Formatter Used in a Fixed Hot Path
+
+**Type:** Performance issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Technology:** Java formatting · **Interview frequency:** Medium · **Production impact:** Medium
+
+`String.format` provides a general parser and formatter for a fixed protocol shape. Direct appends
+can reduce CPU and temporary objects when a representative profile shows the path is material; wire
+format tests preserve correctness.
+
+**Appears in:** `modules/23-performance/broken-examples/excessive-allocation`
+
+### Boxed Counter Replacement Under Contention
+
+**Type:** Performance issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Technology:** Java boxing, LongAdder · **Interview frequency:** Medium · **Production impact:** Medium
+
+Replacing immutable boxed values allocates on every update while holding a shared monitor. A
+per-key striped primitive counter removes both sources of pressure when weakly consistent telemetry
+reads are acceptable.
+
+**Appears in:** `modules/23-performance/broken-examples/lock-contention`
+
+### Global Monitor for Independent Counters
+
+**Type:** Scalability issue · **Severity:** High · **Difficulty:** Senior
+
+**Technology:** Java monitors, LongAdder · **Interview frequency:** High · **Production impact:** High
+
+One monitor serializes independent keys and readers. Per-key striped counters reduce the hot spot;
+JFR monitor-blocked events and throughput by concurrency level show the effect.
+
+**Appears in:** `modules/23-performance/broken-examples/lock-contention`
+
 ## Related
 
 - [Issue catalogue](index.md)

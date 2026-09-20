@@ -276,6 +276,28 @@ Catching checked or unchecked exceptions inside database update or reconciliatio
 
 **Appears in:** `modules/22-observability/broken-examples/swallowed-exceptions-observability`
 
+### Checkout Charge and Commit Can Diverge
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Senior
+
+**Technology:** Payments, JDBC · **Interview frequency:** High · **Production impact:** High
+
+A remote charge can succeed before the local commit fails. Persist workflow state, send an
+idempotency key, and reconcile incomplete orders.
+
+**Appears in:** `modules/23-performance/broken-examples/hikari-exhaustion`
+
+### Executor Overload Has No Caller Contract
+
+**Type:** Reliability issue · **Severity:** Medium · **Difficulty:** Senior
+
+**Technology:** ThreadPoolExecutor · **Interview frequency:** Medium · **Production impact:** High
+
+An API that always accepts work hides saturation until requests time out. Bound capacity and expose
+rejection or rate limiting so callers can shed load or retry within a deadline.
+
+**Appears in:** `modules/23-performance/broken-examples/oversized-thread-pool`
+
 ## Related
 
 - [Issue catalogue](index.md)

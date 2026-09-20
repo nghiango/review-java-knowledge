@@ -275,6 +275,21 @@
 - [ ] Architect multi-window multi-burn-rate alerting strategies based on Google SRE Error Budget consumption
 - [ ] Diagnose and troubleshoot thread pool starvation and deadlocks using ThreadMXBean and Actuator thread dumps
 
+## Performance
+
+- [ ] Distinguish latency, throughput, utilization, saturation, and queue time
+- [ ] Explain p95/p99 and why averages hide tails
+- [ ] Apply Little's Law to a capacity estimate and state its assumptions
+- [ ] Budget Hikari connections across maximum application replicas
+- [ ] Size CPU and blocking executors from workload evidence
+- [ ] Design bounded queues, rejection, and load shedding
+- [ ] Diagnose N+1 queries with statement counts and traces
+- [ ] Use JFR to find CPU, allocation, GC, and lock bottlenecks
+- [ ] Explain coordinated omission and open versus closed load models
+- [ ] Design a reproducible JMH or end-to-end load experiment
+- [ ] Diagnose Hikari exhaustion with low database CPU
+- [ ] Explain when lower-level allocation optimization is justified
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -300,4 +315,4 @@
 - [Spring Cloud questions](questions/spring-cloud.md)
 - [WebClient / WebFlux questions](questions/webclient-webflux.md)
 - [Observability questions](questions/observability.md)
-
+- [Performance questions](questions/performance.md)

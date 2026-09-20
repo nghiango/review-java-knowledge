@@ -188,6 +188,17 @@ them from a map.
 
 ---
 
+### N+1 Customer Lookup in Summary Mapping
+
+**Type:** Database issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** SQL, repositories · **Interview frequency:** High · **Production impact:** High
+
+Loading N orders then querying each customer makes statement count and pool demand grow linearly.
+Collect distinct IDs and fetch them in one bounded query, or use a measured join.
+
+**Appears in:** `modules/23-performance/broken-examples/n-plus-one-summary`
+
 ## Related
 
 - [Issue catalogue](index.md)
