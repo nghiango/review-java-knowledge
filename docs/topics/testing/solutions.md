@@ -302,12 +302,15 @@ slow test by raising `atMost`: if 2 s is not enough, the work or the assertion i
 
 ### Trade-offs
 
-Docker-backed tests are slower and need the container infrastructure, and the JPA slice must be wired
+Docker-backed tests are slower and need the container infrastructure, and the JPA slice is wired
 with `@AutoConfigureTestDatabase(replace = Replace.NONE)` so Boot cannot swap the container DataSource
-for an embedded one. A case-insensitive rule enforced by normalising in the application is portable but
-must be applied at every entry point; a `citext` column or a `lower(email)` functional index pushes the
-rule into the database — stronger, but PostgreSQL-specific and needing a migration. Relying on the
-constraint means the application must translate a persistence exception into its own error contract.
+for an embedded one. In Boot 3.4.x `Replace.NON_TEST` already keeps a `DataSource` that connects to a
+test database — the `@ServiceConnection` bean here qualifies — so `NONE` is defensive rather than
+strictly required; it makes the intent explicit. A case-insensitive rule enforced by normalising in
+the application is portable but must be applied at every entry point; a `citext` column or a
+`lower(email)` functional index pushes the rule into the database — stronger, but PostgreSQL-specific
+and needing a migration. Relying on the constraint means the application must translate a persistence
+exception into its own error contract.
 
 ---
 

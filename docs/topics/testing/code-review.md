@@ -34,9 +34,7 @@ both observable outcomes of `checkout` — the returned amount and the charged a
 
 ??? warning "Reveal issues"
 
-    ### Testing issue — Assertions coupled to implementation instead of behaviour
-
-    **Problem.** The test asserts *how* `CheckoutService` talks to its collaborators — exact argument
+    **Testing issue — Assertions coupled to implementation instead of behaviour:** The test asserts *how* `CheckoutService` talks to its collaborators — exact argument
     lists, the number of `subtotal` calls and the call order — rather than *what* the checkout produces.
 
     **Why it happens.** Mockito makes interaction verification easy, so a test written to "cover" a
@@ -58,9 +56,7 @@ both observable outcomes of `checkout` — the returned amount and the charged a
     to return the amount charged; where a boundary has no return value, capture the recorded side effect
     instead of asserting on internal calls.
 
-    ### Testing issue — Mocking a value collaborator proves nothing
-
-    **Problem.** `PricingCalculator` is a pure, in-process value collaborator, but the test replaces it
+    **Testing issue — Mocking a value collaborator proves nothing:** `PricingCalculator` is a pure, in-process value collaborator, but the test replaces it
     with a mock and stubs its result, so the percentage and rounding rules are never executed.
 
     **Why it happens.** Mocking is the default reflex for any injected dependency, so a collaborator
@@ -80,9 +76,7 @@ both observable outcomes of `checkout` — the returned amount and the charged a
     **Trade-off.** Real collaborators make a test depend on more code, so a failure can originate in the
     collaborator; keep the collaborator pure and fast, and reserve doubles for I/O, time and randomness.
 
-    ### Design issue — No observable behaviour at the service boundary
-
-    **Problem.** `checkout` has two observable outcomes — the amount it returns and the amount it
+    **Design issue — No observable behaviour at the service boundary:** `checkout` has two observable outcomes — the amount it returns and the amount it
     charges — and the test verifies neither precisely: the charge is matched with `any(Money.class)`.
 
     **Why it happens.** The test was written around the implementation's call sequence rather than the
@@ -102,9 +96,7 @@ both observable outcomes of `checkout` — the returned amount and the charged a
     **Trade-off.** Returning the charged amount couples the caller to it — usually desirable for a
     checkout, but it must stay consistent with the payment provider's asynchronous settlement.
 
-    ### Maintainability issue — Test breaks on every behaviour-preserving refactor
-
-    **Problem.** Verifying call order (`InOrder`) and the exact number of internal calls (`times(1)`)
+    **Maintainability issue — Test breaks on every behaviour-preserving refactor:** Verifying call order (`InOrder`) and the exact number of internal calls (`times(1)`)
     makes the test fail for changes that do not alter what the customer is charged.
 
     **Why it happens.** `InOrder` and `times(n)` encode the current control flow; they were added to "be
@@ -153,9 +145,7 @@ API change would surface in the suite.
 
 ??? warning "Reveal issues"
 
-    ### Testing issue — Mocking the HTTP boundary hides contract drift
-
-    **Problem.** The test replaces `InventoryClient` — the outbound HTTP boundary itself — with a mock,
+    **Testing issue — Mocking the HTTP boundary hides contract drift:** The test replaces `InventoryClient` — the outbound HTTP boundary itself — with a mock,
     so no request is ever built or sent. The wrong path (`/stock/{sku}` instead of `/inventory/{sku}`)
     and the wrong JSON field (`"quantity"` instead of `"available"`) cannot fail the suite.
 
@@ -178,9 +168,7 @@ API change would surface in the suite.
     management, so it is reserved for the boundary; unit-test the surrounding domain logic with a fake
     client.
 
-    ### Testing issue — No assertion on the wire contract
-
-    **Problem.** Even with a real client, this test asserts nothing about the request it produces — not
+    **Testing issue — No assertion on the wire contract:** Even with a real client, this test asserts nothing about the request it produces — not
     the URL path, not the `Accept` header, not that the body deserializes into a typed object. The stub
     hands the service a `Map` the test itself built.
 
@@ -202,9 +190,7 @@ API change would surface in the suite.
     a contract test — but assert only the fields genuinely part of the contract and avoid pinning
     headers the API ignores.
 
-    ### Reliability issue — No timeout or error-path coverage on an outbound call
-
-    **Problem.** The outbound call is built with no connect or read timeout, and the suite covers only
+    **Reliability issue — No timeout or error-path coverage on an outbound call:** The outbound call is built with no connect or read timeout, and the suite covers only
     the happy path: a slow or failing inventory service is never exercised, and a 5xx or unparseable
     body surfaces as a raw `RestClientException` (or `NullPointerException`).
 
@@ -227,9 +213,7 @@ API change would surface in the suite.
     failures; choose it from the dependency's SLO and add a bounded retry with jitter rather than
     lengthening the timeout.
 
-    ### Design issue — HTTP client interface leaks the wire format
-
-    **Problem.** `get` returns `Map<String, Object>`, so the caller must know the JSON field names and
+    **Design issue — HTTP client interface leaks the wire format:** `get` returns `Map<String, Object>`, so the caller must know the JSON field names and
     cast the values itself; a renamed or retyped field ripples through the domain layer and fails as a
     `NullPointerException` far from the client.
 
@@ -278,9 +262,7 @@ about `OrderTotals` versus the fixture.
 
 ??? warning "Reveal issues"
 
-    ### Testing issue — Tests share a mutable static fixture
-
-    **Problem.** `OrderFixture.ORDERS` is a single mutable `List<Order>` shared by the whole class, so
+    **Testing issue — Tests share a mutable static fixture:** `OrderFixture.ORDERS` is a single mutable `List<Order>` shared by the whole class, so
     what one test asserts depends on what earlier tests did to that list — and the list is the only
     description of the data a test uses.
 
@@ -304,9 +286,7 @@ about `OrderTotals` versus the fixture.
     a few lines; keep that cheap with a builder and share only immutable values or genuinely expensive
     started resources.
 
-    ### Testing issue — Test order dependence hidden by an explicit method order
-
-    **Problem.** `totalWithShipping_largestOrder_usesFixtureShipping` asserts the fixture holds three
+    **Testing issue — Test order dependence hidden by an explicit method order:** `totalWithShipping_largestOrder_usesFixtureShipping` asserts the fixture holds three
     orders and totals `ORDERS.get(2)`; that third order exists only because
     `total_multiLineOrder_sumsEveryLine` appended it, and `@TestMethodOrder(OrderAnnotation.class)` plus
     `@Order(n)` is what makes the dependency work.
@@ -329,9 +309,7 @@ about `OrderTotals` versus the fixture.
     container started once, a schema migrated before the tests that use it; express that with
     `@BeforeAll` or an extension so it is visible in one place.
 
-    ### Maintainability issue — No per-test data builder; a test edits the shared fixture
-
-    **Problem.** There is no way to describe an order inline, so the test that needs a multi-line basket
+    **Maintainability issue — No per-test data builder; a test edits the shared fixture:** There is no way to describe an order inline, so the test that needs a multi-line basket
     appends one to `OrderFixture.ORDERS` and reads it back with `get(size() - 1)`; its input is not
     visible in the test and the fixture is modified by a test that does not own it.
 
@@ -352,9 +330,7 @@ about `OrderTotals` versus the fixture.
     depends on; keep it dumb, package-private in the test source set, and with no hidden defaults for
     data under assertion.
 
-    ### Design issue — Fixture has no ownership or lifecycle
-
-    **Problem.** `OrderFixture` is a package-private class of static state with no owner and no reset:
+    **Design issue — Fixture has no ownership or lifecycle:** `OrderFixture` is a package-private class of static state with no owner and no reset:
     `static final` protects the reference, not the contents, and the list lives for the whole JVM.
 
     **Why it happens.** A "test data" class is usually written as a bag of constants, and a `static
@@ -403,9 +379,7 @@ what each test costs in wall-clock time.
 
 ??? warning "Reveal issues"
 
-    ### Testing issue — Sleep-based waiting for asynchronous work
-
-    **Problem.** The test submits a report and then calls `Thread.sleep(500)` before asserting the
+    **Testing issue — Sleep-based waiting for asynchronous work:** The test submits a report and then calls `Thread.sleep(500)` before asserting the
     status; the sleep is a guess that the background work finishes within 500 ms, not a
     synchronisation mechanism, so the assertion races the worker thread.
 
@@ -428,9 +402,7 @@ what each test costs in wall-clock time.
     **Trade-off.** Awaitility hides a polling loop, so a condition that never holds still costs the full
     `atMost` budget; keep the bound short and poll the observable state rather than a proxy.
 
-    ### Testing issue — Unbounded polling loop masks a hang
-
-    **Problem.** The second test polls with `while (job.status("RPT-2") != ReportStatus.COMPLETED)`; the
+    **Testing issue — Unbounded polling loop masks a hang:** The second test polls with `while (job.status("RPT-2") != ReportStatus.COMPLETED)`; the
     loop has no timeout and `COMPLETED` is the only state that ends it, so a report that fails or hangs
     keeps it spinning for the life of the build.
 
@@ -452,9 +424,7 @@ what each test costs in wall-clock time.
     **Trade-off.** A bound has to be chosen and too generous a bound still hides slowness; set it from
     the contract ("this must complete in two seconds"), not from the current machine's speed.
 
-    ### Reliability issue — No failure-path assertion on an asynchronous job
-
-    **Problem.** Both tests only ever expect `COMPLETED`; nothing submits a report whose generation
+    **Reliability issue — No failure-path assertion on an asynchronous job:** Both tests only ever expect `COMPLETED`; nothing submits a report whose generation
     throws, so the `FAILED` transition is never executed and the assertion that distinguishes "still
     running" from "will never finish" is never made.
 
@@ -475,9 +445,7 @@ what each test costs in wall-clock time.
     **Trade-off.** Testing the failure path needs a seam that can make the work fail; it must be the
     same code path production uses, not a test-only branch inside `generate`.
 
-    ### Maintainability issue — Fixed delays slow the suite and encode machine speed
-
-    **Problem.** Every test waits a hard-coded delay — `Thread.sleep(500)` in the first and a 50 ms poll
+    **Maintainability issue — Fixed delays slow the suite and encode machine speed:** Every test waits a hard-coded delay — `Thread.sleep(500)` in the first and a 50 ms poll
     in the second — that must track the production simulation, is copied rather than derived, and is
     paid in full on every run.
 
@@ -529,9 +497,7 @@ layer is supposed to reject two accounts sharing an address; and how much of eac
 
 ??? warning "Reveal issues"
 
-    ### Testing issue — Substitute diverges from production semantics
-
-    **Problem.** Every test runs against `InMemoryAccountRepository`, so the suite asserts what the map
+    **Testing issue — Substitute diverges from production semantics:** Every test runs against `InMemoryAccountRepository`, so the suite asserts what the map
     does — case-insensitive matching, insertion order, silent overwrite — rather than what PostgreSQL
     does; PostgreSQL compares `email` case-sensitively and returns rows in no particular order without a
     `Sort`.
@@ -555,9 +521,7 @@ layer is supposed to reject two accounts sharing an address; and how much of eac
     keep fast unit tests for pure logic, but test matching, constraints, ordering and transaction
     boundaries against the real engine.
 
-    ### Database issue — Constraint and collation assumptions are unverified
-
-    **Problem.** The substitute assumes three things PostgreSQL does not do: that the unique index on
+    **Database issue — Constraint and collation assumptions are unverified:** The substitute assumes three things PostgreSQL does not do: that the unique index on
     `email` is case-insensitive, that a duplicate insert fails, and that `findAll()` returns insertion
     order — none verified, all load-bearing for the service's uniqueness rule.
 
@@ -580,9 +544,7 @@ layer is supposed to reject two accounts sharing an address; and how much of eac
     but must be applied at every entry point; a `citext` column or a `lower(email)` functional index
     pushes the rule into the database — stronger but PostgreSQL-specific and needing a migration.
 
-    ### Reliability issue — Defects reach production undetected
-
-    **Problem.** `register` reads for an existing address and then writes, with nothing but the
+    **Reliability issue — Defects reach production undetected:** `register` reads for an existing address and then writes, with nothing but the
     substitute's map to back the check; the map cannot raise a constraint violation, so the suite never
     executes the failure the database produces — a second insert of the same address.
 
@@ -606,9 +568,7 @@ layer is supposed to reject two accounts sharing an address; and how much of eac
     exception into its own error contract (a 409), which couples the service to the exception type —
     cheaper than a correct distributed lock, and the constraint has to exist regardless.
 
-    ### Maintainability issue — The fake duplicates repository logic
-
-    **Problem.** `InMemoryAccountRepository` is a second implementation of the repository contract, kept
+    **Maintainability issue — The fake duplicates repository logic:** `InMemoryAccountRepository` is a second implementation of the repository contract, kept
     in step with `AccountRepository` by hand; change a query, a matching rule or a constraint and only
     the fake — which the tests read — is now wrong, and nothing in the build links the two.
 
@@ -658,9 +618,7 @@ a coupling; and what a second allocator or a second test class would observe.
 
 ??? warning "Reveal issues"
 
-    ### Testing issue — Absolute assertions pinned to the declaration order
-
-    **Problem.** Each method builds a fresh allocator but asserts the absolute number it expects the
+    **Testing issue — Absolute assertions pinned to the declaration order:** Each method builds a fresh allocator but asserts the absolute number it expects the
     process to hand out next (`@Order(1)` expects 1, `@Order(2)` expects 2, `@Order(4)` expects 3);
     those numbers are positions in one shared sequence, not properties of a fresh allocator.
 
@@ -686,9 +644,7 @@ a coupling; and what a second allocator or a second test class would observe.
     points at a method covering a small sequence instead of a single call; keep the methods small and
     name the progression with `@DisplayName`.
 
-    ### Testing issue — Static counter shared across allocators
-
-    **Problem.** The counter is declared `private static long`, so it belongs to the class, not to an
+    **Testing issue — Static counter shared across allocators:** The counter is declared `private static long`, so it belongs to the class, not to an
     allocator: two allocators created with the same `start` share one sequence, and because the
     constructor assigns only `start`, a newly constructed allocator does not begin at its own start
     value at all.
@@ -715,9 +671,7 @@ a coupling; and what a second allocator or a second test class would observe.
     process-wide sequence must share the instance deliberately (a singleton or a dedicated `AtomicLong`
     service) instead of relying on an accident.
 
-    ### Maintainability issue — Order-dependent test class cannot run in parallel
-
-    **Problem.** Because the counter is shared and every expected value is absolute, the class can only
+    **Maintainability issue — Order-dependent test class cannot run in parallel:** Because the counter is shared and every expected value is absolute, the class can only
     be executed as one ordered run: it cannot be split, reordered by the IDE, run with JUnit's parallel
     execution enabled, or selected method-by-method.
 

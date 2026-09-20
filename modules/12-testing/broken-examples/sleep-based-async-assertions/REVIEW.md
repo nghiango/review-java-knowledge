@@ -8,8 +8,10 @@ CI and is treated as the safety net for the job's lifecycle — but it waits for
 delays instead of for the condition it asserts, and it never exercises a report whose generation
 fails.
 
-`AsyncReportJob` itself is the class the correct implementation ships; the review target is the test
-built around it.
+`AsyncReportJob` is the production class as it stands *before* the test seam is added: it accepts only
+an executor and a simulated delay, so no test can make its work fail and its `FAILED` branch is
+unreachable. Both the test and the seam that makes the failure path testable are part of the review
+target and of the fix.
 
 ## Target Files
 

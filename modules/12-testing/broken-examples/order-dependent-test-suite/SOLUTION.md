@@ -31,15 +31,22 @@ public final class SequenceAllocator {
         this.start = start;
     }
 
+    /**
+     * Advances the counter and returns the newly allocated value.
+     *
+     * @throws ArithmeticException if the counter has already reached {@link Long#MAX_VALUE}
+     */
     public long next() {
         counter = Math.incrementExact(counter);
         return counter;
     }
 
+    /** Returns the last allocated value, or {@code start} if nothing has been allocated yet. */
     public long current() {
         return counter;
     }
 
+    /** Restores the counter to {@code start}, so the next allocation is {@code start + 1}. */
     public void reset() {
         counter = start;
     }

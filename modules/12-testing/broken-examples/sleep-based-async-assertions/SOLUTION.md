@@ -61,9 +61,13 @@ public final class AsyncReportJob implements AutoCloseable {
 }
 ```
 
-`AsyncReportJob` carries no issue comments: it is the class the correct implementation ships. The
-defect is entirely in the test below, which is why the exercise is a review of *how* the test
-synchronises rather than of the production code.
+`AsyncReportJob` carries no issue comments: it is the production class *before* the test seam is
+added. Because it accepts only an executor and a simulated delay, and `generate()` catches only
+`InterruptedException`, no test can drive the report to `FAILED` — the branch is unreachable. The
+defect is mostly in the test below, which is why the exercise is a review of *how* the test
+synchronises, but making the failure path testable is part of the fix: the shipped class adds a
+package-private work seam and widens the `catch` to `Exception` (see the correct implementation at
+the end of this file).
 
 ### `AsyncReportJobTest.java`
 

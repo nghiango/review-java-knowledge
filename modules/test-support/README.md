@@ -1,5 +1,5 @@
 ---
-type: support
+type: code
 ---
 
 # Module test-support

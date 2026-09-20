@@ -17,7 +17,7 @@ flowchart TD
 |---|---|---|---|---|
 | Unit | No | ~86 % | milliseconds | Logic, arithmetic, validation, edge cases |
 | Component / slice | Maybe (DB, HTTP) | ~10 % | seconds | Wiring, mapping, persistence semantics |
-| Contract | Yes | ~4 % | seconds | Wire-format drift between consumer and provider |
+| Contract | Yes | ~3 % | seconds | Wire-format drift between consumer and provider |
 | End-to-end | Yes, all of them | ~1 % | minutes | Deployment, configuration, cross-service flow |
 
 ```java title="Q01TestingPyramidAndLevels.java"

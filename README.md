@@ -127,7 +127,7 @@ The repository is specification-driven. Read, in this order:
 
 ### Project skills
 
-Workflows are encoded as skills in `.devin/skills/`. Invoke the matching one instead of
+Workflows are encoded as skills in `.agents/skills/`. Invoke the matching one instead of
 improvising; each names the spec sections it depends on.
 
 | Skill | Use when |
@@ -190,7 +190,7 @@ the implementation, and `docs/progress.md` reflects reality.
 ├── tracks/<track-id>/              isolated Gradle included builds (java25-boot4, kotlin)
 ├── build-logic/                    Gradle convention plugins
 ├── scripts/                        verify-all.sh, run-module.sh
-└── .devin/skills/                  project workflows as skills
+└── .agents/skills/                 project workflows as skills
 ```
 
 ## Licence

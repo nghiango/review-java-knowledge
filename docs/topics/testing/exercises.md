@@ -74,6 +74,11 @@ header or its JSON field names fails the suite.
 loop, and never exercises a report whose generation fails. Rewrite it so it is fast, bounded and proves
 the `RUNNING` → `COMPLETED` transition and the failure path.
 
+`AsyncReportJob` is the production class as it stands *before* the test seam is added — it accepts only
+an executor and a simulated delay, and `generate()` catches only `InterruptedException`, so the
+`FAILED` branch is unreachable. Making the failure path testable is part of the fix: add a
+package-private work seam and widen the `catch` to `Exception`.
+
 ### Requirements
 
 - Never sleep for a fixed delay; wait on the status the test asserts on.
@@ -83,8 +88,8 @@ the `RUNNING` → `COMPLETED` transition and the failure path.
 
 ### Hints
 
-- The job already accepts an injectable work function; gate it with a `CountDownLatch` the test
-  releases.
+- Add a package-private work seam to the production class (an injectable work function) so a test can
+  gate the work with a `CountDownLatch` it releases — or make it throw.
 - `await().atMost(...).pollInterval(...).untilAsserted(...)` returns as soon as the condition holds.
 - A single-thread executor lets you control exactly when the worker can pick up a report.
 
@@ -93,8 +98,8 @@ the `RUNNING` → `COMPLETED` transition and the failure path.
     **Why this works.** The test waits on the condition it cares about, so it is fast when the work is
     fast and still correct when the work is slow; the bound turns a hang into an ordinary
     `ConditionTimeoutException` that reports the last observed status. Releasing a latch makes the
-    `RUNNING` → `COMPLETED` transition deterministic instead of a race, and the throwing-work seam
-    executes the production `catch` so the `FAILED` branch is verified.
+    `RUNNING` → `COMPLETED` transition deterministic instead of a race, and the throwing-work seam you
+    add executes the production `catch` (widened to `Exception`) so the `FAILED` branch is verified.
 
     The review target to replace:
 

@@ -60,8 +60,21 @@ configurations.named(examples.implementationConfigurationName) {
     extendsFrom(configurations.named("implementation").get())
 }
 
+// Gradle applies `-D` to the daemon JVM, not to the forked test worker, so a documented triage
+// command such as `./gradlew test -Djunit.jupiter.testmethod.order.default=...` is otherwise a
+// silent no-op. Forward the JUnit keys the flake-triage docs rely on to the test process whenever
+// the caller sets them, mirroring the `api.version` system property on `integrationTest`.
+val junitForwardedProperties =
+        listOf(
+                "junit.jupiter.testmethod.order.default",
+                "junit.jupiter.execution.parallel.enabled",
+        )
+
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+    junitForwardedProperties.forEach { key ->
+        System.getProperty(key)?.let { value -> systemProperty(key, value) }
+    }
 }
 
 tasks.register<Test>("integrationTest") {

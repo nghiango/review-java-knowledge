@@ -183,9 +183,13 @@ flowchart TD
 
 Two details decide whether a slice test is honest. `@DataJpaTest` defaults to
 `@AutoConfigureTestDatabase(replace = Replace.NON_TEST)`, which swaps the configured `DataSource` for
-an embedded one — a test that believes it runs on PostgreSQL must set `Replace.NONE` and supply a real
-container. And a slice does not component-scan the application, so the service under test must be
-`@Import`ed; each such import changes the context key and can cost a context rebuild.
+an embedded one — but not when that `DataSource` already connects to a test database: in Boot 3.4.x a
+container published as a `@ServiceConnection` bean is recognised as one, so `NON_TEST` would keep it.
+A test that believes it runs on PostgreSQL should therefore set `Replace.NONE` and supply a real
+container; with a test service connection `NONE` is defensive rather than mandatory, but it makes the
+intent explicit and independent of Boot's detection. And a slice does not component-scan the
+application, so the service under test must be `@Import`ed; each such import changes the context key
+and can cost a context rebuild.
 
 ??? question "Interview question"
     Which annotation narrows the auto-configurations a slice applies? Why does `@DataJpaTest` replace
