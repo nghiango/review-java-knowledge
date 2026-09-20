@@ -100,6 +100,32 @@ explicit timeouts and test the failure paths (timeout, 5xx, unparseable body).
 
 **Appears in:** `modules/12-testing/broken-examples/mocking-away-the-integration`
 
+### Tests share a mutable static fixture
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5 · **Interview frequency:** High · **Production impact:** High
+
+A static mutable collection of test data makes one test's output another test's input: the result depends
+on what ran before, failures are attributed to the wrong test, and a broken unit can stay green on data a
+previous test left behind. Build the data a test asserts on inside that test, and share only immutable
+values or genuinely expensive started resources.
+
+**Appears in:** `modules/12-testing/broken-examples/shared-mutable-test-fixtures`
+
+### Test order dependence hidden by an explicit method order
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5 `@TestMethodOrder`, `@Order` · **Interview frequency:** High · **Production impact:** High
+
+`@TestMethodOrder(MethodOrderer.OrderAnnotation.class)` with `@Order(n)` pins the execution order and
+conceals a test that reads state another test wrote. The class is green, but the method fails when run
+alone, under a random orderer or in parallel. Remove the shared state instead of ordering around it, and
+express a real shared-resource dependency once with `@BeforeAll` or an extension.
+
+**Appears in:** `modules/12-testing/broken-examples/shared-mutable-test-fixtures`
+
 ## Related
 
 - [Issue catalogue](index.md)

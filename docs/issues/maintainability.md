@@ -229,6 +229,32 @@ the boundary. Return a typed record and let the client own (de)serialization.
 
 **Appears in:** `modules/12-testing/broken-examples/mocking-away-the-integration`
 
+### No per-test data builder; a test edits a shared fixture
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Basic
+
+**Technology:** JUnit 5 test data builders · **Interview frequency:** Medium · **Production impact:** Medium
+
+Without a builder, a test that needs different data mutates the shared fixture and reads its own entry
+back. What the test depends on becomes implicit, the suite must be read in execution order, and changing
+the fixture breaks tests that never mentioned it. Give each test a fluent builder that returns a fresh
+value stating exactly the input the test needs.
+
+**Appears in:** `modules/12-testing/broken-examples/shared-mutable-test-fixtures`
+
+### Test fixture has no ownership or lifecycle
+
+**Type:** Design issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5 static fixtures · **Interview frequency:** Medium · **Production impact:** Medium
+
+A `static final` collection of test data protects the reference, not the contents: it lives for the whole
+JVM, any test in the package can change it, and nothing resets it between tests — so adding one test file
+changes another file's outcome. Model fixtures as factories that return fresh immutable values, and share
+only started resources with an explicit lifecycle.
+
+**Appears in:** `modules/12-testing/broken-examples/shared-mutable-test-fixtures`
+
 ## Related
 
 - [Issue catalogue](index.md)
