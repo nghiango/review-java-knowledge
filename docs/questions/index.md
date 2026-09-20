@@ -12,6 +12,7 @@ Answer each question before reading its explanation.
 - [Spring Transactions](spring-transactions.md)
 - [JPA / Hibernate](jpa-hibernate.md)
 - [Database / SQL](database-sql.md)
+- [REST API](rest-api.md)
 
 ## Related
 

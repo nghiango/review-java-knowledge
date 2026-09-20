@@ -111,6 +111,16 @@
 - [ ] Prevent schema migration downtime with the 4-phase Expand and Contract (Parallel Run) pattern
 - [ ] Size HikariCP connection pools using the $((\text{CPU Cores} \times 2) + 1)$ formula
 
+## REST API
+
+- [ ] Adhere to HTTP safe (`GET`, `HEAD`) and idempotent (`PUT`, `DELETE`, `GET`) protocol method semantics
+- [ ] Return standard HTTP status codes (`201 Created` with `Location`, `204 No Content`, `404 Not Found`, `422 Unprocessable Entity`)
+- [ ] Mandate `Idempotency-Key` headers on mutating POST endpoints to prevent duplicate operations during network retry storms
+- [ ] Standardize all error responses on RFC 9457 `ProblemDetail` via `@RestControllerAdvice`
+- [ ] Prevent Mass Assignment (CWE-915) and entity leakage by decoupling persistence models with explicit DTO records
+- [ ] Enforce strict pagination bounds (`@Max(100)`) and return envelope metadata with next/prev cursors
+- [ ] Prevent Lost Update race conditions on concurrent mutations using `ETag` and `If-Match` headers
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -123,4 +133,5 @@
 - [Spring Transactions questions](questions/spring-transactions.md)
 - [JPA / Hibernate questions](questions/jpa-hibernate.md)
 - [Database / SQL questions](questions/database-sql.md)
+- [REST API questions](questions/rest-api.md)
 

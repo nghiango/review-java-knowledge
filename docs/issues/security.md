@@ -57,6 +57,14 @@ Configuring wildcard origins (`*`) paired with credentials (`allowCredentials: t
 
 **Appears in:** `modules/06-spring-mvc/broken-examples/cors-wildcard-credentials`
 
+### Mass Assignment & Sensitive Field Leakage
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Senior
+
+Binding incoming JSON request bodies directly to JPA entities (CWE-915) allows untrusted callers to inject administrative fields (e.g. `role: "ADMIN"`, `isVerified: true`). Directly serializing entities also leaks password hashes and internal metadata. Decouple API contracts using dedicated Java record DTOs.
+
+**Appears in:** `modules/10-rest-api/broken-examples/entity-leakage-and-mass-assignment`
+
 ## Related
 
 - [Issue catalogue](index.md)

@@ -120,6 +120,16 @@ nav:
           - Tests: topics/database-sql/tests.md
           - Production: topics/database-sql/production.md
           - Exercises: topics/database-sql/exercises.md
+      - REST API:
+          - Overview: topics/rest-api/index.md
+          - Concepts: topics/rest-api/concepts.md
+          - Internals: topics/rest-api/internals.md
+          - Interview Questions: topics/rest-api/questions.md
+          - Code Review: topics/rest-api/code-review.md
+          - Solutions: topics/rest-api/solutions.md
+          - Tests: topics/rest-api/tests.md
+          - Production: topics/rest-api/production.md
+          - Exercises: topics/rest-api/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -146,6 +156,7 @@ nav:
       - Spring Transactions: questions/spring-transactions.md
       - JPA and Hibernate: questions/jpa-hibernate.md
       - Database and SQL: questions/database-sql.md
+      - REST API: questions/rest-api.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:

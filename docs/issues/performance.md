@@ -97,7 +97,13 @@ formatting paths creates high TLAB churn and frequent minor GCs. Use a single op
 
 Performing long-running, multi-second calculations or un-timed blocking downstream calls directly on the Servlet worker thread starves the Tomcat HTTP thread pool under concurrent load. Offload long operations asynchronously via `DeferredResult` or `CompletableFuture` using a dedicated bounded `ExecutorService`.
 
-**Appears in:** `modules/06-spring-mvc/broken-examples/blocking-request-thread`
+### Unbounded REST Query & Deep Offset Degradation
+
+**Type:** Performance issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+Querying and returning full collections without bounds causes JVM `OutOfMemoryError` heap crashes and DB connection starvation. Deep offset pagination (`OFFSET N LIMIT M`) incurs $O(N)$ scanning costs on every request. Enforce hard page size limits (`@Max(100)`) and adopt keyset cursor pagination.
+
+**Appears in:** `modules/10-rest-api/broken-examples/missing-pagination-unbounded-list`
 
 ## Related
 
