@@ -120,6 +120,46 @@ unvalidated or concurrently modified state. Model domain telemetry payloads as i
 
 **Appears in:** `modules/02-jvm/broken-examples/excessive-hot-path-allocation`
 
+### Field injection hides dependencies and prevents unit testing
+
+**Type:** Maintainability issue · **Severity:** High · **Difficulty:** Basic
+
+Injecting dependencies directly into private fields via `@Autowired` hides constructor contracts, prevents `final` immutable fields, and makes unit testing impossible without reflection or Spring runners. Use explicit constructor injection.
+
+**Appears in:** [Spring Core — circular field injection](../topics/spring-core/code-review.md#circular-field-injection)
+
+### Circular dependency between domain services
+
+**Type:** Architecture issue · **Severity:** High · **Difficulty:** Intermediate
+
+Direct bidirectional dependencies between beans (`ServiceA` $\leftrightarrow$ `ServiceB`) prevent isolated reasoning and trigger startup failures in modern Spring Boot. Decouple services using domain events (`ApplicationEventPublisher` / `@EventListener`).
+
+**Appears in:** [Spring Core — circular field injection](../topics/spring-core/code-review.md#circular-field-injection)
+
+### Self-invocation bypasses Spring AOP proxy interceptors
+
+**Type:** Architecture issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+Calling an annotated method (`@Transactional`, `@Audited`, `@Async`, `@Cacheable`) on `this` within the same class stays inside the target instance and bypasses the Spring proxy interceptor chain, silently omitting cross-cutting behavior. Move the annotated method to a dedicated collaborator bean.
+
+**Appears in:** [Spring Core — self-invocation aspect bypass](../topics/spring-core/code-review.md#self-invocation-aspect-bypass)
+
+### Prototype bean injected into singleton is never re-created
+
+**Type:** Scope issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+Injecting a `@Scope("prototype")` bean directly into a singleton constructor resolves and wires the prototype only once at container startup. Use `ObjectProvider<T>`, `@Lookup`, or `ScopedProxyMode.TARGET_CLASS` to dynamically fetch fresh instances.
+
+**Appears in:** [Spring Core — prototype injection in singleton](../topics/spring-core/code-review.md#prototype-injection-in-singleton)
+
+### Mutable instance state in Spring singleton bean
+
+**Type:** Concurrency issue · **Severity:** Critical · **Difficulty:** Basic
+
+Spring `@Service` and `@Component` beans are shared singletons. Storing per-request data in instance fields causes multithreaded race conditions and cross-tenant data leakage. Keep services strictly stateless and pass data via method parameters and records.
+
+**Appears in:** [Spring Core — mutable singleton state](../topics/spring-core/code-review.md#mutable-singleton-state)
+
 ## Related
 
 - [Issue catalogue](index.md)

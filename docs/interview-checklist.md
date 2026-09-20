@@ -36,10 +36,23 @@
 - [ ] Explain Java 21 Virtual Threads, carrier thread scheduling, and pinning on `synchronized` / native JNI
 - [ ] Contrast `ThreadLocal` memory leaks with `ScopedValue` lexical lifetimes
 
+## Spring Core
+
+- [ ] Explain IoC Container and ApplicationContext vs BeanFactory hierarchy
+- [ ] Trace the complete Bean Lifecycle (instantiation, BeanPostProcessor, init, destruction)
+- [ ] Contrast Bean Scopes (Singleton, Prototype, Request, Session) and resolve prototype injection in singleton via `ObjectProvider`
+- [ ] Compare dependency injection strategies (Constructor, Setter, Field) and diagnose circular dependency failures
+- [ ] Trace Spring AOP dynamic proxy mechanisms (JDK dynamic proxies vs CGLIB subclassing) and resolve self-invocation bypass
+- [ ] Configure `@Configuration` full mode (CGLIB method proxying) vs lite mode (`@Component` / records)
+- [ ] Implement asynchronous event-driven decoupling with `@EventListener` and `@Async` ApplicationEventMulticaster
+- [ ] Troubleshoot startup performance bottlenecks, heavy work in constructors, and deferred initialization via `ApplicationReadyEvent`
+- [ ] Maintain thread safety in singleton beans with stateless designs, immutability, and thread-safe delegates
+
 ## Related
 
 - [Roadmap](roadmap.md)
 - [Java questions](questions/java.md)
 - [JVM & Performance questions](questions/jvm.md)
 - [Concurrency questions](questions/concurrency.md)
+- [Spring Core questions](questions/spring-core.md)
 

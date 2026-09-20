@@ -6,6 +6,7 @@ Answer each question before reading its explanation.
 - [Java](java.md)
 - [JVM & Performance](jvm.md)
 - [Concurrency](concurrency.md)
+- [Spring Core](spring-core.md)
 
 ## Related
 

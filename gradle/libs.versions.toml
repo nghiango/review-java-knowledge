@@ -1,5 +1,8 @@
 [versions]
 spring-boot = "3.5.16"
+spring-framework = "6.2.4"
+aspectj = "1.9.22.1"
+jakarta-annotation = "3.0.0"
 junit = "5.14.4"
 junit-platform = "1.14.4"
 assertj = "3.27.7"
@@ -9,6 +12,10 @@ errorprone-core = "2.50.0"
 google-java-format = "1.28.0"
 
 [libraries]
+spring-context = { module = "org.springframework:spring-context", version.ref = "spring-framework" }
+spring-test = { module = "org.springframework:spring-test", version.ref = "spring-framework" }
+aspectjweaver = { module = "org.aspectj:aspectjweaver", version.ref = "aspectj" }
+jakarta-annotation-api = { module = "jakarta.annotation:jakarta.annotation-api", version.ref = "jakarta-annotation" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
