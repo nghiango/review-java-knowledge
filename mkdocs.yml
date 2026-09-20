@@ -100,6 +100,16 @@ nav:
           - Tests: topics/spring-transactions/tests.md
           - Production: topics/spring-transactions/production.md
           - Exercises: topics/spring-transactions/exercises.md
+      - JPA and Hibernate:
+          - Overview: topics/jpa-hibernate/index.md
+          - Concepts: topics/jpa-hibernate/concepts.md
+          - Internals: topics/jpa-hibernate/internals.md
+          - Interview Questions: topics/jpa-hibernate/questions.md
+          - Code Review: topics/jpa-hibernate/code-review.md
+          - Solutions: topics/jpa-hibernate/solutions.md
+          - Tests: topics/jpa-hibernate/tests.md
+          - Production: topics/jpa-hibernate/production.md
+          - Exercises: topics/jpa-hibernate/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -124,6 +134,7 @@ nav:
       - Spring Boot: questions/spring-boot.md
       - Spring MVC: questions/spring-mvc.md
       - Spring Transactions: questions/spring-transactions.md
+      - JPA and Hibernate: questions/jpa-hibernate.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:

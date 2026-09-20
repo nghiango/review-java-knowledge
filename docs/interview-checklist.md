@@ -83,6 +83,19 @@
 - [ ] Coordinate transactional side effects using `@TransactionalEventListener(phase = AFTER_COMMIT)`
 - [ ] Implement Transactional Outbox pattern for atomic database persistence and message publishing
 
+## JPA / Hibernate
+
+- [ ] Explain the 4 Entity Lifecycle States (Transient, Managed, Detached, Removed) and transition triggers
+- [ ] Contrast primary key generation strategies (`IDENTITY` vs `SEQUENCE` with `allocationSize`) and JDBC batching
+- [ ] Override JPA default `FetchType.EAGER` on `@ManyToOne` and `@OneToOne` with `FetchType.LAZY`
+- [ ] Eliminate N+1 query storms using `JOIN FETCH`, `@EntityGraph`, or DTO projections
+- [ ] Implement proxy-safe `equals()` and `hashCode()` using natural business keys without relying on generated IDs
+- [ ] Prevent `LazyInitializationException` without using Open Session in View (OSIV)
+- [ ] Model many-to-many associations safely without `CascadeType.REMOVE` on shared entities
+- [ ] Protect presentation boundaries with Java record DTO projections instead of exposing entities
+- [ ] Evaluate Optimistic Locking (`@Version`) vs Pessimistic Locking (`PESSIMISTIC_WRITE`) for concurrent writes
+- [ ] Process large datasets with Hibernate `StatelessSession` or periodic `em.flush()` / `em.clear()`
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -93,4 +106,5 @@
 - [Spring Boot questions](questions/spring-boot.md)
 - [Spring MVC questions](questions/spring-mvc.md)
 - [Spring Transactions questions](questions/spring-transactions.md)
+- [JPA / Hibernate questions](questions/jpa-hibernate.md)
 

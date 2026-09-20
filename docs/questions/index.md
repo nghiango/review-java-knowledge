@@ -10,6 +10,7 @@ Answer each question before reading its explanation.
 - [Spring Boot](spring-boot.md)
 - [Spring MVC](spring-mvc.md)
 - [Spring Transactions](spring-transactions.md)
+- [JPA / Hibernate](jpa-hibernate.md)
 
 ## Related
 

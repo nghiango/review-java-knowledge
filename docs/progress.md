@@ -13,7 +13,7 @@
 | 05 | Spring Boot | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 06 | Spring MVC | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 07 | Spring Transactions | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 08 | JPA / Hibernate | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 08 | JPA / Hibernate | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 09 | Database / SQL | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 10 | REST API | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 11 | Spring Security | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
