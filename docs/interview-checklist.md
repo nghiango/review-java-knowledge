@@ -183,6 +183,18 @@
 - [ ] Contrast Quorum Queues (Raft consensus) with Classic Mirrored Queues for high availability and network partition resilience
 - [ ] Handle broker memory and disk alarms (`vm_memory_high_watermark`, `disk_free_limit`) by sizing queues and provisioning monitoring alerts
 
+## AWS Messaging
+
+- [ ] Contrast Amazon SQS Standard vs SQS FIFO regarding ordering guarantees, deduplication, and throughput
+- [ ] Size SQS `VisibilityTimeout` relative to consumer execution latency and implement dynamic lease heartbeating
+- [ ] Configure SQS Long Polling (`WaitTimeSeconds = 20`) to eliminate empty receive responses and reduce API costs
+- [ ] Design poison pill mitigation using SQS Dead Letter Queues (DLQ) and `maxReceiveCount` redrive policies
+- [ ] Partition SQS FIFO throughput across high-cardinality `MessageGroupId` keys up to 70,000 messages per second
+- [ ] Leverage SNS-to-SQS fanout patterns with Subscription Filter Policies to eliminate noisy consumer traffic
+- [ ] Route schema-aware enterprise events using Amazon EventBridge custom event buses and JSON pattern matching
+- [ ] Evaluate architectural trade-offs across Kafka, RabbitMQ, SQS, SNS, and EventBridge for microservice workloads
+- [ ] Scale consumer worker fleets based on backlog per worker instance (`ApproximateNumberOfMessagesVisible`) rather than CPU
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -201,4 +213,5 @@
 - [Caching / Redis questions](questions/caching-redis.md)
 - [Kafka questions](questions/kafka.md)
 - [RabbitMQ questions](questions/rabbitmq.md)
+- [AWS Messaging questions](questions/aws-messaging.md)
 

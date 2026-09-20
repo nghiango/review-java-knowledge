@@ -146,8 +146,57 @@ Using `rabbitTemplate.convertAndSend()` without publisher confirms or returns ha
 
 **Appears in:** `modules/15-rabbitmq/broken-examples/fire-and-forget-publisher`
 
+---
+
+### SQS Visibility Timeout Shorter Than Consumer Execution (Duplicate Processing)
+
+**Type:** Reliability issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** AWS SQS, CloudFormation · **Interview frequency:** High · **Production impact:** Critical
+
+In Amazon SQS, `VisibilityTimeout` defines a temporary processing lease during which the message is invisible to other workers. If the worker's processing latency (or Lambda function timeout) exceeds this lease, SQS returns the in-flight message to the visible queue state. A second worker receives and executes the identical message concurrently, causing race conditions, duplicate database writes, and wasted compute. Set `VisibilityTimeout` to at least $6\times$ consumer execution timeout, or implement dynamic heartbeat lease extensions via `ChangeMessageVisibility`.
+
+**Appears in:** `modules/16-aws-messaging/broken-examples/visibility-timeout-too-short`
+
+---
+
+### SQS FIFO Missing Deduplication and Partitioning Strategy
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** AWS SQS FIFO, CloudFormation · **Interview frequency:** High · **Production impact:** High
+
+Declaring an SQS FIFO queue without the required `.fifo` suffix causes deployment failures. Furthermore, omitting `ContentBasedDeduplication` causes SQS to reject producer calls that do not provide `MessageDeduplicationId` with an API exception. Omitting `DeduplicationScope: messageGroup` and `FifoThroughputLimit: perMessageGroupId` artificially caps FIFO queue throughput to 300 msg/sec instead of scaling up to 70,000 msg/sec across unique message groups.
+
+**Appears in:** `modules/16-aws-messaging/broken-examples/fifo-missing-deduplication`
+
+---
+
+### SQS Queue Missing Dead Letter Queue (DLQ) Redrive Policy
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** AWS SQS, Dead Letter Queue · **Interview frequency:** High · **Production impact:** High
+
+Omitting `RedrivePolicy` from an SQS queue allows malformed or unprocessable payloads (poison pills) to cycle continuously through receive-fail-reappear loops until `MessageRetentionPeriod` expires. Each poison pill consumes worker CPU and SQS API request billing thousands of times before being silently deleted by SQS without notice. Always attach a dedicated DLQ with `maxReceiveCount` (3–5) and a CloudWatch alarm on DLQ visible message count.
+
+**Appears in:** `modules/16-aws-messaging/broken-examples/no-dlq-redrive-policy`
+
+---
+
+### Unfiltered SNS Topic Fanout Flooding Subscriber Queues
+
+**Type:** Scalability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** AWS SNS, SQS Fanout, Subscription Filter Policies · **Interview frequency:** High · **Production impact:** High
+
+By default, Amazon SNS fanout delivers 100% of topic messages to every subscribed SQS queue. Downstream services that only process a fraction of events (e.g. fraud detection only needing high-value checkout events) are overwhelmed by millions of irrelevant messages. Consumer workers waste compute and network resources polling, deserializing, and discarding noisy events. Define `FilterPolicy` on SNS subscriptions to evaluate message attributes at the SNS boundary.
+
+**Appears in:** `modules/16-aws-messaging/broken-examples/sns-fanout-missing-filter`
+
 ## Related
 
 - [Issue catalogue](index.md)
 - [Kafka topic documentation](../topics/kafka/index.md)
 - [RabbitMQ topic documentation](../topics/rabbitmq/index.md)
+- [AWS Messaging topic documentation](../topics/aws-messaging/index.md)

@@ -1,0 +1,12 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Carrier Webhook Tracking Ingestion Queue
+
+Resources:
+  ShipmentTrackingQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: shipment-tracking-queue
+      VisibilityTimeout: 60
+      ReceiveMessageWaitTimeSeconds: 20
+      MessageRetentionPeriod: 86400
+      KmsMasterKeyId: alias/aws/sqs

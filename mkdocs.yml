@@ -180,6 +180,15 @@ nav:
           - Tests: topics/rabbitmq/tests.md
           - Production: topics/rabbitmq/production.md
           - Exercises: topics/rabbitmq/exercises.md
+      - AWS Messaging:
+          - Overview: topics/aws-messaging/index.md
+          - Concepts: topics/aws-messaging/concepts.md
+          - Internals: topics/aws-messaging/internals.md
+          - Interview Questions: topics/aws-messaging/questions.md
+          - Code Review: topics/aws-messaging/code-review.md
+          - Solutions: topics/aws-messaging/solutions.md
+          - Production: topics/aws-messaging/production.md
+          - Exercises: topics/aws-messaging/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -212,6 +221,7 @@ nav:
       - Caching and Redis: questions/caching-redis.md
       - Kafka: questions/kafka.md
       - RabbitMQ: questions/rabbitmq.md
+      - AWS Messaging: questions/aws-messaging.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:

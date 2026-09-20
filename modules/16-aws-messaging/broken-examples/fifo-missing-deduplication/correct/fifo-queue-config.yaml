@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Banking Payment Ledger FIFO Queue Configuration - Corrected
+
+Resources:
+  PaymentLedgerDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      # DLQ for FIFO must also be a FIFO queue ending with .fifo
+      QueueName: payment-ledger-dlq.fifo
+      FifoQueue: true
+      MessageRetentionPeriod: 1209600 # 14 days
+
+  PaymentLedgerQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      # Mandatory .fifo suffix for FIFO queue names
+      QueueName: payment-ledger-queue.fifo
+      FifoQueue: true
+      # Automatic SHA-256 payload deduplication across a 5-minute sliding window
+      ContentBasedDeduplication: true
+      # High-throughput FIFO configuration scaling up to 70,000 msg/sec partitioned by MessageGroupId
+      DeduplicationScope: messageGroup
+      FifoThroughputLimit: perMessageGroupId
+      VisibilityTimeout: 120
+      ReceiveMessageWaitTimeSeconds: 20
+      MessageRetentionPeriod: 345600 # 4 days
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt PaymentLedgerDeadLetterQueue.Arn
+        maxReceiveCount: 5

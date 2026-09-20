@@ -1,0 +1,12 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Banking Payment Ledger FIFO Queue Configuration
+
+Resources:
+  PaymentLedgerQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: payment-ledger-queue
+      FifoQueue: true
+      VisibilityTimeout: 120
+      ReceiveMessageWaitTimeSeconds: 20
+      MessageRetentionPeriod: 345600

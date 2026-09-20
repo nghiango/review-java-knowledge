@@ -18,6 +18,7 @@ Answer each question before reading its explanation.
 - [Caching / Redis](caching-redis.md)
 - [Kafka](kafka.md)
 - [RabbitMQ](rabbitmq.md)
+- [AWS Messaging](aws-messaging.md)
 
 ## Related
 

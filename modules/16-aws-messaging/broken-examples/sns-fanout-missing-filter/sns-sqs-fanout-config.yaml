@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: E-Commerce Order Lifecycle SNS to SQS Fanout Architecture
+
+Resources:
+  OrderEventsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: order-events-topic
+
+  FraudDetectionQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: fraud-detection-queue
+
+  WarehouseShippingQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: warehouse-shipping-queue
+
+  CustomerNotificationQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: customer-notification-queue
+
+  FraudDetectionSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref OrderEventsTopic
+      Endpoint: !GetAtt FraudDetectionQueue.Arn
+      Protocol: sqs
+      RawMessageDelivery: true
+
+  WarehouseShippingSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref OrderEventsTopic
+      Endpoint: !GetAtt WarehouseShippingQueue.Arn
+      Protocol: sqs
+      RawMessageDelivery: true
+
+  CustomerNotificationSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref OrderEventsTopic
+      Endpoint: !GetAtt CustomerNotificationQueue.Arn
+      Protocol: sqs
+      RawMessageDelivery: true

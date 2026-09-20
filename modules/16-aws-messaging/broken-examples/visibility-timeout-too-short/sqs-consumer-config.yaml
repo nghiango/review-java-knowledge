@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Video Rendering SQS Queue and Processing Lambda
+
+Resources:
+  VideoRenderQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: video-render-queue
+      VisibilityTimeout: 30
+      MessageRetentionPeriod: 86400
+      ReceiveMessageWaitTimeSeconds: 20
+
+  VideoRenderFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: video-render-processor
+      Runtime: java21
+      Handler: lab.awsmessaging.RenderHandler::handleRequest
+      Timeout: 90
+      MemorySize: 2048
+      Code:
+        S3Bucket: deploy-artifacts
+        S3Key: video-render-processor.jar
+
+  VideoRenderEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt VideoRenderQueue.Arn
+      FunctionName: !GetAtt VideoRenderFunction.Arn
+      BatchSize: 10
+      Enabled: true

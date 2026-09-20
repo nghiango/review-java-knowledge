@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Carrier Webhook Tracking Ingestion Queue - Corrected
+
+Resources:
+  ShipmentTrackingDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: shipment-tracking-dlq
+      MessageRetentionPeriod: 1209600 # 14 days maximum retention for dead letters
+      KmsMasterKeyId: alias/aws/sqs
+      RedriveAllowPolicy:
+        redrivePermission: byQueue
+        sourceQueueArns:
+          - !Sub 'arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:shipment-tracking-queue'
+
+  ShipmentTrackingQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: shipment-tracking-queue
+      VisibilityTimeout: 60
+      ReceiveMessageWaitTimeSeconds: 20
+      MessageRetentionPeriod: 345600 # 4 days retention
+      KmsMasterKeyId: alias/aws/sqs
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt ShipmentTrackingDeadLetterQueue.Arn
+        # Dead-letter after 5 failed receive attempts
+        maxReceiveCount: 5
+
+  ShipmentTrackingDlqAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: shipment-tracking-dlq-non-empty
+      AlarmDescription: Triggered when poison messages land in the shipment tracking DLQ
+      MetricName: ApproximateNumberOfMessagesVisible
+      Namespace: AWS/SQS
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt ShipmentTrackingDeadLetterQueue.QueueName
