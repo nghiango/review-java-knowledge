@@ -3,12 +3,12 @@
 ## Context
 
 A team added `SequenceAllocator`, which hands out monotonically increasing numbers, together with a
-unit test covering allocation, the current value and reset. The suite is green in CI and is treated
-as the safety net for the allocator — but every test works on one `static` allocator, and each test
-asserts the absolute number it expects to be handed out next.
+unit test covering allocation, the current value and reset. The suite is green in CI and is treated as
+the safety net for the allocator — but each test builds a fresh allocator and then asserts the absolute
+number it expects to be handed out next, and those numbers only line up when the methods run in the
+order declared in the class.
 
-`SequenceAllocator` itself is the class the correct implementation ships; the review target is the
-test built around it.
+Both files are the review target: the allocator and the suite that covers it.
 
 ## Target Files
 
@@ -17,19 +17,19 @@ test built around it.
 
 ## Task
 
-Review the two files as if they were a pull request. Identify every problem with the suite and with
-the way it shares the allocator. Consider:
+Review the two files as if they were a pull request. Identify every problem with the allocator and with
+the suite. Consider:
 
-- where the allocator a test calls `next()` on comes from, and who else can advance it
-- what each expected value actually describes — a property of `next()`, or the position the method
-  happens to occupy in the class
+- where the counter a test calls `next()` on actually lives, and who else can advance it
+- whether a newly constructed allocator starts from the `start` value it was given, and what the class
+  promises in its Javadoc
+- what each expected value describes — a property of `next()`, or the position the method happens to
+  occupy in the class
 - what happens when the methods run in a different order, when one method runs alone, when the class
   runs twice in the same JVM, or when the suite is executed in parallel
 - whether `@TestMethodOrder(OrderAnnotation.class)` documents a real sequence or hides a coupling
-- whether the suite would still pass if each method built its own allocator, and what that says
-  about the assertions
-- what a second test class in the same package would observe if it used the same allocator
-- how much of each assertion is about `SequenceAllocator` and how much about the shared counter
+- what a second allocator — or a second test class in the same package — would observe
+- how much of each assertion is about `SequenceAllocator` and how much about shared state
 
 Write your findings down before opening `SOLUTION.md`.
 

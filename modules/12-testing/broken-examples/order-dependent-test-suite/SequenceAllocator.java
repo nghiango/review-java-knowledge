@@ -1,7 +1,7 @@
 package lab.testing.broken.orderdependenttestsuite;
 
 /**
- * Issues monotonically increasing sequence numbers from a counter.
+ * Issues monotonically increasing sequence numbers.
  *
  * <p>{@code start} is the value the counter holds before the first allocation, so {@code new
  * SequenceAllocator(0).next()} returns 1 and {@link #current()} returns 0 until then. Allocation
@@ -10,12 +10,12 @@ package lab.testing.broken.orderdependenttestsuite;
  */
 public final class SequenceAllocator {
 
+    private static long counter;
+
     private final long start;
-    private long counter;
 
     public SequenceAllocator(long start) {
         this.start = start;
-        this.counter = start;
     }
 
     /**
