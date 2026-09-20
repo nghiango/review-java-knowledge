@@ -90,8 +90,8 @@ public final class AccountService {
         // stated here, so it is not a rule the application owns.
         // Reliability issue: Check-then-act with nothing to back it up. The map cannot raise a
         // constraint violation, so two concurrent registrations of the same address both pass the
-        // check and one silently overwrites the other; the suite never exercises the race or the
-        // violation the database would raise.
+        // check and one silently overwrites the other, and the suite never exercises the violation
+        // the database raises for a duplicate insert (which needs no concurrency to trigger).
         if (repository.findByEmail(email).isPresent()) {
             throw new IllegalStateException("email already registered: " + email);
         }
@@ -210,7 +210,7 @@ compiles, and passes, which is why it survived review.
 |---|---|---|---|---|
 | 1 | Testing issue | High | `AccountServiceTest` (whole class), `AccountService.register()` / `balance()` | The suite asserts the in-memory substitute's semantics — case-insensitive matching, insertion order, silent overwrite — none of which PostgreSQL provides |
 | 2 | Database issue | High | `InMemoryAccountRepository.save()` / `findByEmail()` / `findAll()` | The unique index and the `findByEmail` collation are assumed to be case-insensitive and to reject duplicates; PostgreSQL compares case-sensitively and the map overwrites silently |
-| 3 | Reliability issue | High | `AccountService.register()` | A read-then-write duplicate check with no constraint behind it, tested only against a store that cannot fail, so the race and the real violation are never exercised |
+| 3 | Reliability issue | High | `AccountService.register()` | A read-then-write duplicate check with no constraint behind it, tested only against a store that cannot fail, so the constraint violation the database produces is never exercised |
 | 4 | Maintainability issue | Medium | `InMemoryAccountRepository` | A hand-written second implementation of the repository that has to be kept in step with `AccountRepository` |
 
 ## Issue details
@@ -363,8 +363,8 @@ attempting the conflicting write against the real engine.
 #### Problem
 `register` reads for an existing address and then writes, with nothing but the substitute's map to
 back the check. The map cannot raise a constraint violation, so the suite never executes the failure
-the database will produce, and never runs the two registrations concurrently. A duplicate check that
-is only ever tested against a store that cannot fail is not verified at all.
+the database produces — a second insert of the same address. A duplicate check that is only ever
+tested against a store that cannot fail is not verified at all.
 
 #### Why it happens
 The check-then-act shape reads naturally and passes every test the fake can run. Because the fake
@@ -375,9 +375,11 @@ that has to handle it (and the constraint that has to exist) is never needed.
 ```text
 two requests register the same address at the same time
 → both findByEmail calls return empty, both save
-→ without a unique index both rows commit; with one, the loser gets a
-  DataIntegrityViolationException that nothing maps to a 409
-→ the caller sees a 500, and the duplicate exists in the meantime
+→ the unique index rejects the loser with a DataIntegrityViolationException
+  that nothing maps to a 409 → the caller sees a 500
+
+no concurrency is required to trigger the violation: inserting the same address twice on one
+connection is enough. The index, not the read-then-write check, is what makes the rule true.
 ```
 
 #### Broken implementation
@@ -401,11 +403,25 @@ public Account register(String email, String displayName) {
 }
 ```
 
+```java
+// src/integrationTest/java/lab/testing/accounts/AccountRepositoryIT.java
+@Test
+void save_identicalEmailTwice_isRejectedByTheUniqueIndex() {
+    repository.saveAndFlush(new Account("dup@example.com", "One", 0L));
+
+    assertThatThrownBy(() -> repository.saveAndFlush(new Account("dup@example.com", "Two", 0L)))
+            .isInstanceOf(DataIntegrityViolationException.class)
+            .hasMessageContaining("uk_accounts_email");
+}
+```
+
 #### Why the solution works
-With the unique constraint on the column, the losing writer of a concurrent registration fails at
-commit with a `DataIntegrityViolationException` instead of creating a second row. The integration test
-exercises the constraint directly, so the failure path is covered by a test rather than left to
-production. The pre-check stays only to turn the common case into a domain exception.
+The unique constraint on the column is the rule: a second row with the same email is rejected by the
+database with a `DataIntegrityViolationException`, whether the two inserts come from one thread or
+two. `AccountRepositoryIT.save_identicalEmailTwice_isRejectedByTheUniqueIndex()` asserts exactly that
+— it saves the same address twice and asserts that the violation is the `uk_accounts_email` constraint
+— so the failure path is covered by a test rather than left to production. The pre-check stays only to
+turn the common case into a domain exception.
 
 #### Trade-offs
 Relying on the constraint means the application must translate a persistence exception into its own
@@ -414,7 +430,9 @@ correct distributed lock, and the constraint has to exist regardless.
 
 #### How to detect it
 Look for read-then-write uniqueness checks whose only test double cannot fail. Then check that the
-column actually carries a unique constraint and that a test attempts the conflicting write.
+column actually carries a unique constraint and that a test attempts the conflicting write against the
+real database and asserts the violation — here
+`save_identicalEmailTwice_isRejectedByTheUniqueIndex`.
 
 #### Interview follow-up
 > Why is a database constraint the right place for a uniqueness rule, and how would you surface its
@@ -530,10 +548,11 @@ The production-ready counterpart lives in `lab.testing.accounts`:
   the email (trim + lower-case) before storing or querying it, so case-insensitive uniqueness is an
   explicit application rule, and rejects a duplicate with a typed `DuplicateEmailException`.
 - [`AccountRepositoryIT.java`](../../src/integrationTest/java/lab/testing/accounts/AccountRepositoryIT.java)
-  — the persistence test against a real PostgreSQL container: it asserts that addresses differing only
-  by case both persist (the index is case-sensitive), that `register` normalises and rejects the
-  duplicate, that `findByEmail` is case-sensitive, that ordering must be requested with `Sort`, and
-  that `balance` reflects persisted state across a flush/clear boundary.
+  — the persistence test against a real PostgreSQL container: it asserts that the unique index rejects
+  a second row with the identical email (`DataIntegrityViolationException` on `uk_accounts_email`) but
+  accepts two addresses differing only by case (the index is case-sensitive), that `register`
+  normalises and rejects the duplicate, that `findByEmail` is case-sensitive, that ordering must be
+  requested with `Sort`, and that `balance` reflects persisted state across a flush/clear boundary.
 
 The container is shared through
 [`SharedPostgresContainer`](../../../test-support/src/main/java/lab/testsupport/SharedPostgresContainer.java)

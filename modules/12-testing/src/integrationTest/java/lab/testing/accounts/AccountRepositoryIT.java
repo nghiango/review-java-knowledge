@@ -11,6 +11,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.TestConstructor;
 
@@ -19,10 +20,11 @@ import org.springframework.test.context.TestConstructor;
  * PostgreSQL container.
  *
  * <p>The point of the slice is that the assertions describe PostgreSQL's semantics rather than an
- * in-memory substitute's: the unique index on {@code email} is case-sensitive, {@code findByEmail}
- * is case-sensitive, and row order is only guaranteed when it is requested with a {@link Sort}.
- * {@link AccountService} therefore has to normalise the email itself — case-insensitive uniqueness
- * is an application rule, not something the database or a fake repository provides.
+ * in-memory substitute's: the unique index on {@code email} rejects an exact duplicate but accepts
+ * two addresses that differ only by case (it is case-sensitive), {@code findByEmail} is
+ * case-sensitive, and row order is only guaranteed when it is requested with a {@link Sort}. {@link
+ * AccountService} therefore has to normalise the email itself — case-insensitive uniqueness is an
+ * application rule, not something the database or a fake repository provides.
  *
  * <p>{@code replace = Replace.NONE} stops Boot from swapping the container-backed DataSource for an
  * embedded one, and the container itself comes from {@link TestingJpaConfiguration}. The
@@ -54,6 +56,16 @@ class AccountRepositoryIT {
         repository.saveAndFlush(new Account("Ada@Example.com", "Ada Lovelace", 0L));
 
         assertThat(repository.findAll()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("the unique index rejects a second row with the identical email")
+    void save_identicalEmailTwice_isRejectedByTheUniqueIndex() {
+        repository.saveAndFlush(new Account("dup@example.com", "One", 0L));
+
+        assertThatThrownBy(() -> repository.saveAndFlush(new Account("dup@example.com", "Two", 0L)))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("uk_accounts_email");
     }
 
     @Test
