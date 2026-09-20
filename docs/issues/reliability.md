@@ -40,6 +40,30 @@ running worker threads and sever active HTTP connections upon receiving `SIGTERM
 
 **Appears in:** `modules/05-spring-boot/broken-examples/no-graceful-shutdown`
 
+### Assertions coupled to implementation details
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5, Mockito · **Interview frequency:** High · **Production impact:** High
+
+Verifying call order, call counts and exact argument lists restates the implementation instead of the
+observable outcome. The test then fails on behaviour-preserving refactors and still passes when the
+business result is wrong. Assert the returned value or a captured side effect.
+
+**Appears in:** `modules/12-testing/broken-examples/asserting-implementation-not-behaviour`
+
+### Mocking a value collaborator removes the rule under test
+
+**Type:** Testing issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Mockito · **Interview frequency:** High · **Production impact:** High
+
+Doubling a pure, in-process collaborator and stubbing its result deletes the code path the test
+claims to verify; the test can only prove that the stub was called. Use the real collaborator and
+reserve test doubles for I/O boundaries, time and randomness.
+
+**Appears in:** `modules/12-testing/broken-examples/asserting-implementation-not-behaviour`
+
 ## Related
 
 - [Issue catalogue](index.md)

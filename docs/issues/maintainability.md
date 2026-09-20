@@ -192,6 +192,31 @@ Returning universal `200 OK` responses with buried error messages or lacking `Lo
 
 **Appears in:** `modules/06-spring-mvc/broken-examples/wrong-http-status-codes`
 
+### Service boundary with no observable behaviour
+
+**Type:** Design issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** JUnit 5, Mockito · **Interview frequency:** High · **Production impact:** High
+
+When the outcome of a use case is only expressed as an outbound call, tests cannot pin it down and
+match it with `any()`. Return the value the caller depends on (or capture the side effect) so the
+boundary has a contract that a test can assert — otherwise a wrong charge or wrong total ships
+green.
+
+**Appears in:** `modules/12-testing/broken-examples/asserting-implementation-not-behaviour`
+
+### Test coupled to internal call structure
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Basic
+
+**Technology:** Mockito `InOrder` · **Interview frequency:** Medium · **Production impact:** Medium
+
+`InOrder` and `times(n)` verification encode today's control flow, so extract-method and reorder
+refactors fail without any behaviour change. Reserve order verification for sequences that are
+themselves the contract (authenticate before authorise, commit before ack).
+
+**Appears in:** `modules/12-testing/broken-examples/asserting-implementation-not-behaviour`
+
 ## Related
 
 - [Issue catalogue](index.md)

@@ -25,6 +25,13 @@ dependencies {
     testImplementation(libs.archunit.junit5)
     testImplementation(libs.wiremock.standalone)
 
+    // The "asserting implementation not behaviour" review target is itself a JUnit/Mockito test,
+    // so the brokenExamples source set needs the test libraries to compile it. compileOnly-style
+    // only: broken examples are never run and never packaged.
+    add("brokenExamplesImplementation", libs.junit.jupiter)
+    add("brokenExamplesImplementation", libs.mockito.core)
+    add("brokenExamplesImplementation", libs.mockito.junit.jupiter)
+
     integrationTestImplementation(libs.testcontainers.junit.jupiter)
     integrationTestImplementation(libs.testcontainers.postgresql)
     integrationTestImplementation(libs.spring.boot.testcontainers)
