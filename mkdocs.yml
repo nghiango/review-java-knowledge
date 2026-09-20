@@ -140,6 +140,16 @@ nav:
           - Tests: topics/spring-security/tests.md
           - Production: topics/spring-security/production.md
           - Exercises: topics/spring-security/exercises.md
+      - Testing:
+          - Overview: topics/testing/index.md
+          - Concepts: topics/testing/concepts.md
+          - Internals: topics/testing/internals.md
+          - Interview Questions: topics/testing/questions.md
+          - Code Review: topics/testing/code-review.md
+          - Solutions: topics/testing/solutions.md
+          - Tests: topics/testing/tests.md
+          - Production: topics/testing/production.md
+          - Exercises: topics/testing/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -168,8 +178,10 @@ nav:
       - Database and SQL: questions/database-sql.md
       - REST API: questions/rest-api.md
       - Spring Security: questions/spring-security.md
+      - Testing: questions/testing.md
   - Reference:
       - Overview: reference/index.md
+      - Testing Plan: superpowers/plans/2026-09-20-testing-module.md
   - Contributing:
       - Specification Index: spec/README.md
       - Module Conventions: spec/module-conventions.md

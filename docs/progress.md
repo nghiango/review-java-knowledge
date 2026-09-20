@@ -17,7 +17,7 @@
 | 09 | Database / SQL | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 10 | REST API | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 11 | Spring Security | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 12 | Testing | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 12 | Testing | code | 🟨 | 🟨 | 🟨 | 🟨 | 🟨 | 🟨 | 🟨 |
 | 13 | Caching / Redis | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 14 | Kafka | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 15 | RabbitMQ | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |

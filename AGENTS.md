@@ -147,7 +147,7 @@ implementation, or if `docs/progress.md` was not updated.
 
 ## 6. Agent workflow checklist
 
-Project skills in `.devin/skills/` encode these workflows — invoke the matching one instead of
+Project skills in `.agents/skills/` encode these workflows — invoke the matching one instead of
 improvising: `/creating-module`, `/writing-broken-example`, `/writing-interview-questions`,
 `/documenting-topic`, `/creating-track-module`, `/reviewing-lab-change`, `/verifying-module`.
 

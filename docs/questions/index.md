@@ -14,6 +14,7 @@ Answer each question before reading its explanation.
 - [Database / SQL](database-sql.md)
 - [REST API](rest-api.md)
 - [Spring Security](spring-security.md)
+- [Testing](testing.md)
 
 ## Related
 
