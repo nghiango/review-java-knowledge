@@ -29,7 +29,16 @@ Handle only the failure the layer owns; preserve operational failures and their 
 Removing through a collection while an enhanced-for Iterator is active changes its modification
 count and fails fast. Use iterator removal, `removeIf`, or derive a new immutable result.
 
-**Appears in:** [Core Java — resource and collection mutation](../topics/core-java/code-review.md#resource-and-collection-mutation)
+### Abrupt JVM Termination Drops In-Flight Tasks
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Intermediate
+
+Default `server.shutdown: immediate` and unmanaged `ExecutorService` instances forcefully terminate
+running worker threads and sever active HTTP connections upon receiving `SIGTERM`. Configure
+`server.shutdown: graceful` and manage worker threads via `ThreadPoolTaskExecutor` with
+`setWaitForTasksToCompleteOnShutdown(true)` and `setAwaitTerminationSeconds(30)`.
+
+**Appears in:** `modules/05-spring-boot/broken-examples/no-graceful-shutdown`
 
 ## Related
 

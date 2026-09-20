@@ -48,6 +48,17 @@
 - [ ] Troubleshoot startup performance bottlenecks, heavy work in constructors, and deferred initialization via `ApplicationReadyEvent`
 - [ ] Maintain thread safety in singleton beans with stateless designs, immutability, and thread-safe delegates
 
+## Spring Boot
+
+- [ ] Explain auto-configuration discovery via `AutoConfiguration.imports` and `@AutoConfiguration`
+- [ ] Evaluate conditional annotations (`@ConditionalOnClass`, `@ConditionalOnMissingBean`, `@ConditionalOnProperty`)
+- [ ] Implement type-safe `@ConfigurationProperties` records with Jakarta Bean Validation and relaxed binding
+- [ ] Trace the 17-level property resolution precedence hierarchy and multi-profile YAML activation
+- [ ] Secure Actuator management endpoints and isolate Kubernetes `liveness` and `readiness` health groups
+- [ ] Configure `server.shutdown: graceful` and `ThreadPoolTaskExecutor` shutdown hooks for zero-downtime rolling deploys
+- [ ] Enable Java 21 Virtual Threads via `spring.threads.virtual.enabled=true` for embedded Tomcat workers
+- [ ] Utilize Testcontainers `@ServiceConnection` and Docker Compose integration for automated local development
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -55,4 +66,5 @@
 - [JVM & Performance questions](questions/jvm.md)
 - [Concurrency questions](questions/concurrency.md)
 - [Spring Core questions](questions/spring-core.md)
+- [Spring Boot questions](questions/spring-boot.md)
 

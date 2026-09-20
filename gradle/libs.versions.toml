@@ -1,8 +1,11 @@
 [versions]
-spring-boot = "3.5.16"
+spring-boot = "3.4.3"
 spring-framework = "6.2.4"
 aspectj = "1.9.22.1"
 jakarta-annotation = "3.0.0"
+jakarta-validation = "3.0.2"
+hibernate-validator = "8.0.2.Final"
+jakarta-el = "4.0.2"
 junit = "5.14.4"
 junit-platform = "1.14.4"
 assertj = "3.27.7"
@@ -14,8 +17,16 @@ google-java-format = "1.28.0"
 [libraries]
 spring-context = { module = "org.springframework:spring-context", version.ref = "spring-framework" }
 spring-test = { module = "org.springframework:spring-test", version.ref = "spring-framework" }
-aspectjweaver = { module = "org.aspectj:aspectjweaver", version.ref = "aspectj" }
+spring-boot = { module = "org.springframework.boot:spring-boot", version.ref = "spring-boot" }
+spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "spring-boot" }
+spring-boot-actuator = { module = "org.springframework.boot:spring-boot-actuator", version.ref = "spring-boot" }
+spring-boot-actuator-autoconfigure = { module = "org.springframework.boot:spring-boot-actuator-autoconfigure", version.ref = "spring-boot" }
+spring-boot-test = { module = "org.springframework.boot:spring-boot-test", version.ref = "spring-boot" }
 jakarta-annotation-api = { module = "jakarta.annotation:jakarta.annotation-api", version.ref = "jakarta-annotation" }
+jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api", version.ref = "jakarta-validation" }
+hibernate-validator = { module = "org.hibernate.validator:hibernate-validator", version.ref = "hibernate-validator" }
+jakarta-el = { module = "org.glassfish:jakarta.el", version.ref = "jakarta-el" }
+aspectjweaver = { module = "org.aspectj:aspectjweaver", version.ref = "aspectj" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }

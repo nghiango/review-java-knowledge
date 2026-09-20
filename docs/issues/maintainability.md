@@ -160,6 +160,22 @@ Spring `@Service` and `@Component` beans are shared singletons. Storing per-requ
 
 **Appears in:** [Spring Core — mutable singleton state](../topics/spring-core/code-review.md#mutable-singleton-state)
 
+### Scattered `@Value` configuration without validation
+
+**Type:** Maintainability issue · **Severity:** High · **Difficulty:** Intermediate
+
+Direct `@Value` injection scatters property keys across services without type hierarchy, IDE autocomplete, or startup validation. Encapsulate properties in `@ConfigurationProperties` records annotated with `@Validated` and Jakarta Bean Validation constraints.
+
+**Appears in:** `modules/05-spring-boot/broken-examples/scattered-value-config`
+
+### Accidental auto-configuration override bypasses framework customization
+
+**Type:** Architecture issue · **Severity:** High · **Difficulty:** Senior
+
+Defining raw custom beans without using auto-configured builders or customizer callbacks accidentally overrides Spring Boot framework defaults, discarding Micrometer metrics, distributed tracing, and connection pool configuration. Use `@ConditionalOnMissingBean` and implement framework Customizer interfaces.
+
+**Appears in:** `modules/05-spring-boot/broken-examples/accidental-autoconfig-override`
+
 ## Related
 
 - [Issue catalogue](index.md)

@@ -1,0 +1,9 @@
+payment:
+  gateway:
+    endpoint-url: "https://api.payments.prod.company.com/v1"
+    api-key: "live_sk_prod_998877665544332211"
+spring:
+  datasource:
+    url: "jdbc:postgresql://db-primary.prod.internal:5432/payments"
+    username: "prod_db_user"
+    password: "SuperSecretProductionPassword2026!"

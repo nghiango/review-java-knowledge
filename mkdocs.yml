@@ -70,6 +70,16 @@ nav:
           - Tests: topics/spring-core/tests.md
           - Production: topics/spring-core/production.md
           - Exercises: topics/spring-core/exercises.md
+      - Spring Boot:
+          - Overview: topics/spring-boot/index.md
+          - Concepts: topics/spring-boot/concepts.md
+          - Internals: topics/spring-boot/internals.md
+          - Interview Questions: topics/spring-boot/questions.md
+          - Code Review: topics/spring-boot/code-review.md
+          - Solutions: topics/spring-boot/solutions.md
+          - Tests: topics/spring-boot/tests.md
+          - Production: topics/spring-boot/production.md
+          - Exercises: topics/spring-boot/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -91,6 +101,7 @@ nav:
       - JVM: questions/jvm.md
       - Concurrency: questions/concurrency.md
       - Spring Core: questions/spring-core.md
+      - Spring Boot: questions/spring-boot.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:
