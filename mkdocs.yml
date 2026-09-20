@@ -160,6 +160,16 @@ nav:
           - Tests: topics/caching-redis/tests.md
           - Production: topics/caching-redis/production.md
           - Exercises: topics/caching-redis/exercises.md
+      - Kafka:
+          - Overview: topics/kafka/index.md
+          - Concepts: topics/kafka/concepts.md
+          - Internals: topics/kafka/internals.md
+          - Interview Questions: topics/kafka/questions.md
+          - Code Review: topics/kafka/code-review.md
+          - Solutions: topics/kafka/solutions.md
+          - Tests: topics/kafka/tests.md
+          - Production: topics/kafka/production.md
+          - Exercises: topics/kafka/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -190,6 +200,7 @@ nav:
       - Spring Security: questions/spring-security.md
       - Testing: questions/testing.md
       - Caching and Redis: questions/caching-redis.md
+      - Kafka: questions/kafka.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:

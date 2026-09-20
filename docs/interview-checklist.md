@@ -160,6 +160,19 @@
 - [ ] Implement atomic distributed locks using `SET key token NX PX` with Lua script release
 - [ ] Defer cache invalidations to `afterCommit` in `@Transactional` methods to prevent dirty reads on rollback
 
+## Kafka
+
+- [ ] Explain append-only commit log architecture, sequential disk I/O, and OS Page Cache zero-copy reads
+- [ ] Design partition keys using Murmur2 hashing to guarantee total message ordering per business entity
+- [ ] Configure producer durability with `acks=all`, `min.insync.replicas=2`, and `enable.idempotence=true`
+- [ ] Implement idempotent consumers using an atomic deduplication store to handle at-least-once redeliveries
+- [ ] Control offset acknowledgment strictly after business processing and database commits (`AckMode.MANUAL_IMMEDIATE`)
+- [ ] Isolate deterministic poison pill messages immediately to Dead Letter Topics (`.DLT`) with bounded retries
+- [ ] Prevent consumer group rebalance storms by offloading heavy processing and respecting `max.poll.interval.ms`
+- [ ] Eliminate stop-the-world partition revocations using `CooperativeStickyAssignor`
+- [ ] Prevent dual-write race conditions between databases and Kafka using the Transactional Outbox pattern or post-commit events
+- [ ] Monitor consumer group health using consumer lag metrics (`records.lag`) and rebalance rates
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -176,4 +189,5 @@
 - [Spring Security questions](questions/spring-security.md)
 - [Testing questions](questions/testing.md)
 - [Caching / Redis questions](questions/caching-redis.md)
+- [Kafka questions](questions/kafka.md)
 

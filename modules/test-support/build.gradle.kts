@@ -9,4 +9,5 @@ dependencies {
     // depend on `:modules:test-support` to use the shared containers.
     api(libs.testcontainers.junit.jupiter)
     api(libs.testcontainers.postgresql)
+    api(libs.testcontainers.kafka)
 }

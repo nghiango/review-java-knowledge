@@ -16,6 +16,7 @@ Answer each question before reading its explanation.
 - [Spring Security](spring-security.md)
 - [Testing](testing.md)
 - [Caching / Redis](caching-redis.md)
+- [Kafka](kafka.md)
 
 ## Related
 
