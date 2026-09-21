@@ -381,6 +381,16 @@ nav:
               - Tests: tracks/java25-boot4/rest-api/tests.md
               - Production: tracks/java25-boot4/rest-api/production.md
               - Exercises: tracks/java25-boot4/rest-api/exercises.md
+          - Spring Security:
+              - Overview: tracks/java25-boot4/spring-security/index.md
+              - Concepts: tracks/java25-boot4/spring-security/concepts.md
+              - Internals: tracks/java25-boot4/spring-security/internals.md
+              - Interview Questions: tracks/java25-boot4/spring-security/questions.md
+              - Code Review: tracks/java25-boot4/spring-security/code-review.md
+              - Solutions: tracks/java25-boot4/spring-security/solutions.md
+              - Tests: tracks/java25-boot4/spring-security/tests.md
+              - Production: tracks/java25-boot4/spring-security/production.md
+              - Exercises: tracks/java25-boot4/spring-security/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md

@@ -20,6 +20,11 @@ spring-tx = { module = "org.springframework:spring-tx", version = "6.2.4" }
 spring-web = { module = "org.springframework:spring-web", version = "6.2.4" }
 spring-webmvc = { module = "org.springframework:spring-webmvc", version = "6.2.4" }
 spring-test = { module = "org.springframework:spring-test", version = "6.2.4" }
+spring-security-core = { module = "org.springframework.security:spring-security-core", version = "6.4.3" }
+spring-security-web = { module = "org.springframework.security:spring-security-web", version = "6.4.3" }
+spring-security-config = { module = "org.springframework.security:spring-security-config", version = "6.4.3" }
+spring-security-crypto = { module = "org.springframework.security:spring-security-crypto", version = "6.4.3" }
+spring-security-test = { module = "org.springframework.security:spring-security-test", version = "6.4.3" }
 spring-boot = { module = "org.springframework.boot:spring-boot", version = "3.4.3" }
 spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version = "3.4.3" }
 spring-boot-test = { module = "org.springframework.boot:spring-boot-test", version = "3.4.3" }

@@ -31,7 +31,7 @@ Only the delta is implemented per module. Each module keeps the baseline's numbe
 | [06-spring-mvc](spring-mvc/index.md) | Spring MVC | Delta implemented | API versioning, JSpecify nullness, Jackson 3 |
 | [07-spring-transactions](spring-transactions/index.md) | Spring Transactions | Delta implemented | transactional behaviour re-verification after the upgrade |
 | [10-rest-api](rest-api/index.md) | REST API | Delta implemented | declarative @HttpExchange, native versioning vs hand-rolled, RFC 8594 headers |
-| 11-spring-security | Spring Security | Planned | Security 7 lambda-only DSL |
+| [11-spring-security](spring-security/index.md) | Spring Security | Delta implemented | Security 7 lambda-only DSL, virtual thread context propagation with ScopedValue |
 | 12-testing | Testing | Planned | `RestTestClient`, new test slices |
 | 18-resilience | Resilience | Planned | core retry vs Resilience4j |
 | 40-whats-new | Feature tour | Planned | runnable tour + migration checklist |

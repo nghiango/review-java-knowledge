@@ -160,6 +160,18 @@ Subtasks forked using `CompletableFuture.supplyAsync()` or bare executors have i
 
 **Appears in:** [Java 25 / Boot 4 Concurrency — Virtual Thread Context Propagation & Leaks](../tracks/java25-boot4/concurrency/code-review.md#review-target-1-tenantcontextholderjava)
 
+---
+
+### InheritableThreadLocal Security Context Pollution Across Worker Pools
+
+**Type:** Concurrency issue · **Severity:** Critical · **Difficulty:** Senior
+
+**Track:** `java25-boot4` · **Technology:** Spring Security 7, Virtual Threads, InheritableThreadLocal · **Interview frequency:** High · **Production impact:** Critical
+
+`InheritableThreadLocal` creates subtle concurrency bugs when combined with reusable worker pools or virtual threads: tasks dispatched to existing threads do not re-inherit context, while uncleared credentials survive on the worker thread, causing subsequent tasks to run with unauthorized credentials. Replace with Java 25 `ScopedValue` or context-propagating executor decorators.
+
+**Appears in:** [Java 25 / Boot 4 Spring Security — InheritableThreadLocal Context Pollution](../tracks/java25-boot4/spring-security/code-review.md#review-target-2-inheritablethreadlocal-security-context-pollution)
+
 ## Related
 
 - [Issue catalogue](index.md)

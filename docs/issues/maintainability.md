@@ -470,6 +470,18 @@ Manually instantiating `RestClient`, `RestClientAdapter`, and `HttpServiceProxyF
 
 **Appears in:** [Java 25 / Boot 4 REST API — Declarative HTTP Client Leaks](../tracks/java25-boot4/rest-api/code-review.md#review-target-2-declarative-http-interface-proxy-configuration-leaks)
 
+---
+
+### Obsolete and() Method Chaining in Security Configuration
+
+**Type:** Maintainability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Spring Security 7, Lambda DSL · **Interview frequency:** High · **Production impact:** Medium
+
+Using fluent `.and()` method chaining and parameterless configurers (such as `csrf()` or `authorizeHttpRequests()`) was deprecated in Spring Security 6 and completely removed in Spring Security 7. Fluent chaining obscures builder return scopes and leads to misconfigured filter hierarchies. Migrate all security configurations to the pure lambda DSL with `Customizer<T>`.
+
+**Appears in:** [Java 25 / Boot 4 Spring Security — Legacy Chaining DSL](../tracks/java25-boot4/spring-security/code-review.md#review-target-1-legacy-spring-security-dsl-chaining-matcher-ordering)
+
 ## Related
 
 - [Issue catalogue](index.md)

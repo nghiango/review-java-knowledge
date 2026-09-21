@@ -49,7 +49,7 @@ the differences; the baseline remains the canonical explanation of each topic.
 | 06 | Spring MVC | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 07 | Spring Transactions | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 10 | REST API | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 11 | Spring Security | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 11 | Spring Security | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 12 | Testing | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 18 | Resilience | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 40 | What's New (track-only) | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |

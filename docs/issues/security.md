@@ -217,6 +217,30 @@ Composing caching or logging decorators outside security or authorization decora
 
 **Appears in:** `modules/29-design-patterns/broken-examples/decorator-order-bug`
 
+---
+
+### Broad PermitAll or Misplaced Request Matcher Leaks Protected Admin Endpoints
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Spring Security 7, RequestMatcher · **Interview frequency:** High · **Production impact:** Critical
+
+Misplacing general permit-all matchers before specific protected routes or ending filter chain rules with `anyRequest().permitAll()` unintentionally exposes restricted administrative or management endpoints to anonymous internet traffic. Always order request matchers from most specific to least specific, and enforce secure-by-default posture using `anyRequest().authenticated()` or `anyRequest().denyAll()`.
+
+**Appears in:** [Java 25 / Boot 4 Spring Security — Legacy Chaining DSL](../tracks/java25-boot4/spring-security/code-review.md#review-target-1-legacy-spring-security-dsl-chaining-matcher-ordering)
+
+---
+
+### Uncleared SecurityContext Permits Unauthenticated Worker Tasks to Execute Privileged Actions
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Senior
+
+**Track:** `java25-boot4` · **Technology:** Spring Security 7, ThreadLocal, ScopedValue · **Interview frequency:** High · **Production impact:** Critical
+
+Failing to clean up thread-local security credentials after executing background worker tasks allows subsequent unauthenticated or unprivileged tasks scheduled on the same worker thread to inherit lingering administrative credentials. This causes privilege escalation, authorization bypasses, and audit trail spoofing. Use Java 25 `ScopedValue` or `DelegatingSecurityContextExecutorService` to guarantee strict lexical context lifetime.
+
+**Appears in:** [Java 25 / Boot 4 Spring Security — InheritableThreadLocal Context Pollution](../tracks/java25-boot4/spring-security/code-review.md#review-target-2-inheritablethreadlocal-security-context-pollution)
+
 ## Related
 
 - [Issue catalogue](index.md)
