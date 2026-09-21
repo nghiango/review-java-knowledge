@@ -374,6 +374,23 @@
 - [ ] Explain Cell-Based Architecture: partition platforms into self-contained cells via deterministic edge routing to contain failure blast radii
 - [ ] Evaluate Multi-Tenant Architecture strategies: Database-per-tenant vs Schema-per-tenant vs Shared Table with Row-Level Security (RLS)
 
+## Design Patterns
+
+- [ ] Select appropriate Creational, Structural, and Behavioral patterns based on architectural forces rather than applying patterns preemptively (avoid YAGNI/Over-Engineering)
+- [ ] Implement the Strategy Pattern to eliminate brittle switch-on-type branching, adhering to the Open/Closed Principle
+- [ ] Harness Spring's dynamic collection injection (`List<Strategy>` / `Map<String, Strategy>`) to construct extensible strategy registries
+- [ ] Differentiate Strategy (composition-based interchangeable algorithms) from Template Method (inheritance-based algorithmic skeleton with hooks)
+- [ ] Evaluate Builder Pattern implementations: records vs mutable builders vs staged/step builders for multi-argument validation
+- [ ] Compare Factory Method with Abstract Factory and know when simple static factory methods on domain types suffice
+- [ ] Implement thread-safe, reflection-safe, serialization-safe Singletons using Java enums or double-checked locking with `volatile`
+- [ ] Design pipeline and middleware architectures using the Decorator Pattern, avoiding brittle subclass explosion
+- [ ] Audit Decorator composition order to ensure security, authentication, and authorization decorators wrap caching or logging decorators
+- [ ] Implement the Proxy Pattern in Spring: understand dynamic JDK interface proxies vs CGLIB class subclassing and the self-invocation limitation
+- [ ] Structure composite predicate business rules using the Specification Pattern (`and`, `or`, `not`)
+- [ ] Model complex entity lifecycles using the State Pattern, decoupling state-dependent behavior from monolithic entity classes
+- [ ] Implement the Chain of Responsibility Pattern for sequential validation, filtration, and request enrichment pipelines
+- [ ] Replace classic GoF patterns with modern Java 21+ idioms: lambdas and functional interfaces for Strategy, sealed interfaces and pattern matching for Visitor/State
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -405,3 +422,4 @@
 - [CI/CD questions](questions/ci-cd.md)
 - [System Design questions](questions/system-design.md)
 - [Architecture questions](questions/architecture.md)
+- [Design Patterns questions](questions/design-patterns.md)

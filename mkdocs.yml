@@ -304,6 +304,16 @@ nav:
           - Tests: topics/architecture/tests.md
           - Production: topics/architecture/production.md
           - Exercises: topics/architecture/exercises.md
+      - Design Patterns:
+          - Overview: topics/design-patterns/index.md
+          - Concepts: topics/design-patterns/concepts.md
+          - Internals: topics/design-patterns/internals.md
+          - Interview Questions: topics/design-patterns/questions.md
+          - Code Review: topics/design-patterns/code-review.md
+          - Solutions: topics/design-patterns/solutions.md
+          - Tests: topics/design-patterns/tests.md
+          - Production: topics/design-patterns/production.md
+          - Exercises: topics/design-patterns/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -349,6 +359,7 @@ nav:
       - CI/CD: questions/ci-cd.md
       - System Design: questions/system-design.md
       - Architecture: questions/architecture.md
+      - Design Patterns: questions/design-patterns.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:

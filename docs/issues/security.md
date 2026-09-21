@@ -205,6 +205,18 @@ Configuring container vulnerability scanners (such as Trivy, Grype, or Snyk) wit
 
 **Appears in:** `modules/26-ci-cd/broken-examples/tests-and-security-skipped-on-main`
 
+---
+
+### Decorator Ordering Bug Bypassing Security and Authorization Checks
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Decorator Pattern, Spring Security, Pipeline Composition · **Interview frequency:** High · **Production impact:** Critical
+
+Composing caching or logging decorators outside security or authorization decorators in a processing pipeline allows cached responses to bypass access-control checks. When an authorized administrator queries sensitive data, the outer caching decorator stores the payload keyed only by resource ID. Subsequent requests by unauthenticated or unauthorized users hit the cache and receive the sensitive resource directly without executing the inner authorization decorator. Security decorators must always form the outermost layer of any processing chain or decorator pipeline.
+
+**Appears in:** `modules/29-design-patterns/broken-examples/decorator-order-bug`
+
 ## Related
 
 - [Issue catalogue](index.md)

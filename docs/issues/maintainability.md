@@ -364,7 +364,27 @@ Treating domain entities as passive data holders with public getters and setters
 
 Allowing one module in a modular monolith or microservices architecture to directly query or mutate database tables owned by another bounded context violates encapsulation. Changes to internal schemas immediately break foreign modules, domain lifecycle logic is bypassed, and database-level deadlocks emerge. Modules must interact strictly through published Java API contracts or asynchronous Domain Events.
 
-**Appears in:** `modules/28-architecture/broken-examples/cross-module-database-access`
+### Procedural Switch-on-Type Growth Violating Open/Closed Principle
+
+**Type:** Maintainability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Java Switch, Strategy Pattern, SOLID Principles · **Interview frequency:** High · **Production impact:** High
+
+Using monolithic `switch` statements across multiple methods to handle domain type variants forces modification of existing, tested code whenever a new variant is introduced. As new types are added, cyclomatic complexity explodes, merge conflicts multiply across teams, and omitting a case branch triggers runtime exceptions instead of compile-time errors. Refactor to polymorphic interfaces (Strategy Pattern) with dynamic registry discovery or Java 21 sealed hierarchies with exhaustive switch expressions.
+
+**Appears in:** `modules/29-design-patterns/broken-examples/switch-on-type-growth`
+
+---
+
+### Premature Pattern Over-Engineering Violating KISS and YAGNI
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Technology:** Gang of Four Patterns, Clean Code, Refactoring · **Interview frequency:** High · **Production impact:** Medium
+
+Stacking multiple structural and behavioral design patterns (such as Bridge, Abstract Factory, and Visitor) to solve straightforward requirements (e.g. formatting a flat list of records into CSV) introduces excessive cognitive overhead, obscures data flow behind layers of synthetic delegation, and creates unnecessary heap allocations and garbage collection pressure. Always favor idiomatic language constructs, static helpers, or standard library features until genuine variability requirements emerge.
+
+**Appears in:** `modules/29-design-patterns/broken-examples/pattern-over-engineering`
 
 ## Related
 

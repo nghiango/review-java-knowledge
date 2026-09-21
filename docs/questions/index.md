@@ -31,6 +31,7 @@ Answer each question before reading its explanation.
 - [CI/CD](ci-cd.md)
 - [System Design](system-design.md)
 - [Architecture](architecture.md)
+- [Design Patterns](design-patterns.md)
 
 ## Related
 
