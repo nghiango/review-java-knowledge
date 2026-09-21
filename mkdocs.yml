@@ -361,6 +361,16 @@ nav:
               - Tests: tracks/java25-boot4/spring-mvc/tests.md
               - Production: tracks/java25-boot4/spring-mvc/production.md
               - Exercises: tracks/java25-boot4/spring-mvc/exercises.md
+          - Spring Transactions:
+              - Overview: tracks/java25-boot4/spring-transactions/index.md
+              - Concepts: tracks/java25-boot4/spring-transactions/concepts.md
+              - Internals: tracks/java25-boot4/spring-transactions/internals.md
+              - Interview Questions: tracks/java25-boot4/spring-transactions/questions.md
+              - Code Review: tracks/java25-boot4/spring-transactions/code-review.md
+              - Solutions: tracks/java25-boot4/spring-transactions/solutions.md
+              - Tests: tracks/java25-boot4/spring-transactions/tests.md
+              - Production: tracks/java25-boot4/spring-transactions/production.md
+              - Exercises: tracks/java25-boot4/spring-transactions/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md

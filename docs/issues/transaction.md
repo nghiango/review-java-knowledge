@@ -76,6 +76,30 @@ transaction. This requires idempotency and reconciliation.
 
 **Appears in:** `modules/23-performance/broken-examples/hikari-exhaustion`
 
+---
+
+### Structured Concurrency Subtasks Forked Inside `@Transactional`
+
+**Type:** Transaction issue · **Severity:** Critical · **Difficulty:** Senior
+
+**Track:** `java25-boot4` · **Technology:** Spring Transactions, StructuredTaskScope, Virtual Threads · **Interview frequency:** High · **Production impact:** Critical
+
+Spring `@Transactional` binds database connections and transaction status to `TransactionSynchronizationManager` via a `ThreadLocal`. Forking subtasks inside `StructuredTaskScope` executes them on distinct child virtual threads that do not inherit the active database transaction. Subtasks acquire separate connections or run in auto-commit mode, breaking transaction isolation and failing to roll back when the parent transaction fails. Move parallel subtasks outside database transactions.
+
+**Appears in:** [Java 25 / Boot 4 Spring Transactions — StructuredTaskScope Subtasks Inside @Transactional](../tracks/java25-boot4/spring-transactions/code-review.md#review-target-1-batchorderservicejava)
+
+---
+
+### Transaction Context Loss across Asynchronous Virtual Worker Threads
+
+**Type:** Resource management issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Spring Transactions, ThreadLocal, ScopedValue · **Interview frequency:** High · **Production impact:** High
+
+Relying on standard `ThreadLocal` to propagate transaction correlation IDs or audit metadata to asynchronous virtual workers causes silent context loss because newly spawned virtual threads observe empty thread-local maps. Furthermore, omitting cleanup leaks context on caller threads. Migrate to Java 25 `ScopedValue` for automatic, bounded context inheritance.
+
+**Appears in:** [Java 25 / Boot 4 Spring Transactions — ThreadLocal Context Loss in Async Virtual Workers](../tracks/java25-boot4/spring-transactions/code-review.md#review-target-2-paymentorchestratorjava)
+
 ## Related
 
 - [Issue catalogue](index.md)
