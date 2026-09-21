@@ -6,8 +6,7 @@ import lab.architecture.cleanarchitecture.domain.model.OrderId;
 import lab.architecture.cleanarchitecture.domain.port.out.PaymentPort;
 
 /**
- * Infrastructure adapter implementing PaymentPort.
- * Simulates external payment gateway interaction.
+ * Infrastructure adapter implementing PaymentPort. Simulates external payment gateway interaction.
  */
 public class MockPaymentAdapter implements PaymentPort {
 
@@ -23,7 +22,9 @@ public class MockPaymentAdapter implements PaymentPort {
 
     @Override
     public PaymentResult processPayment(OrderId orderId, Money amount, String paymentToken) {
-        if (paymentToken == null || paymentToken.isBlank() || paymentToken.equals("invalid-token")) {
+        if (paymentToken == null
+                || paymentToken.isBlank()
+                || paymentToken.equals("invalid-token")) {
             return PaymentResult.failure("Invalid payment token");
         }
         if (amount.amount().compareTo(maxAllowedAmount) > 0) {

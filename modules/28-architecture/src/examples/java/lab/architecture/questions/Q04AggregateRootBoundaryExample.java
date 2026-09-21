@@ -5,8 +5,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Q04: Aggregate and Aggregate Root Boundaries.
- * Demonstrates how Aggregate Root controls access to internal entities.
+ * Q04: Aggregate and Aggregate Root Boundaries. Demonstrates how Aggregate Root controls access to
+ * internal entities.
  */
 public class Q04AggregateRootBoundaryExample {
 

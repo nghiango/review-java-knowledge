@@ -31,7 +31,8 @@ public record Money(BigDecimal amount, Currency currency) {
     public Money add(Money other) {
         Objects.requireNonNull(other, "Other money must not be null");
         if (!this.currency.equals(other.currency)) {
-            throw new IllegalArgumentException("Cannot add different currencies: " + this.currency + " vs " + other.currency);
+            throw new IllegalArgumentException(
+                    "Cannot add different currencies: " + this.currency + " vs " + other.currency);
         }
         return new Money(this.amount.add(other.amount), this.currency);
     }

@@ -366,6 +366,9 @@
 - [ ] Apply CQRS (Command Query Responsibility Segregation) to decouple write-optimized aggregates from read-optimized denormalized projections
 - [ ] Explain Event Sourcing mechanics: append-only event store, optimistic concurrency control via sequence numbers, and snapshotting
 - [ ] Prevent the Shared Database anti-pattern across bounded contexts to protect autonomous schema evolution and team ownership
+- [ ] Differentiate DDD (structural domain modeling & aggregates) from BDD (collaborative behavior discovery & executable specifications)
+- [ ] Implement Outside-In development: map BDD Given-When-Then scenarios to Hexagonal Driving Ports and verify Aggregate Root state transitions
+- [ ] Apply the Backend for Frontend (BFF) pattern: shape client-specific payloads (Mobile vs Web), reduce round-trips, and ban domain logic leaks into BFF adapters
 
 ## Related
 

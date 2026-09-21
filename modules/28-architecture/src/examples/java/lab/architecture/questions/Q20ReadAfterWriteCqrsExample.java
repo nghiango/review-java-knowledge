@@ -4,8 +4,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Q20: Read-After-Write Consistency in CQRS Architectures.
- * Demonstrates version checking to ensure client doesn't see stale read projection.
+ * Q20: Read-After-Write Consistency in CQRS Architectures. Demonstrates version checking to ensure
+ * client doesn't see stale read projection.
  */
 public class Q20ReadAfterWriteCqrsExample {
 
@@ -26,7 +26,9 @@ public class Q20ReadAfterWriteCqrsExample {
         ReadModelWithVersion readModel = new ReadModelWithVersion();
         readModel.updateProjection("ORD-1", 1L);
 
-        boolean isStale = !readModel.isConsistentWithWrittenVersion("ORD-1", 2L); // true (client waits or polls)
+        boolean isStale =
+                !readModel.isConsistentWithWrittenVersion(
+                        "ORD-1", 2L); // true (client waits or polls)
         readModel.updateProjection("ORD-1", 2L);
         boolean isConsistentNow = readModel.isConsistentWithWrittenVersion("ORD-1", 2L); // true
 

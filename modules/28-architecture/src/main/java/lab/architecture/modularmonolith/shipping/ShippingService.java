@@ -7,8 +7,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 /**
- * Shipping bounded context service.
- * Responds to billing events without direct database coupling to Billing or Ordering.
+ * Shipping bounded context service. Responds to billing events without direct database coupling to
+ * Billing or Ordering.
  */
 @Service
 public class ShippingService {

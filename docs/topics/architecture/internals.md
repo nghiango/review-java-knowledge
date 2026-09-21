@@ -129,3 +129,87 @@ $$\text{Load State} = \text{Snapshot}_{k} + \sum_{i=k+1}^{n} \text{Event}_i$$
 
 1. A background worker or in-line trigger saves an aggregated snapshot every $N$ events (e.g. every 100 events).
 2. Hydration queries the snapshot table for the latest snapshot $\le \text{version}$, and then queries `event_store` only for events where `sequence_number > snapshot.version`.
+
+---
+
+## 4. BFF Request Fan-Out & Non-Blocking Aggregation Mechanics
+
+When a mobile client calls a single composite endpoint (e.g. `GET /api/mobile/dashboard`), the BFF must orchestrate calls to multiple downstream microservices or modular bounded contexts concurrently:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Mobile as Mobile App
+    participant BFF as MobileOrderBff
+    participant Ord as Ordering Context
+    participant Inv as Inventory Context
+    participant Ship as Shipping Context
+
+    Mobile->>BFF: GET /api/mobile/orders/42
+    par Async Non-Blocking Fan-Out
+        BFF->>Ord: getOrder(42)
+    and
+        BFF->>Inv: checkStock(SKU-1)
+    and
+        BFF->>Ship: getShipmentStatus(42)
+    end
+    Note over BFF: CompletableFuture.allOf() with 800ms timeout
+    Ord-->>BFF: OrderData (200 OK, 45ms)
+    Inv-->>BFF: StockData (200 OK, 30ms)
+    Ship-->>BFF: Timeout / 500 Error
+    Note over BFF: Resilient Partial Degradation Fallback
+    BFF-->>Mobile: 200 OK MobileOrderSummaryDto<br/>(status=PAID, delivery="Status Pending")
+```
+
+### Asynchronous Fan-Out Implementation Pattern
+```java
+public CompletableFuture<MobileOrderSummaryDto> getMobileOrderSummary(String orderId) {
+    CompletableFuture<OrderDto> orderFuture = CompletableFuture.supplyAsync(
+            () -> orderClient.findOrder(orderId), executor);
+    CompletableFuture<String> shippingFuture = CompletableFuture.supplyAsync(
+            () -> shippingClient.getStatus(orderId), executor)
+            .completeOnTimeout("Tracking Unavailable", 800, TimeUnit.MILLISECONDS)
+            .exceptionally(ex -> "Tracking Unavailable");
+
+    return orderFuture.thenCombine(shippingFuture, (order, shippingStatus) ->
+            new MobileOrderSummaryDto(
+                    order.id(),
+                    order.status(),
+                    order.totalAmount(),
+                    order.itemCount(),
+                    shippingStatus
+            )
+    );
+}
+```
+
+### Resilient Partial Degradation
+A critical internal responsibility of the BFF is **blast radius containment**:
+- If the non-critical Shipping service is experiencing an outage or timeout, the BFF **must not** return HTTP 500 to the mobile app.
+- Instead, it degrades gracefully: constructs the `MobileOrderSummaryDto` with `deliveryStatus: "Tracking Unavailable"` and returns HTTP 200.
+- The mobile user can view their purchased order without interruption, preventing client-facing cart abandonment.
+
+---
+
+## 5. BDD Living Documentation & Specification Mechanics
+
+BDD execution frameworks bridge business prose and Java bytecode by binding Gherkin step expressions to programmatic method invocations:
+
+```mermaid
+flowchart TD
+    Feature["Gherkin Feature File<br/>(Scenario: Customer Cancels Order)"] --> Parser["Gherkin AST Parser"]
+    Parser --> Matcher["Step Definition Matcher<br/>(Regex / Cucumber Expressions)"]
+    Matcher --> TestClass["BDD Test Class<br/>(OrderPlacementBddTest)"]
+    TestClass -->|"In-Memory Invocation (< 1ms)"| Hexagon["Hexagonal Driving Port<br/>(PlaceOrderUseCase.placeOrder)"]
+    Hexagon --> Aggregate["Order Aggregate Root"]
+    Aggregate --> Assertion["AssertJ State & Event Verification"]
+```
+
+### In-Memory BDD Execution Pipeline
+1. **Zero-IO Acceptance Verification**:
+   - Rather than executing BDD tests through slow HTTP network hops or Selenium browser drivers, senior architectures run BDD acceptance criteria directly against the **Driving Ports** using in-memory stub adapters for Driven Ports (`InMemoryOrderRepositoryAdapter`, `MockPaymentAdapter`).
+2. **Speed & CI Determinism**:
+   - A suite of 500 BDD acceptance scenarios executes in under 2 seconds.
+   - Tests run in standard JUnit 5 suites (`./gradlew test`) on every commit, preventing regression without flaky network failures.
+3. **Living Documentation**:
+   - Scenario output logs directly generate human-readable HTML reports (e.g. Cucumber HTML / JGiven reports) audited by compliance officers and product stakeholders.

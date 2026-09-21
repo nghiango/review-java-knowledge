@@ -3,8 +3,8 @@ package lab.architecture.questions;
 import java.math.BigDecimal;
 
 /**
- * Q02: Anemic Domain Model vs Rich Domain Model.
- * Demonstrates how rich domain model enforces business invariants internally.
+ * Q02: Anemic Domain Model vs Rich Domain Model. Demonstrates how rich domain model enforces
+ * business invariants internally.
  */
 public class Q02AnemicVsRichDomainExample {
 

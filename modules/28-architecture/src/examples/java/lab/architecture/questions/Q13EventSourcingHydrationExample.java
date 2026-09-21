@@ -3,14 +3,17 @@ package lab.architecture.questions;
 import java.util.List;
 
 /**
- * Q13: Event Sourcing Concepts (Event Streams & State Hydration).
- * Demonstrates rehydrating state from an append-only sequence of past events.
+ * Q13: Event Sourcing Concepts (Event Streams & State Hydration). Demonstrates rehydrating state
+ * from an append-only sequence of past events.
  */
 public class Q13EventSourcingHydrationExample {
 
     public interface DomainEvent {}
+
     public record AccountOpenedEvent(String accountId, int initialBalance) implements DomainEvent {}
+
     public record MoneyDepositedEvent(String accountId, int amount) implements DomainEvent {}
+
     public record MoneyWithdrawnEvent(String accountId, int amount) implements DomainEvent {}
 
     public static class BankAccountAggregate {
@@ -43,11 +46,11 @@ public class Q13EventSourcingHydrationExample {
     }
 
     public static void main(String[] args) {
-        List<DomainEvent> history = List.of(
-                new AccountOpenedEvent("ACC-1", 100),
-                new MoneyDepositedEvent("ACC-1", 50),
-                new MoneyWithdrawnEvent("ACC-1", 30)
-        );
+        List<DomainEvent> history =
+                List.of(
+                        new AccountOpenedEvent("ACC-1", 100),
+                        new MoneyDepositedEvent("ACC-1", 50),
+                        new MoneyWithdrawnEvent("ACC-1", 30));
 
         BankAccountAggregate account = BankAccountAggregate.replay(history);
         int finalBalance = account.getBalance(); // 120 (100 + 50 - 30)

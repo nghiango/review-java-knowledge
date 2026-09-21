@@ -7,8 +7,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * DDD Rich Domain Aggregate Root.
- * Fully encapsulates business invariants, state transitions, and total calculation.
+ * DDD Rich Domain Aggregate Root. Fully encapsulates business invariants, state transitions, and
+ * total calculation.
  */
 public class Order {
 
@@ -32,9 +32,8 @@ public class Order {
             throw new IllegalStateException("Cannot modify order in status: " + status);
         }
 
-        Optional<OrderItem> existing = items.stream()
-                .filter(it -> it.productId().equals(productId))
-                .findFirst();
+        Optional<OrderItem> existing =
+                items.stream().filter(it -> it.productId().equals(productId)).findFirst();
 
         if (existing.isPresent()) {
             OrderItem current = existing.get();
@@ -43,7 +42,8 @@ public class Order {
             items.add(new OrderItem(productId, newQty, unitPrice));
         } else {
             if (items.size() >= MAX_ITEMS_LIMIT) {
-                throw new IllegalStateException("Order cannot contain more than " + MAX_ITEMS_LIMIT + " distinct items");
+                throw new IllegalStateException(
+                        "Order cannot contain more than " + MAX_ITEMS_LIMIT + " distinct items");
             }
             items.add(new OrderItem(productId, quantity, unitPrice));
         }
@@ -53,7 +53,8 @@ public class Order {
 
     public void submit() {
         if (status != OrderStatus.DRAFT) {
-            throw new IllegalStateException("Order can only be submitted from DRAFT status, current: " + status);
+            throw new IllegalStateException(
+                    "Order can only be submitted from DRAFT status, current: " + status);
         }
         if (items.isEmpty()) {
             throw new IllegalStateException("Cannot submit an empty order");
@@ -66,7 +67,8 @@ public class Order {
 
     public void markPaid() {
         if (status != OrderStatus.SUBMITTED) {
-            throw new IllegalStateException("Order must be SUBMITTED before payment, current: " + status);
+            throw new IllegalStateException(
+                    "Order must be SUBMITTED before payment, current: " + status);
         }
         this.status = OrderStatus.PAID;
     }

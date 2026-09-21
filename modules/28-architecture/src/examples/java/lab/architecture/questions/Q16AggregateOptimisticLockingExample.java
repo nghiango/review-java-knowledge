@@ -1,8 +1,8 @@
 package lab.architecture.questions;
 
 /**
- * Q16: Optimistic Concurrency Control in DDD Aggregates.
- * Demonstrates version-based optimistic concurrency control preventing lost updates.
+ * Q16: Optimistic Concurrency Control in DDD Aggregates. Demonstrates version-based optimistic
+ * concurrency control preventing lost updates.
  */
 public class Q16AggregateOptimisticLockingExample {
 
@@ -19,8 +19,11 @@ public class Q16AggregateOptimisticLockingExample {
 
         public void update(String newData, long expectedVersion) {
             if (this.version != expectedVersion) {
-                throw new IllegalStateException("OptimisticLockingFailure: Expected version "
-                        + expectedVersion + " but current is " + this.version);
+                throw new IllegalStateException(
+                        "OptimisticLockingFailure: Expected version "
+                                + expectedVersion
+                                + " but current is "
+                                + this.version);
             }
             this.data = newData;
             this.version++;
@@ -45,6 +48,7 @@ public class Q16AggregateOptimisticLockingExample {
             conflictDetected = true; // true (prevented lost update)
         }
 
-        System.out.println("Q16 newVersion: " + newVersion + ", conflictDetected: " + conflictDetected);
+        System.out.println(
+                "Q16 newVersion: " + newVersion + ", conflictDetected: " + conflictDetected);
     }
 }

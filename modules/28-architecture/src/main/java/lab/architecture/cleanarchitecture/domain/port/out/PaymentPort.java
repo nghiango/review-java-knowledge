@@ -4,8 +4,8 @@ import lab.architecture.cleanarchitecture.domain.model.Money;
 import lab.architecture.cleanarchitecture.domain.model.OrderId;
 
 /**
- * Outgoing port for external payment processing.
- * Isolates the domain from external gateway APIs (e.g. Stripe, PayPal).
+ * Outgoing port for external payment processing. Isolates the domain from external gateway APIs
+ * (e.g. Stripe, PayPal).
  */
 public interface PaymentPort {
 

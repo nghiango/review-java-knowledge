@@ -1,8 +1,8 @@
 package lab.architecture.modularmonolith.inventory;
 
 /**
- * Public contract exposed by the Inventory bounded context.
- * External modules may only interact with Inventory via this interface.
+ * Public contract exposed by the Inventory bounded context. External modules may only interact with
+ * Inventory via this interface.
  */
 public interface InventoryApi {
 

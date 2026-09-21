@@ -3,8 +3,8 @@ package lab.architecture.questions;
 import java.math.BigDecimal;
 
 /**
- * Q22: Scenario: Refactoring a 5,000-line God Service into Hexagonal DDD Aggregates.
- * Demonstrates moving procedural price calculation and invariant logic from a service into an aggregate.
+ * Q22: Scenario: Refactoring a 5,000-line God Service into Hexagonal DDD Aggregates. Demonstrates
+ * moving procedural price calculation and invariant logic from a service into an aggregate.
  */
 public class Q22GodServiceRefactoringScenarioExample {
 
@@ -33,7 +33,9 @@ public class Q22GodServiceRefactoringScenarioExample {
         order.addLineItem(new BigDecimal("100.00"));
         order.applyCoupon("SAVE10");
 
-        BigDecimal total = order.calculateFinalTotal(); // 90.00 (encapsulated in aggregate, not in god service)
+        BigDecimal total =
+                order.calculateFinalTotal(); // 90.00 (encapsulated in aggregate, not in god
+        // service)
         boolean isCorrect = total.compareTo(new BigDecimal("90.00")) == 0; // true
 
         System.out.println("Q22 total: " + total + ", valid: " + isCorrect);

@@ -34,15 +34,14 @@ class OrderApplicationServiceTest {
     @Test
     @DisplayName("placeOrder with valid items and payment token succeeds and marks order PAID")
     void placeOrder_validCommand_succeedsAndMarksPaid() {
-        PlaceOrderCommand command = new PlaceOrderCommand(
-                "cust-123",
-                Currency.getInstance("USD"),
-                List.of(
-                        new ItemCommand("PROD-1", 2, new BigDecimal("49.99")),
-                        new ItemCommand("PROD-2", 1, new BigDecimal("20.00"))
-                ),
-                "valid-token-xyz"
-        );
+        PlaceOrderCommand command =
+                new PlaceOrderCommand(
+                        "cust-123",
+                        Currency.getInstance("USD"),
+                        List.of(
+                                new ItemCommand("PROD-1", 2, new BigDecimal("49.99")),
+                                new ItemCommand("PROD-2", 1, new BigDecimal("20.00"))),
+                        "valid-token-xyz");
 
         PlaceOrderResult result = service.placeOrder(command);
 
@@ -58,12 +57,12 @@ class OrderApplicationServiceTest {
     @Test
     @DisplayName("placeOrder with rejected payment cancels order")
     void placeOrder_rejectedPayment_cancelsOrder() {
-        PlaceOrderCommand command = new PlaceOrderCommand(
-                "cust-123",
-                Currency.getInstance("USD"),
-                List.of(new ItemCommand("PROD-1", 1, new BigDecimal("100.00"))),
-                "invalid-token"
-        );
+        PlaceOrderCommand command =
+                new PlaceOrderCommand(
+                        "cust-123",
+                        Currency.getInstance("USD"),
+                        List.of(new ItemCommand("PROD-1", 1, new BigDecimal("100.00"))),
+                        "invalid-token");
 
         PlaceOrderResult result = service.placeOrder(command);
 
@@ -76,12 +75,12 @@ class OrderApplicationServiceTest {
     @Test
     @DisplayName("placeOrder with negative quantity throws validation exception")
     void placeOrder_negativeQuantity_throwsException() {
-        PlaceOrderCommand command = new PlaceOrderCommand(
-                "cust-123",
-                Currency.getInstance("USD"),
-                List.of(new ItemCommand("PROD-1", -5, new BigDecimal("10.00"))),
-                "token"
-        );
+        PlaceOrderCommand command =
+                new PlaceOrderCommand(
+                        "cust-123",
+                        Currency.getInstance("USD"),
+                        List.of(new ItemCommand("PROD-1", -5, new BigDecimal("10.00"))),
+                        "token");
 
         assertThatThrownBy(() -> service.placeOrder(command))
                 .isInstanceOf(IllegalArgumentException.class)

@@ -215,3 +215,158 @@ Design an asynchronous CQRS read projection in Spring Boot that listens to `Orde
         }
     }
     ```
+
+---
+
+## Exercise 4: Authoring a BDD Specification Driving a DDD Aggregate Root
+
+### Objective
+Write an executable BDD acceptance specification using Given-When-Then structure that verifies domain invariant enforcement in a pure DDD Aggregate Root without booting a Spring container.
+
+### Requirements
+1. Feature: Account Withdrawal Invariants.
+2. Scenario 1: Successful withdrawal updates balance and emits `MoneyWithdrawnEvent`.
+3. Scenario 2: Overdraft attempt throws `InsufficientFundsException` and leaves balance unchanged.
+
+### Step-by-Step Implementation
+
+??? question "View solution"
+    #### 1. Pure DDD Aggregate Root: `BankAccount`
+    ```java
+    public class BankAccount {
+        private final AccountId id;
+        private Money balance;
+        private final List<Object> domainEvents = new ArrayList<>();
+
+        public BankAccount(AccountId id, Money initialDeposit) {
+            this.id = Objects.requireNonNull(id);
+            this.balance = Objects.requireNonNull(initialDeposit);
+        }
+
+        public void withdraw(Money amount) {
+            if (amount.compareTo(this.balance) > 0) {
+                throw new InsufficientFundsException("Insufficient balance for withdrawal: " + amount);
+            }
+            this.balance = this.balance.subtract(amount);
+            this.domainEvents.add(new MoneyWithdrawnEvent(this.id, amount, this.balance));
+        }
+
+        public Money getBalance() {
+            return balance;
+        }
+
+        public List<Object> pullDomainEvents() {
+            var events = List.copyOf(this.domainEvents);
+            this.domainEvents.clear();
+            return events;
+        }
+    }
+    ```
+
+    #### 2. Fast In-Memory BDD Acceptance Test
+    ```java
+    @DisplayName("Feature: Bank Account Withdrawals")
+    class BankAccountBddTest {
+
+        @Test
+        @DisplayName("Scenario: Successful withdrawal when funds are sufficient")
+        void successfulWithdrawal() {
+            // Given
+            BankAccount account = new BankAccount(AccountId.of("ACC-1"), Money.usd(500.00));
+
+            // When
+            account.withdraw(Money.usd(200.00));
+
+            // Then
+            assertThat(account.getBalance()).isEqualTo(Money.usd(300.00));
+            // And
+            assertThat(account.pullDomainEvents())
+                .hasSize(1)
+                .first()
+                .isInstanceOf(MoneyWithdrawnEvent.class);
+        }
+
+        @Test
+        @DisplayName("Scenario: Overdraft rejected when balance is insufficient")
+        void overdraftRejected() {
+            // Given
+            BankAccount account = new BankAccount(AccountId.of("ACC-2"), Money.usd(100.00));
+
+            // When / Then
+            assertThatThrownBy(() -> account.withdraw(Money.usd(250.00)))
+                .isInstanceOf(InsufficientFundsException.class);
+
+            // And balance is unchanged
+            assertThat(account.getBalance()).isEqualTo(Money.usd(100.00));
+            assertThat(account.pullDomainEvents()).isEmpty();
+        }
+    }
+    ```
+
+---
+
+## Exercise 5: Designing a Resilient Mobile BFF Gateway with Partial Fallbacks
+
+### Objective
+Implement a Spring Boot Backend for Frontend (BFF) endpoint for mobile clients that fans out asynchronously to Ordering and Shipping services, returning a compact DTO with graceful partial degradation when Shipping times out.
+
+### Requirements
+1. The Mobile BFF exposes `GET /api/mobile/orders/{id}`.
+2. It fetches order details from `OrderClient` and tracking status from `ShippingClient` in parallel using `CompletableFuture`.
+3. If `ShippingClient` exceeds an 800ms timeout or returns an error, the BFF must degrade gracefully: return HTTP 200 with `shippingStatus = "Tracking Pending"`.
+4. Ensure no domain business invariants or calculations reside in the BFF controller.
+
+### Step-by-Step Implementation
+
+??? question "View solution"
+    #### 1. Mobile-Optimized Presentation DTO
+    ```java
+    public record MobileOrderSummaryResponse(
+        String orderId,
+        String status,
+        BigDecimal totalAmount,
+        String shippingStatus
+    ) {}
+    ```
+
+    #### 2. Resilient BFF Controller with Non-Blocking Fan-Out
+    ```java
+    @RestController
+    @RequestMapping("/api/mobile/orders")
+    public class MobileOrderBffGateway {
+
+        private final OrderServiceClient orderClient;
+        private final ShippingServiceClient shippingClient;
+        private final Executor bffExecutor;
+
+        public MobileOrderBffGateway(OrderServiceClient orderClient, 
+                                     ShippingServiceClient shippingClient,
+                                     @Qualifier("bffTaskExecutor") Executor bffExecutor) {
+            this.orderClient = orderClient;
+            this.shippingClient = shippingClient;
+            this.bffExecutor = bffExecutor;
+        }
+
+        @GetMapping("/{id}")
+        public CompletableFuture<MobileOrderSummaryResponse> getMobileOrder(@PathVariable String id) {
+            CompletableFuture<OrderDto> orderFuture = CompletableFuture.supplyAsync(
+                () -> orderClient.getOrder(id), bffExecutor
+            );
+
+            CompletableFuture<String> shippingFuture = CompletableFuture.supplyAsync(
+                () -> shippingClient.getTrackingStatus(id), bffExecutor
+            )
+            .completeOnTimeout("Tracking Pending", 800, TimeUnit.MILLISECONDS)
+            .exceptionally(ex -> "Tracking Pending");
+
+            return orderFuture.thenCombine(shippingFuture, (order, shippingStatus) ->
+                new MobileOrderSummaryResponse(
+                    order.id(),
+                    order.status(),
+                    order.grandTotal(),
+                    shippingStatus
+                )
+            );
+        }
+    }
+    ```

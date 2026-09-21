@@ -3,8 +3,8 @@ package lab.architecture.questions;
 import java.util.Set;
 
 /**
- * Q21: Shared Database Anti-Pattern in Microservices and Modular Monoliths.
- * Demonstrates why allowing multiple services to query a single shared table violates autonomy.
+ * Q21: Shared Database Anti-Pattern in Microservices and Modular Monoliths. Demonstrates why
+ * allowing multiple services to query a single shared table violates autonomy.
  */
 public class Q21SharedDatabaseAntiPatternExample {
 
@@ -23,7 +23,9 @@ public class Q21SharedDatabaseAntiPatternExample {
         DatabaseSchemaGovernance gov = new DatabaseSchemaGovernance();
 
         boolean allowed = gov.canServiceDirectlyQueryTable("BillingService", "invoices"); // true
-        boolean forbidden = gov.canServiceDirectlyQueryTable("ShippingService", "invoices"); // false (prevents shared DB antipattern)
+        boolean forbidden =
+                gov.canServiceDirectlyQueryTable(
+                        "ShippingService", "invoices"); // false (prevents shared DB antipattern)
 
         System.out.println("Q21 allowed: " + allowed + ", forbidden: " + forbidden);
     }

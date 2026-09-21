@@ -3,8 +3,8 @@ package lab.architecture.questions;
 import java.util.Set;
 
 /**
- * Q15: Spring Modulith Module Verification & Event Publication.
- * Demonstrates the concept of declared module boundaries and allowed inter-module dependencies.
+ * Q15: Spring Modulith Module Verification & Event Publication. Demonstrates the concept of
+ * declared module boundaries and allowed inter-module dependencies.
  */
 public class Q15SpringModulithVerificationExample {
 
@@ -13,7 +13,8 @@ public class Q15SpringModulithVerificationExample {
         private final Set<String> exposedPackages;
         private final Set<String> allowedDependencies;
 
-        public ModuleDescriptor(String moduleName, Set<String> exposedPackages, Set<String> allowedDependencies) {
+        public ModuleDescriptor(
+                String moduleName, Set<String> exposedPackages, Set<String> allowedDependencies) {
             this.moduleName = moduleName;
             this.exposedPackages = exposedPackages;
             this.allowedDependencies = allowedDependencies;
@@ -28,15 +29,16 @@ public class Q15SpringModulithVerificationExample {
     }
 
     public static void main(String[] args) {
-        ModuleDescriptor orderModule = new ModuleDescriptor(
-                "ordering",
-                Set.of("lab.ordering.api"),
-                Set.of("inventory")
-        );
+        ModuleDescriptor orderModule =
+                new ModuleDescriptor("ordering", Set.of("lab.ordering.api"), Set.of("inventory"));
 
-        boolean allowedPublicAccess = orderModule.canDependOn("inventory", "lab.inventory.api.InventoryService"); // true
-        boolean forbiddenInternalAccess = orderModule.canDependOn("inventory", "lab.inventory.internal.Repo"); // false (violates boundary)
+        boolean allowedPublicAccess =
+                orderModule.canDependOn("inventory", "lab.inventory.api.InventoryService"); // true
+        boolean forbiddenInternalAccess =
+                orderModule.canDependOn(
+                        "inventory", "lab.inventory.internal.Repo"); // false (violates boundary)
 
-        System.out.println("Q15 allowed: " + allowedPublicAccess + ", forbidden: " + forbiddenInternalAccess);
+        System.out.println(
+                "Q15 allowed: " + allowedPublicAccess + ", forbidden: " + forbiddenInternalAccess);
     }
 }

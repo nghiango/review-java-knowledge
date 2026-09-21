@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Q18: Distributed Data Management: Dual-Write Hazard and Transactional Outbox.
- * Demonstrates persisting business entity and outbox message in a single local transaction.
+ * Q18: Distributed Data Management: Dual-Write Hazard and Transactional Outbox. Demonstrates
+ * persisting business entity and outbox message in a single local transaction.
  */
 public class Q18TransactionalOutboxPatternExample {
 

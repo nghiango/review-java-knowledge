@@ -4,8 +4,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Q14: CQRS Read Model Projections and Eventual Consistency.
- * Demonstrates updating a read projection in response to domain events.
+ * Q14: CQRS Read Model Projections and Eventual Consistency. Demonstrates updating a read
+ * projection in response to domain events.
  */
 public class Q14CqrsProjectionExample {
 

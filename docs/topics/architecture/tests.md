@@ -83,3 +83,18 @@ Because the rich domain model encapsulates its own rules and invariants, testing
 --8<-- "modules/28-architecture/src/test/java/lab/architecture/cleanarchitecture/OrderApplicationServiceTest.java"
 
 By providing `InMemoryOrderRepositoryAdapter` and `MockPaymentAdapter`, the entire checkout workflow is tested end-to-end without spinning up a database or third-party web server.
+
+---
+
+## 5. BDD Executable Acceptance Testing
+
+BDD acceptance specifications bridge the gap between product requirements and automated test suites. Rather than testing implementation details, BDD tests declare scenarios in business terminology and verify that the DDD aggregate root transitions into expected states:
+
+### Implementation: `OrderPlacementBddTest.java`
+
+--8<-- "modules/28-architecture/src/test/java/lab/architecture/bdd/OrderPlacementBddTest.java"
+
+### Key Principles Demonstrated
+1. **Given-When-Then Narrative**: Scenarios read like natural business prose while executing as standard JUnit 5 tests.
+2. **Hexagonal Inbound Driving**: The test interacts with the system strictly through the Driving Port (`PlaceOrderUseCase`), ensuring application orchestration and aggregate invariants are tested together.
+3. **Microsecond Execution**: Executes in $< 5\text{ ms}$ because driven ports are stubbed with in-memory adapters, providing instantaneous feedback on every developer commit.

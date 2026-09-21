@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Q06: CQRS (Command Query Responsibility Segregation) Fundamentals.
- * Demonstrates separation of mutating Command side and read-optimized Query projection.
+ * Q06: CQRS (Command Query Responsibility Segregation) Fundamentals. Demonstrates separation of
+ * mutating Command side and read-optimized Query projection.
  */
 public class Q06CqrsSeparationExample {
 
@@ -31,7 +31,8 @@ public class Q06CqrsSeparationExample {
     }
 
     public static void main(String[] args) {
-        CreateProductCommand cmd = new CreateProductCommand("101", "Keyboard", new BigDecimal("79.99"));
+        CreateProductCommand cmd =
+                new CreateProductCommand("101", "Keyboard", new BigDecimal("79.99"));
         ProductReadModel readModel = new ProductReadModel();
 
         ProductSummaryView view = readModel.getSummary(cmd.productId(), cmd.price());

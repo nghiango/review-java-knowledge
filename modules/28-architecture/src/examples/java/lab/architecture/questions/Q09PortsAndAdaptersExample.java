@@ -1,11 +1,8 @@
 package lab.architecture.questions;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
- * Q09: Hexagonal Architecture Ports & Adapters Implementation.
- * Demonstrates the separation between primary (driving) port, secondary (driven) port, and adapters.
+ * Q09: Hexagonal Architecture Ports & Adapters Implementation. Demonstrates the separation between
+ * primary (driving) port, secondary (driven) port, and adapters.
  */
 public class Q09PortsAndAdaptersExample {
 

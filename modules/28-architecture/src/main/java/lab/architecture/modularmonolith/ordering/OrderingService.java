@@ -11,7 +11,9 @@ public class OrderingService {
     private final ApplicationEventPublisher eventPublisher;
 
     public OrderingService(ApplicationEventPublisher eventPublisher) {
-        this.eventPublisher = Objects.requireNonNull(eventPublisher, "ApplicationEventPublisher must not be null");
+        this.eventPublisher =
+                Objects.requireNonNull(
+                        eventPublisher, "ApplicationEventPublisher must not be null");
     }
 
     public void placeOrder(String orderId, String customerId, BigDecimal amount) {

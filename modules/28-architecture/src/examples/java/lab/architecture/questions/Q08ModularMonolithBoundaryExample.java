@@ -1,8 +1,8 @@
 package lab.architecture.questions;
 
 /**
- * Q08: Monolith vs Modular Monolith vs Microservices.
- * Demonstrates internal package encapsulation in a modular monolith.
+ * Q08: Monolith vs Modular Monolith vs Microservices. Demonstrates internal package encapsulation
+ * in a modular monolith.
  */
 public class Q08ModularMonolithBoundaryExample {
 

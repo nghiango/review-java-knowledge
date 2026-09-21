@@ -10,7 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Q23DistributedJoinResolutionScenarioExample {
 
     // Materialized view pre-joining Customer and Order details
-    public record OrderDetailView(String orderId, String customerName, String shippingAddress, double total) {}
+    public record OrderDetailView(
+            String orderId, String customerName, String shippingAddress, double total) {}
 
     public static class OrderDetailMaterializedViewRepository {
         private final Map<String, OrderDetailView> viewStore = new ConcurrentHashMap<>();

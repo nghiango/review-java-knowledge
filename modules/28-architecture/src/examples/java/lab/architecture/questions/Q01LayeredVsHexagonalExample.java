@@ -3,8 +3,8 @@ package lab.architecture.questions;
 import java.math.BigDecimal;
 
 /**
- * Q01: Layered vs Hexagonal Architecture (Dependency Direction).
- * Demonstrates how Hexagonal architecture inverts dependency so domain does not depend on database.
+ * Q01: Layered vs Hexagonal Architecture (Dependency Direction). Demonstrates how Hexagonal
+ * architecture inverts dependency so domain does not depend on database.
  */
 public class Q01LayeredVsHexagonalExample {
 

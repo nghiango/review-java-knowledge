@@ -5,8 +5,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Q11: Domain Events Pattern and Side-Effect Decoupling.
- * Demonstrates aggregate recording domain events to be published after state change.
+ * Q11: Domain Events Pattern and Side-Effect Decoupling. Demonstrates aggregate recording domain
+ * events to be published after state change.
  */
 public class Q11DomainEventPublishingExample {
 
@@ -43,7 +43,8 @@ public class Q11DomainEventPublishingExample {
 
         List<Object> events = order.pullDomainEvents();
         int eventCount = events.size(); // 1
-        boolean pulledClearsList = order.pullDomainEvents().isEmpty(); // true (events dispatched once)
+        boolean pulledClearsList =
+                order.pullDomainEvents().isEmpty(); // true (events dispatched once)
 
         System.out.println("Q11 eventCount: " + eventCount + ", cleared: " + pulledClearsList);
     }

@@ -8,8 +8,8 @@ import lab.architecture.cleanarchitecture.domain.model.OrderId;
 import lab.architecture.cleanarchitecture.domain.port.out.OrderRepositoryPort;
 
 /**
- * Infrastructure adapter implementing persistence port using an in-memory store.
- * In a real production environment, this would be a JPA / JDBC adapter.
+ * Infrastructure adapter implementing persistence port using an in-memory store. In a real
+ * production environment, this would be a JPA / JDBC adapter.
  */
 public class InMemoryOrderRepositoryAdapter implements OrderRepositoryPort {
 

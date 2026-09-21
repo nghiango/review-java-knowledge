@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Pure domain Aggregate Root with zero framework or database dependencies.
- * Business invariants are protected internally; outside callers cannot tamper with state.
+ * Pure domain Aggregate Root with zero framework or database dependencies. Business invariants are
+ * protected internally; outside callers cannot tamper with state.
  */
 public class Order {
 
@@ -33,8 +33,11 @@ public class Order {
             throw new IllegalStateException("Cannot add items to order in status: " + status);
         }
         if (!item.unitPrice().currency().equals(this.currency)) {
-            throw new IllegalArgumentException("Item currency " + item.unitPrice().currency()
-                    + " does not match order currency " + this.currency);
+            throw new IllegalArgumentException(
+                    "Item currency "
+                            + item.unitPrice().currency()
+                            + " does not match order currency "
+                            + this.currency);
         }
 
         this.items.add(item);
@@ -43,7 +46,8 @@ public class Order {
 
     public void markPaid() {
         if (status != OrderStatus.CREATED) {
-            throw new IllegalStateException("Order must be in CREATED status to be marked PAID, current: " + status);
+            throw new IllegalStateException(
+                    "Order must be in CREATED status to be marked PAID, current: " + status);
         }
         if (items.isEmpty()) {
             throw new IllegalStateException("Cannot pay for an order with no items");
@@ -62,11 +66,7 @@ public class Order {
         if (status == OrderStatus.CANCELLED) {
             throw new IllegalStateException("Order is already cancelled");
         }
-        this.status = OrderStatusStatusCancelled(reason);
-    }
-
-    private OrderStatus OrderStatusStatusCancelled(String reason) {
-        return OrderStatus.CANCELLED;
+        this.status = OrderStatus.CANCELLED;
     }
 
     public OrderId getId() {

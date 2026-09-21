@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Q07: Synchronous RPC vs Asynchronous Event-Driven Messaging.
- * Demonstrates how event publishing decouples the caller from downstream side effects.
+ * Q07: Synchronous RPC vs Asynchronous Event-Driven Messaging. Demonstrates how event publishing
+ * decouples the caller from downstream side effects.
  */
 public class Q07SyncVsAsyncEventExample {
 

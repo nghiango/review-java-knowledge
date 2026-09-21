@@ -10,16 +10,18 @@ import lab.architecture.cleanarchitecture.domain.port.out.OrderRepositoryPort;
 import lab.architecture.cleanarchitecture.domain.port.out.PaymentPort;
 
 /**
- * Application service orchestrating order placement use case.
- * Coordinates domain models and outgoing ports without holding business invariants.
+ * Application service orchestrating order placement use case. Coordinates domain models and
+ * outgoing ports without holding business invariants.
  */
 public class OrderApplicationService implements PlaceOrderUseCase {
 
     private final OrderRepositoryPort orderRepositoryPort;
     private final PaymentPort paymentPort;
 
-    public OrderApplicationService(OrderRepositoryPort orderRepositoryPort, PaymentPort paymentPort) {
-        this.orderRepositoryPort = Objects.requireNonNull(orderRepositoryPort, "OrderRepositoryPort must not be null");
+    public OrderApplicationService(
+            OrderRepositoryPort orderRepositoryPort, PaymentPort paymentPort) {
+        this.orderRepositoryPort =
+                Objects.requireNonNull(orderRepositoryPort, "OrderRepositoryPort must not be null");
         this.paymentPort = Objects.requireNonNull(paymentPort, "PaymentPort must not be null");
     }
 
@@ -36,11 +38,9 @@ public class OrderApplicationService implements PlaceOrderUseCase {
             order.addItem(item);
         }
 
-        PaymentPort.PaymentResult paymentResult = paymentPort.processPayment(
-                order.getId(),
-                order.getTotalAmount(),
-                command.paymentToken()
-        );
+        PaymentPort.PaymentResult paymentResult =
+                paymentPort.processPayment(
+                        order.getId(), order.getTotalAmount(), command.paymentToken());
 
         if (paymentResult.successful()) {
             order.markPaid();
@@ -49,7 +49,8 @@ public class OrderApplicationService implements PlaceOrderUseCase {
         } else {
             order.cancel("Payment rejected: " + paymentResult.errorMessage());
             orderRepositoryPort.save(order);
-            return new PlaceOrderResult(orderId, false, "Payment failed: " + paymentResult.errorMessage());
+            return new PlaceOrderResult(
+                    orderId, false, "Payment failed: " + paymentResult.errorMessage());
         }
     }
 }

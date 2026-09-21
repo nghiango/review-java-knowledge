@@ -6,8 +6,8 @@ import lab.architecture.modularmonolith.inventory.InventoryApi;
 import org.springframework.stereotype.Service;
 
 /**
- * Internal implementation of the Inventory API.
- * Encapsulated within internal package to prevent direct cross-module coupling.
+ * Internal implementation of the Inventory API. Encapsulated within internal package to prevent
+ * direct cross-module coupling.
  */
 @Service
 public class InventoryServiceImpl implements InventoryApi {

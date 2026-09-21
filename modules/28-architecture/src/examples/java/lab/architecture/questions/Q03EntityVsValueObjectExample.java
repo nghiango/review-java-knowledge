@@ -4,8 +4,8 @@ import java.math.BigDecimal;
 import java.util.Objects;
 
 /**
- * Q03: Entity vs Value Object in Domain-Driven Design.
- * Demonstrates identity comparison (Entity) vs structural equality (Value Object).
+ * Q03: Entity vs Value Object in Domain-Driven Design. Demonstrates identity comparison (Entity) vs
+ * structural equality (Value Object).
  */
 public class Q03EntityVsValueObjectExample {
 
@@ -45,7 +45,9 @@ public class Q03EntityVsValueObjectExample {
 
         CustomerEntity c1 = new CustomerEntity("CUST-1", "user@example.com");
         CustomerEntity c2 = new CustomerEntity("CUST-1", "user-updated@example.com");
-        boolean sameIdentity = c1.getId().equals(c2.getId()); // true (same entity identity despite changed attribute)
+        boolean sameIdentity =
+                c1.getId().equals(c2.getId()); // true (same entity identity despite changed
+        // attribute)
 
         System.out.println("Q03 voEquals: " + valueObjectEquals + ", sameId: " + sameIdentity);
     }
