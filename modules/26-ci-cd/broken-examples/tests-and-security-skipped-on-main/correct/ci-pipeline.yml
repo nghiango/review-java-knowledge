@@ -1,0 +1,67 @@
+name: Continuous Integration & Security Pipeline (Strict & Fast)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Build, Verify & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21 Toolchain
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Execute Static Analysis & Unit Tests
+        run: |
+          ./gradlew check --scan --no-daemon
+
+      - name: Publish Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: build/reports/tests/
+
+  security-scan:
+    name: Container Vulnerability Scan
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: |
+          docker build -t app-service:${{ github.sha }} .
+
+      - name: Scan Image with Trivy (Fail on High/Critical CVEs)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'app-service:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+  publish:
+    name: Publish Artifact
+    needs: [test, security-scan]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Publish Verified Artifact
+        run: |
+          echo "Publishing verified, tested, secure image to container registry..."

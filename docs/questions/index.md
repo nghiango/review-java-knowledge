@@ -28,6 +28,7 @@ Answer each question before reading its explanation.
 - [Performance](performance.md)
 - [Docker](docker.md)
 - [AWS](aws.md)
+- [CI/CD](ci-cd.md)
 
 ## Related
 

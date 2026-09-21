@@ -1,0 +1,78 @@
+name: Production Release Pipeline (Immutable & Rollback-Safe)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Compute Immutable Image Tag
+        id: vars
+        run: |
+          echo "IMAGE_TAG=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+          echo "PREV_TASK_DEF=$(aws ecs describe-services --cluster prod-cluster --services order-service --query 'services[0].taskDefinition' --output text)" >> $GITHUB_OUTPUT
+
+      - name: Build & Push Docker Image with Immutable Git SHA
+        env:
+          ECR_REGISTRY: 123456789012.dkr.ecr.us-east-1.amazonaws.com
+          TAG: ${{ steps.vars.outputs.IMAGE_TAG }}
+        run: |
+          docker build -t "$ECR_REGISTRY/order-service:$TAG" .
+          docker push "$ECR_REGISTRY/order-service:$TAG"
+
+      - name: Register New Task Definition Revision
+        id: task_def
+        run: |
+          # Render updated task definition with new image tag
+          NEW_DEF=$(aws ecs describe-task-definition --task-definition order-service \
+            | jq --arg IMAGE "123456789012.dkr.ecr.us-east-1.amazonaws.com/order-service:${{ steps.vars.outputs.IMAGE_TAG }}" \
+            '.taskDefinition | .containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+          
+          NEW_ARN=$(echo "$NEW_DEF" | aws ecs register-task-definition --cli-input-json file:///dev/stdin --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "NEW_TASK_DEF_ARN=$NEW_ARN" >> $GITHUB_OUTPUT
+
+      - name: Trigger Rolling Deployment
+        id: deploy
+        run: |
+          aws ecs update-service \
+            --cluster prod-cluster \
+            --service order-service \
+            --task-definition "${{ steps.task_def.outputs.NEW_TASK_DEF_ARN }}"
+
+      - name: Wait for Deployment Stability
+        id: wait_stable
+        continue-on-error: true
+        run: |
+          # Wait up to 10 minutes for rolling deployment to stabilize
+          aws ecs wait services-stable \
+            --cluster prod-cluster \
+            --services order-service
+
+      - name: Execute Synthetic Smoke Tests
+        if: steps.wait_stable.outcome == 'success'
+        id: smoke_test
+        continue-on-error: true
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.production.internal/actuator/health/readiness)
+          if [ "$STATUS" -ne 200 ]; then
+            echo "Smoke test failed with HTTP $STATUS"
+            exit 1
+          fi
+
+      - name: Automated Rollback on Deployment or Smoke Test Failure
+        if: steps.wait_stable.outcome != 'success' || steps.smoke_test.outcome != 'success'
+        run: |
+          echo "Deployment or smoke test failed! Rolling back to previous stable task definition: ${{ steps.vars.outputs.PREV_TASK_DEF }}"
+          aws ecs update-service \
+            --cluster prod-cluster \
+            --service order-service \
+            --task-definition "${{ steps.vars.outputs.PREV_TASK_DEF }}"
+          aws ecs wait services-stable \
+            --cluster prod-cluster \
+            --services order-service
+          exit 1

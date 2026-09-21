@@ -346,6 +346,30 @@ Setting database backup retention to 0 disables continuous transaction log (WAL)
 
 **Appears in:** `modules/25-aws/broken-examples/single-az-rds-no-backup`
 
+---
+
+### Destructive Database Schema Migration in Deployment Pipeline Breaks Coexisting Instances
+
+**Type:** Reliability issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** CI/CD, Flyway, PostgreSQL, Zero-Downtime Deployments · **Interview frequency:** High · **Production impact:** Critical
+
+Executing destructive database schema migrations (e.g. `DROP COLUMN`, column renaming, or synchronous `NOT NULL` additions) as a pre-deployment step violates the Dual-State Coexistence Invariant. During rolling updates, blue/green cutovers, or canary deployments, old ($v1$) and new ($v2$) application instances run concurrently. Dropping or renaming columns causes active $v1$ instances to immediately fail with database column missing exceptions, corrupting active transactions and triggering an outage. Schema evolution must follow the multi-phase Expand-Contract pattern across multiple releases.
+
+**Appears in:** `modules/26-ci-cd/broken-examples/destructive-db-migration-before-deploy`
+
+---
+
+### Mutable Container Image Tagging (:latest) Prevents Deterministic Deployments and Rollbacks
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Basic
+
+**Technology:** Docker, Container Registries, CI/CD · **Interview frequency:** High · **Production impact:** High
+
+Tagging release container images with mutable `:latest` tags causes severe deployment hazards. Overwriting `:latest` erases the reference to the previously deployed, working image, making fast automated rollback impossible. Furthermore, horizontal autoscaling events launch new tasks that pull different image layers than existing tasks, creating a split-brain production fleet running mixed application code. Production container images must be tagged strictly with immutable identifiers (such as the short Git commit SHA).
+
+**Appears in:** `modules/26-ci-cd/broken-examples/no-rollback-path-pipeline`
+
 ## Related
 
 - [Issue catalogue](index.md)

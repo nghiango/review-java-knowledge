@@ -1,0 +1,27 @@
+name: Production Release Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: |
+          docker build -t 123456789012.dkr.ecr.us-east-1.amazonaws.com/order-service:latest .
+
+      - name: Push Docker Image to ECR
+        run: |
+          docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/order-service:latest
+
+      - name: Trigger In-Place Deployment
+        run: |
+          aws ecs update-service \
+            --cluster prod-cluster \
+            --service order-service \
+            --force-new-deployment

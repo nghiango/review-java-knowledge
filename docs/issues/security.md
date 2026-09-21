@@ -193,6 +193,18 @@ Setting `publicly_accessible = true` on production database instances assigns a 
 
 **Appears in:** `modules/25-aws/broken-examples/single-az-rds-no-backup`
 
+---
+
+### Suppression of Container Vulnerability Scanner Failures in CI Pipeline
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** CI/CD, Container Security, Trivy, Supply Chain Security · **Interview frequency:** High · **Production impact:** Critical
+
+Configuring container vulnerability scanners (such as Trivy, Grype, or Snyk) with `continue-on-error: true` in CI/CD pipelines suppresses scanner exit codes, allowing vulnerable container images with known `CRITICAL` or `HIGH` Common Vulnerabilities and Exposures (CVEs) to be published and deployed to production. This directly violates SOC2 and PCI-DSS Requirement 6.3.2 compliance mandates. Vulnerability scanners must be configured with blocking exit codes (`--exit-code 1`) for unpatched high/critical vulnerabilities.
+
+**Appears in:** `modules/26-ci-cd/broken-examples/tests-and-security-skipped-on-main`
+
 ## Related
 
 - [Issue catalogue](index.md)

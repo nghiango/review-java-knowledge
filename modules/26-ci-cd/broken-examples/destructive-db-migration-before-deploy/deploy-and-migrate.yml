@@ -1,0 +1,30 @@
+name: Deploy Production Service
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Database Migrations
+        env:
+          DB_URL: ${{ secrets.PROD_DB_URL }}
+          DB_USER: ${{ secrets.PROD_DB_USER }}
+          DB_PASS: ${{ secrets.PROD_DB_PASS }}
+        run: |
+          ./gradlew flywayMigrate \
+            -Dflyway.url="${DB_URL}" \
+            -Dflyway.user="${DB_USER}" \
+            -Dflyway.password="${DB_PASS}"
+
+      - name: Deploy New Application Version
+        run: |
+          aws ecs update-service \
+            --cluster production-cluster \
+            --service customer-service \
+            --force-new-deployment

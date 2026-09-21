@@ -320,6 +320,23 @@
 - [ ] Differentiate VPC Gateway Endpoints (free for S3/DynamoDB) from Interface Endpoints (PrivateLink) to prevent NAT Gateway data transfer costs
 - [ ] Synchronize ALB Target Group Deregistration Delay with Spring Boot Graceful Shutdown to eliminate HTTP 502 Bad Gateway errors during deployments
 
+## CI/CD
+
+- [ ] Explain pipeline stages (compile, verify, static analysis, unit/integration test, container build, CVE scan, signing, deploy)
+- [ ] Tag container images strictly with immutable Git commit SHAs; eliminate mutable `:latest` tagging in production
+- [ ] Understand the Dual-State Coexistence Invariant: ensure database and API changes are backward-compatible with running $v1$ code
+- [ ] Execute database refactoring via the Expand-Contract (Parallel Change) pattern across multiple releases (never drop columns in release DDL)
+- [ ] Set strict `lock_timeout` ($\le 3\text{s}$) in PostgreSQL DDL migrations to prevent connection pool exhaustion cascades
+- [ ] Use `CREATE INDEX CONCURRENTLY` in PostgreSQL to build production indexes without blocking writes
+- [ ] Disable in-app migrations in production (`spring.flyway.enabled=false`); execute Flyway as a dedicated pre-deployment pipeline job
+- [ ] Compare deployment strategies: Rolling Updates (low cost, $v1/v2$ coexist), Blue/Green (instant cutover/rollback, 2x cost), Canary (blast radius containment)
+- [ ] Configure automated deployment health gates (`/actuator/health/readiness`), synthetic smoke tests, and automated rollback triggers
+- [ ] Scan container images and dependencies with Trivy/Grype, enforcing zero unpatched `CRITICAL` or `HIGH` CVEs
+- [ ] Cryptographically sign release artifacts using Sigstore Cosign with keyless OIDC authentication
+- [ ] Implement architectural fitness functions in Java using ArchUnit to enforce package boundaries and prevent code rot
+- [ ] Decouple deployment from release using Feature Flags (Strategy pattern, operational kill switches, and technical debt retirement)
+- [ ] Contrast push-based CI/CD pipelines with declarative pull-based GitOps (ArgoCD reconciliation loops, drift detection, sync waves)
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -348,3 +365,4 @@
 - [Performance questions](questions/performance.md)
 - [Docker questions](questions/docker.md)
 - [AWS questions](questions/aws.md)
+- [CI/CD questions](questions/ci-cd.md)

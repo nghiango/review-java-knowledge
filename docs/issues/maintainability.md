@@ -318,6 +318,18 @@ a service maximum and require pagination to keep a stable memory and latency env
 
 **Appears in:** `modules/23-performance/broken-examples/n-plus-one-summary`
 
+---
+
+### Bypassing Test Verification on Main Deployment Branch
+
+**Type:** Maintainability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** CI/CD, Gradle, Software Quality Gates · **Interview frequency:** High · **Production impact:** Critical
+
+Skipping test tasks (`-x test`) during packaging on the `main` trunk branch operates on the flawed assumption that feature branches were sufficient. Sequential merges into `main` frequently introduce semantic conflicts, broken database expectations, or incompatible dependency updates that are never validated prior to deployment. Every artifact released to production must be built and verified against the exact commit SHA on the target branch.
+
+**Appears in:** `modules/26-ci-cd/broken-examples/tests-and-security-skipped-on-main`
+
 ## Related
 
 - [Issue catalogue](index.md)

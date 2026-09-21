@@ -276,6 +276,15 @@ nav:
           - Solutions: topics/aws/solutions.md
           - Production: topics/aws/production.md
           - Exercises: topics/aws/exercises.md
+      - CI/CD:
+          - Overview: topics/ci-cd/index.md
+          - Concepts: topics/ci-cd/concepts.md
+          - Internals: topics/ci-cd/internals.md
+          - Interview Questions: topics/ci-cd/questions.md
+          - Code Review: topics/ci-cd/code-review.md
+          - Solutions: topics/ci-cd/solutions.md
+          - Production: topics/ci-cd/production.md
+          - Exercises: topics/ci-cd/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -318,6 +327,7 @@ nav:
       - Performance: questions/performance.md
       - Docker: questions/docker.md
       - AWS: questions/aws.md
+      - CI/CD: questions/ci-cd.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:
