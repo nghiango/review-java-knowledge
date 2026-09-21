@@ -386,6 +386,30 @@ Stacking multiple structural and behavioral design patterns (such as Bridge, Abs
 
 **Appears in:** `modules/29-design-patterns/broken-examples/pattern-over-engineering`
 
+---
+
+### Dogmatic Architecture Decision Record Lacking Context and Alternatives
+
+**Type:** Maintainability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Architecture Decision Records (ADRs), Conway's Law, System Evolution · **Interview frequency:** High · **Production impact:** High
+
+Authoring Architecture Decision Records that state dogmatic technical mandates without quantifiable business context, operational metrics, or team constraints leads to catastrophic project failure. Committing to complex distributed rewrites (e.g. 12 microservices with an 8-person engineering team) without evaluating intermediate options like Modular Monoliths or documenting negative operational trade-offs violates Conway's Law and leads to engineering burnout and project abandonment.
+
+**Appears in:** `modules/30-senior-engineering/broken-examples/poorly-written-adr`
+
+---
+
+### Hostile and Superficial Code Review Comments Overlooking Critical Bugs
+
+**Type:** Maintainability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Code Review, Conventional Comments, Psychological Safety · **Interview frequency:** High · **Production impact:** High
+
+Bikeshedding over variable names, whitespace, and subjective indentation preferences in pull request reviews consumes cognitive bandwidth while allowing critical defects (SQL injection, database connection leaks, and concurrent map race conditions) to ship to production. Furthermore, hostile and sarcastic review comments erode psychological safety, destroy mentorship opportunities, and discourage engineers from proactively communicating risks.
+
+**Appears in:** `modules/30-senior-engineering/broken-examples/unhelpful-code-review-comments`
+
 ## Related
 
 - [Issue catalogue](index.md)

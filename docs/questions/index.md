@@ -32,6 +32,7 @@ Answer each question before reading its explanation.
 - [System Design](system-design.md)
 - [Architecture](architecture.md)
 - [Design Patterns](design-patterns.md)
+- [Senior Engineering](senior-engineering.md)
 
 ## Related
 

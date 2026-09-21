@@ -314,6 +314,15 @@ nav:
           - Tests: topics/design-patterns/tests.md
           - Production: topics/design-patterns/production.md
           - Exercises: topics/design-patterns/exercises.md
+      - Senior Engineering:
+          - Overview: topics/senior-engineering/index.md
+          - Concepts: topics/senior-engineering/concepts.md
+          - Internals: topics/senior-engineering/internals.md
+          - Interview Questions: topics/senior-engineering/questions.md
+          - Code Review: topics/senior-engineering/code-review.md
+          - Solutions: topics/senior-engineering/solutions.md
+          - Production: topics/senior-engineering/production.md
+          - Exercises: topics/senior-engineering/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -360,6 +369,7 @@ nav:
       - System Design: questions/system-design.md
       - Architecture: questions/architecture.md
       - Design Patterns: questions/design-patterns.md
+      - Senior Engineering: questions/senior-engineering.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:

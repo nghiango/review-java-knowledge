@@ -382,6 +382,18 @@ Executing separate non-atomic `INCR` and `EXPIRE` commands across network bounda
 
 **Appears in:** `modules/27-system-design/broken-examples/distributed-rate-limiter-naive-redis`
 
+---
+
+### Blame-Oriented Incident Post-Mortem Obscuring Systemic Failure Modes
+
+**Type:** Reliability issue · **Severity:** Critical · **Difficulty:** Senior
+
+**Technology:** Incident Management, Blameless Culture, Human Factors · **Interview frequency:** High · **Production impact:** Critical
+
+Singling out individual engineers and attributing production outages to "human carelessness" or "negligence" masks latent systemic failure modes in tooling, architecture, and permissions. In complex sociotechnical systems, human error is the starting point of an investigation, not the root cause. Blame-oriented post-mortems generate low-leverage, ineffective action items ("remind developers to be careful") while leaving structural hazards (missing database query timeouts, excessive production credentials, and lack of realistic staging data) untouched, guaranteeing repeat outages.
+
+**Appears in:** `modules/30-senior-engineering/broken-examples/blame-oriented-post-mortem`
+
 ## Related
 
 - [Issue catalogue](index.md)

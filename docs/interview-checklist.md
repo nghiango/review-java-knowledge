@@ -391,6 +391,23 @@
 - [ ] Implement the Chain of Responsibility Pattern for sequential validation, filtration, and request enrichment pipelines
 - [ ] Replace classic GoF patterns with modern Java 21+ idioms: lambdas and functional interfaces for Strategy, sealed interfaces and pattern matching for Visitor/State
 
+## Senior Engineering
+
+- [ ] Author and review Architecture Decision Records (ADRs) following the Michael Nygard format, evaluating at least 3 viable options and documenting negative trade-offs
+- [ ] Implement an asynchronous, Git-based RFC process to balance cross-team architectural alignment with autonomous engineering velocity
+- [ ] Lead high-severity (Sev-1) production outages as an Incident Commander (IC), establishing dedicated triage task delegation and 15-minute stakeholder communication cadences
+- [ ] Facilitate blameless post-mortems based on human factors engineering (John Allspaw / Sidney Dekker), treating human error as a symptom and investigating the systemic "Second Story"
+- [ ] Formulate SMART, high-leverage engineering action items (Elimination and Engineering Controls over low-leverage administrative policy reminders)
+- [ ] Conduct constructive code reviews using the Conventional Comments specification (`blocking:`, `suggestion:`, `question:`, `nit:`, `praise:`)
+- [ ] Avoid bikeshedding (Parkinson's Law of Triviality) in code reviews by automating mechanical formatting, linting, and architectural fitness functions in CI
+- [ ] Quantify technical debt using Ward Cunningham's principal vs. interest framework and Martin Fowler's Technical Debt Quadrant (Prudent vs Reckless)
+- [ ] Negotiate institutional technical debt capacity (e.g. 70/20/10 split) by translating architectural refactoring into business risk and feature velocity metrics
+- [ ] Execute safe, zero-downtime legacy refactoring in production using Branch by Abstraction, Shadowing (Dark Launching), and the Strangler Fig pattern
+- [ ] Communicate engineering estimates using the Cone of Uncertainty and PERT three-point estimation, negotiating scope rather than committed calendar dates
+- [ ] Resolve technical impasses constructively using "disagree and commit", time-boxed prototype SPIKEs, and objective decision criteria matrices
+- [ ] Mentor junior engineers toward autonomy using situational leadership, the SBI (Situation-Behavior-Impact) feedback model, and incremental PR sizing (< 300 lines)
+- [ ] Benchmark organizational software delivery performance using the 4 DORA metrics (Deployment Frequency, Lead Time, Change Failure Rate, and MTTR)
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -423,3 +440,4 @@
 - [System Design questions](questions/system-design.md)
 - [Architecture questions](questions/architecture.md)
 - [Design Patterns questions](questions/design-patterns.md)
+- [Senior Engineering questions](questions/senior-engineering.md)
