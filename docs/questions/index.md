@@ -23,6 +23,10 @@ Answer each question before reading its explanation.
 - [Distributed Data Patterns](distributed-data-patterns.md)
 - [Resilience](resilience.md)
 - [Spring Cloud](spring-cloud.md)
+- [WebClient / WebFlux](webclient-webflux.md)
+- [Observability](observability.md)
+- [Performance](performance.md)
+- [Docker](docker.md)
 
 ## Related
 

@@ -7,6 +7,7 @@ Hands-on exercises to master custom jitter algorithms, stochastic backoff tuning
 ### Problem
 
 In distributed systems under heavy load, deterministic exponential backoff synchronizes retries, generating destructive thundering herds. Implement an algorithmic Full Jitter calculator:
+
 $$\text{Delay} = \text{random}(0, \min(\text{maxDelay}, \text{baseDelay} \times \text{multiplier}^{\text{attempt}-1}))$$
 
 ### Requirements
@@ -27,6 +28,7 @@ $$\text{Delay} = \text{random}(0, \min(\text{maxDelay}, \text{baseDelay} \times 
 ### Problem
 
 Static thread pool and bulkhead sizes cannot adapt to downstream service degradation. When a downstream database slows down, static limits cause requests to queue up and exhaust memory. Implement a dynamic concurrency limiter inspired by TCP Vegas:
+
 $$\text{gradient} = \frac{\text{RTT}_{\text{no\_load}}}{\text{RTT}_{\text{observed}}}$$
 
 ### Requirements

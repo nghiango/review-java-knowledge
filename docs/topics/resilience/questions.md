@@ -159,7 +159,7 @@ Analyze the layering: `@Retry`, `@CircuitBreaker`, `@RateLimiter`, `@TimeLimiter
 
 ??? question "Reveal answer"
     - **Default Spring AOP Aspect Order (Outer to Inner)**:
-        $$\text{Retry} \to \text{CircuitBreaker} \to \text{RateLimiter} \to \text{TimeLimiter} \to \text{Bulkhead}$$
+        $\displaystyle \text{Retry} \to \text{CircuitBreaker} \to \text{RateLimiter} \to \text{TimeLimiter} \to \text{Bulkhead}$
     - **Retry Wraps CircuitBreaker**: If an attempt fails, Retry retries it. CircuitBreaker records each individual attempt, allowing the circuit to open quickly if repeated retries fail.
     - **CircuitBreaker Wraps RateLimiter**: When the circuit is OPEN, calls are rejected immediately before consuming client rate limiter permits.
     - **TimeLimiter Wraps Bulkhead**: When an execution times out, TimeLimiter cancels the invocation and frees the bulkhead permit.

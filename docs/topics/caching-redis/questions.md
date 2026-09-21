@@ -362,7 +362,8 @@ Explain cluster slot assignment, cross-slot limitations, and hash tag syntax.
 
 ??? question "Reveal answer"
     Redis Cluster partitions the keyspace across **16,384 logical Hash Slots**:
-    $$\text{Slot} = \text{CRC16}(\text{key}) \pmod{16384}$$
+
+    $\displaystyle \text{Slot} = \text{CRC16}(\text{key}) \pmod{16384}$
     Multi-key operations (MGET, MSET, transactions, Lua scripts) are rejected with a `CROSSSLOT` error if the involved keys belong to different hash slots residing on different physical cluster nodes.
     
     **Hash Tags (`{...}`)**:

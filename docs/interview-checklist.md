@@ -290,6 +290,20 @@
 - [ ] Diagnose Hikari exhaustion with low database CPU
 - [ ] Explain when lower-level allocation optimization is justified
 
+## Docker
+
+- [ ] Explain Linux container primitives (namespaces for isolation, cgroups for resource metering, overlayfs for copy-on-write layering)
+- [ ] Architect multi-stage Docker builds separating build environment (JDK, Gradle, source) from minimal production runtime (JRE, distroless)
+- [ ] Implement Spring Boot layered JAR extraction (`layertools`) and order Dockerfile `COPY` instructions by cache change frequency
+- [ ] Configure non-root dedicated application users (`useradd -u 10001`) and explain Linux file permission / UID mapping semantics
+- [ ] Explain cgroups v1 vs v2 mechanics and why legacy JVMs ignored container memory limits, leading to host-level OOMKills
+- [ ] Size JVM container memory correctly: allocate $\sim 70-75\%$ to heap via `-XX:MaxRAMPercentage` and reserve $25-30\%$ for non-heap overhead
+- [ ] Contrast `ENTRYPOINT` exec form (`["java", "-jar", "..."]`) vs shell form, explaining PID 1 signal forwarding and SIGTERM handling
+- [ ] Implement two-phase graceful shutdown with Spring Boot (`server.shutdown=graceful`) and orchestrator termination grace periods
+- [ ] Configure Docker and Kubernetes health probes (distinguishing liveness vs readiness probes and avoiding circular dependencies)
+- [ ] Prevent secrets exposure in Docker images: never use `ARG` or `ENV` for credentials; use BuildKit `--mount=type=secret` or runtime injection
+- [ ] Compare container base image distributions (Alpine vs Debian-slim vs Distroless vs Chainguard) and evaluate musl vs glibc trade-offs
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -316,3 +330,4 @@
 - [WebClient / WebFlux questions](questions/webclient-webflux.md)
 - [Observability questions](questions/observability.md)
 - [Performance questions](questions/performance.md)
+- [Docker questions](questions/docker.md)

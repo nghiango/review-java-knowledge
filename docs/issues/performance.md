@@ -252,6 +252,18 @@ JFR monitor-blocked events and throughput by concurrency level show the effect.
 
 **Appears in:** `modules/23-performance/broken-examples/lock-contention`
 
+---
+
+### Single-Stage Fat Container Image Bloats Deployment and Startup
+
+**Type:** Performance issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Docker, BuildKit, Layer Caching, Registry Bandwidth · **Interview frequency:** High · **Production impact:** High
+
+Compiling and packaging Java applications inside a single-stage Dockerfile bundles compiler toolchains (full JDK), Gradle/Maven caches, source trees, and build tools into the runtime image (producing 800MB–1.5GB images). This bloats container registry storage, consumes gigabytes of CI/CD network egress, dramatically slows Kubernetes node image pulls during autoscaling events, and enlarges the container vulnerability surface. Use multi-stage builds separating the build environment from a minimal runtime JRE/distroless image, and extract Spring Boot layered JARs to maximize Docker layer caching.
+
+**Appears in:** `modules/24-docker/broken-examples/fat-image-root-user`
+
 ## Related
 
 - [Issue catalogue](index.md)

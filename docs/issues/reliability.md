@@ -298,6 +298,30 @@ rejection or rate limiting so callers can shed load or retry within a deadline.
 
 **Appears in:** `modules/23-performance/broken-examples/oversized-thread-pool`
 
+---
+
+### Unbounded Memory and Missing JVM Container Awareness Trigger Silent OOMKills
+
+**Type:** Reliability issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Docker, Linux cgroups, JVM Memory Management · **Interview frequency:** High · **Production impact:** Critical
+
+Running JVM applications without explicit container memory limits in `docker-compose.yml` or Kubernetes manifests (or setting `-Xmx` equal to the container cgroup limit) causes the Linux kernel OOM killer to terminate the process abruptly with exit code 137. Because the JVM process memory consists of heap plus non-heap overhead (Metaspace, thread stacks, CodeCache, direct byte buffers, native libraries, GC data structures), heap sized to 100% of the container budget inevitably overflows container cgroup limits. Always set container memory limits, reserve 25–30% of memory for off-heap overhead, and use `-XX:MaxRAMPercentage=70.0` to dynamically align heap sizing.
+
+**Appears in:** `modules/24-docker/broken-examples/no-memory-limits-jvm`
+
+---
+
+### Shell-Form Entrypoint Breaks Graceful Shutdown (SIGTERM Swallowed)
+
+**Type:** Reliability issue · **Severity:** Critical · **Difficulty:** Senior
+
+**Technology:** Docker ENTRYPOINT, Linux Signals, Spring Boot Graceful Shutdown · **Interview frequency:** High · **Production impact:** Critical
+
+Using the shell form for `ENTRYPOINT java -jar app.jar` spawns `/bin/sh -c` as PID 1 inside the container. When Docker or Kubernetes initiates container shutdown, it sends `SIGTERM` to PID 1 (`/bin/sh`), which does not forward signals to child processes by default. The Java process never receives `SIGTERM`, bypasses Spring Boot's graceful shutdown lifecycle (`server.shutdown=graceful`), and drops active HTTP in-flight requests and database transactions. After a termination grace period (e.g., 10s or 30s), the orchestrator forcibly kills the container with `SIGKILL` (exit code 137). Always use exec form (`ENTRYPOINT ["java", "-jar", "..."]`) or wrap execution with `exec java ...` so the JVM runs as PID 1.
+
+**Appears in:** `modules/24-docker/broken-examples/missing-healthcheck-shutdown`
+
 ## Related
 
 - [Issue catalogue](index.md)

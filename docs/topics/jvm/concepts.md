@@ -132,7 +132,9 @@ Inside Docker or Kubernetes containers, JVM must detect and respect cgroup limit
 
 - By default, Java 21 calculates heap limits as a percentage of container RAM via `-XX:MaxRAMPercentage` (default ~25% without explicit flags).
 - **Total Process Memory $\ne$ `-Xmx`**. Total container memory consumption is:
-  $$\text{Container Memory} = \text{Heap} + \text{Metaspace} + \text{CodeCache} + (\text{Threads} \times \text{StackSize}) + \text{DirectMemory} + \text{JVM Native Overhead}$$
+
+$$\begin{aligned} \text{Container Memory} = {} & \text{Heap} + \text{Metaspace} + \text{CodeCache} \\ & + (\text{Threads} \times \text{StackSize}) + \text{DirectMemory} \\ & + \text{JVM Native Overhead} \end{aligned}$$
+
 - Setting `-Xmx` equal to the container memory limit leads to the Linux kernel **OOMKiller** terminating the process with exit code 137 without a JVM heap dump.
 
 ```java

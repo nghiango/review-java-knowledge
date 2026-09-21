@@ -1,0 +1,13 @@
+services:
+  order-service:
+    image: order-service:1.0.0
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    entrypoint: ["/entrypoint.sh"]
+
+# entrypoint.sh:
+# #!/bin/sh
+# # Launching JVM with static heap flag sizing:
+# java -Xmx32g -jar /app/app.jar

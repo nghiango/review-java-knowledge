@@ -86,6 +86,7 @@ When a method annotated with `@Transactional` invokes a slow remote HTTP API:
 
 ### Pool Sizing Formula
 According to PostgreSQL and HikariCP guidelines:
+
 $$\text{Pool Size} = (\text{CPU Cores} \times 2) + \text{Effective Spindle Count}$$
 
 ---

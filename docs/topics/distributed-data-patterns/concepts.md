@@ -83,8 +83,11 @@ If the event ID already exists in `inbox_messages`, the transaction skips busine
 ## 5. The Saga Pattern
 
 A Saga coordinates long-running business transactions spanning multiple microservices as a sequence of local transactions:
+
 $$T_1, T_2, T_3, \dots, T_n$$
+
 If step $T_i$ fails, the Saga executes compensating transactions in reverse order:
+
 $$C_{i-1}, C_{i-2}, \dots, C_1$$
 
 ### Orchestration vs Choreography

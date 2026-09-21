@@ -97,7 +97,7 @@ In distributed tracing, context propagation relies on `TextMapPropagator` implem
 When making an outbound HTTP call via `RestClient` or `WebClient`:
 1. The tracing instrumentation queries the current active `Span` from `Tracer.currentSpan()`.
 2. The `W3CTraceContextPropagator` formats the span context into the standard string:
-   $$\text{00-}\{\text{traceId}\}\text{-}\{\text{spanId}\}\text{-}\{\text{traceFlags}\}$$
+   $\displaystyle \text{00-}\{\text{traceId}\}\text{-}\{\text{spanId}\}\text{-}\{\text{traceFlags}\}$
 3. The propagator sets the HTTP header:
    ```text
    traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01

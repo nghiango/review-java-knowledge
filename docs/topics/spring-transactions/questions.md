@@ -93,7 +93,7 @@ Four levels of interview questions covering `@Transactional` proxy mechanics, pr
 
 ??? question "Reveal answer"
     HikariCP pool sizing follows the PostgreSQL empirical formula:
-    $$\text{Pool Size} = (\text{CPU Cores} \times 2) + \text{Effective Spindle Count}$$
+    $\displaystyle \text{Pool Size} = (\text{CPU Cores} \times 2) + \text{Effective Spindle Count}$
     
     Over-allocating connections creates disk I/O thrashing, lock contention, and high context-switching overhead. A small, well-tuned pool (e.g. 10–20 connections) frequently outperforms a pool of hundreds of connections.
 

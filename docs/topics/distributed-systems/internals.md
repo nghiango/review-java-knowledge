@@ -16,12 +16,15 @@ If $w + r > N$, then $W \cap R \neq \emptyset$.
 ### Proof by Contradiction
 Assume $W \cap R = \emptyset$.
 Then by the sum rule for disjoint sets:
+
 $$|W \cup R| = |W| + |R| = w + r$$
 
 Since both $W$ and $R$ are subsets of the entire cluster $S$ where $|S| = N$:
+
 $$|W \cup R| \le N$$
 
 Substituting the assumed disjoint sum:
+
 $$w + r \le N$$
 
 This directly contradicts the initial premise that $w + r > N$.
@@ -42,21 +45,20 @@ Each process $P_i$ maintains local vector $V_i$.
 ### State Update Rules
 
 1. **Local Event Rule**: Before process $P_i$ executes a local event:
-   $$V_i[i] \leftarrow V_i[i] + 1$$
+   $\displaystyle V_i[i] \leftarrow V_i[i] + 1$
 2. **Message Send Rule**: Process $P_i$ attaches its current vector $V_i$ to every outgoing message $m$.
 3. **Message Receive Rule**: When process $P_j$ receives message $m$ containing vector $V_{\text{msg}}$:
-   $$V_j[k] \leftarrow \max(V_j[k], V_{\text{msg}}[k]) \quad \forall k \in \{1, \dots, n\}$$
-   $$V_j[j] \leftarrow V_j[j] + 1$$
+   $\displaystyle \begin{aligned} V_j[k] & \leftarrow \max(V_j[k], V_{\text{msg}}[k]) \quad \forall k \in \{1, \dots, n\} \\ V_j[j] & \leftarrow V_j[j] + 1 \end{aligned}$
 
 ### Causality Comparison Operator
 
 For two vector timestamps $V_A$ and $V_B$:
 - **$V_A \le V_B$ (Happened-Before)**:
-  $$V_A[k] \le V_B[k] \quad \forall k \in \{1, \dots, n\}$$
+  $\displaystyle V_A[k] \le V_B[k] \quad \forall k \in \{1, \dots, n\}$
 - **$V_A < V_B$ (Strict Causality)**:
-  $$V_A \le V_B \quad \text{and} \quad V_A \neq V_B$$
+  $\displaystyle V_A \le V_B \quad \text{and} \quad V_A \neq V_B$
 - **$V_A \parallel V_B$ (Concurrent / Conflict)**:
-  $$\neg(V_A \le V_B) \quad \text{and} \quad \neg(V_B \le V_A)$$
+  $\displaystyle \neg(V_A \le V_B) \quad \text{and} \quad \neg(V_B \le V_A)$
 
 When $V_A \parallel V_B$, the system detects an uncoordinated concurrent update that cannot be automatically ordered and triggers domain-specific conflict resolution (e.g. Git merge, Riak siblings, or CRDT join).
 

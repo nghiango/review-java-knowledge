@@ -80,8 +80,7 @@ Real-world production failure modes, diagnostic runbooks, and JVM operational tr
 
 ### Diagnostic runbook
 1. Verify container memory limits vs JVM heap:
-   - Calculate total native memory:
-     $$\text{RSS} = \text{Heap} + \text{Metaspace} + \text{CodeCache} + (\text{PlatformThreads} \times 1\text{MB}) + \text{DirectMemory} + \text{NativeAllocations}$$
+   - Calculate total native memory: $\displaystyle \text{RSS} = \text{Heap} + \text{Metaspace} + \text{CodeCache} + (\text{PlatformThreads} \times 1\text{MB}) + \text{DirectMemory} + \text{NativeAllocations}$
 2. Enable Native Memory Tracking (NMT):
    ```bash
    -XX:NativeMemoryTracking=summary

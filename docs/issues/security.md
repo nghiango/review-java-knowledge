@@ -133,6 +133,30 @@ Writing raw 16-digit primary account numbers (PAN) and card verification values 
 
 **Appears in:** `modules/22-observability/broken-examples/logging-secrets-pii`
 
+---
+
+### Root Container Execution
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Docker, Linux User Namespaces, Container Security · **Interview frequency:** High · **Production impact:** Critical
+
+Omitting a `USER` instruction runs container processes as UID 0 (root). If an attacker achieves Remote Code Execution (RCE) or exploits a container breakout vulnerability (e.g., runc CVEs, misconfigured mount bindings, sensitive host path access), they immediately possess root privileges on the underlying host node. Always create a dedicated unprivileged user (`useradd -u 10001 -r -g appuser appuser`) and set `USER 10001:10001` before launching the runtime process.
+
+**Appears in:** `modules/24-docker/broken-examples/fat-image-root-user`
+
+---
+
+### Secrets Baked into Image Layers
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Dockerfile, BuildKit, Secret Management · **Interview frequency:** High · **Production impact:** Critical
+
+Using `ARG` or `ENV` to pass private credentials (such as GitHub PAT tokens, NPM tokens, AWS access keys, or production database passwords) during image build bakes the secret into intermediate image layers. Because Docker images are immutable layer stacks, deleting the file in a subsequent `RUN rm` layer or relying on image flattening does not remove the secret—it remains retrievable by running `docker history --no-trunc` or inspecting tar archives. Use BuildKit secret mounts (`RUN --mount=type=secret,id=token ...`) or inject secrets strictly at container runtime via environment variables or secret volumes.
+
+**Appears in:** `modules/24-docker/broken-examples/secrets-baked-into-image`
+
 ## Related
 
 - [Issue catalogue](index.md)

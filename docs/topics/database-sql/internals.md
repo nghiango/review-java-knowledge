@@ -134,6 +134,7 @@ Configuring oversized database connection pools is a primary cause of production
 $$\text{connections} = ((\text{CPU Cores} \times 2) + \text{effective\_spindle\_count})$$
 
 For an 8-core database server with SSD storage:
+
 $$\text{pool size} = ((8 \times 2) + 1) = 17 \text{ connections}$$
 
 > [!IMPORTANT]

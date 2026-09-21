@@ -28,7 +28,9 @@ flowchart TD
 
 ### The Danger of Retry Amplification
 If three tiers of microservices each retry 3 times upon failure:
+
 $$\text{Total Requests} = 3_{\text{Tier 1}} \times 3_{\text{Tier 2}} \times 3_{\text{Tier 3}} = 27\times \text{ load}$$
+
 This multiplier transforms a modest 10% traffic spike into a crushing 270% overload on the deepest dependency.
 
 ### Jitter Algorithms

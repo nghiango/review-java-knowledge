@@ -1,0 +1,10 @@
+/* Keep long display equations inside the content column: scroll instead of
+   overflowing into the right-hand table of contents. */
+.md-typeset .arithmatex {
+  overflow-x: auto;
+}
+
+.md-typeset mjx-container[jax="CHTML"][display="true"] {
+  overflow-x: auto;
+  overflow-y: hidden;
+}

@@ -18,6 +18,7 @@ theme:
     - content.code.copy
     - content.code.annotate
     - content.tabs.link
+    - content.tooltips
     - search.highlight
     - search.share
     - search.suggest
@@ -257,6 +258,15 @@ nav:
           - Tests: topics/performance/tests.md
           - Production: topics/performance/production.md
           - Exercises: topics/performance/exercises.md
+      - Docker:
+          - Overview: topics/docker/index.md
+          - Concepts: topics/docker/concepts.md
+          - Internals: topics/docker/internals.md
+          - Interview Questions: topics/docker/questions.md
+          - Code Review: topics/docker/code-review.md
+          - Solutions: topics/docker/solutions.md
+          - Production: topics/docker/production.md
+          - Exercises: topics/docker/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -297,6 +307,7 @@ nav:
       - WebClient / WebFlux: questions/webclient-webflux.md
       - Observability: questions/observability.md
       - Performance: questions/performance.md
+      - Docker: questions/docker.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:
@@ -313,17 +324,39 @@ nav:
       - Testing Plan: superpowers/plans/2026-09-20-testing-module.md
 
 markdown_extensions:
+  - abbr
   - admonition
   - attr_list
+  - def_list
+  - footnotes
   - md_in_html
   - tables
-  - footnotes
   - toc:
       permalink: true
+      permalink_title: Anchor link to this section for reference
   - pymdownx.arithmatex:
       generic: true
+  - pymdownx.betterem
+  - pymdownx.blocks.caption
+  - pymdownx.caret
   - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      linenums: true
+      linenums_style: pymdownx-inline
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
   - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      base_path:
+        - .
+        - docs
+      check_paths: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -331,16 +364,13 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets:
-      base_path:
-        - .
-        - docs
-      check_paths: true
+      combine_header_slug: true
   - pymdownx.tasklist:
       custom_checkbox: true
+  - pymdownx.tilde
+extra_css:
+  - stylesheets/extra.css
+
 extra_javascript:
   - javascripts/mathjax.js
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
