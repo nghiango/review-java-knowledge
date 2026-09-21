@@ -285,6 +285,15 @@ nav:
           - Solutions: topics/ci-cd/solutions.md
           - Production: topics/ci-cd/production.md
           - Exercises: topics/ci-cd/exercises.md
+      - System Design:
+          - Overview: topics/system-design/index.md
+          - Concepts: topics/system-design/concepts.md
+          - Internals: topics/system-design/internals.md
+          - Interview Questions: topics/system-design/questions.md
+          - Code Review: topics/system-design/code-review.md
+          - Solutions: topics/system-design/solutions.md
+          - Production: topics/system-design/production.md
+          - Exercises: topics/system-design/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -328,6 +337,7 @@ nav:
       - Docker: questions/docker.md
       - AWS: questions/aws.md
       - CI/CD: questions/ci-cd.md
+      - System Design: questions/system-design.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:

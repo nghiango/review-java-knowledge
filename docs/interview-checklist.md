@@ -337,6 +337,21 @@
 - [ ] Decouple deployment from release using Feature Flags (Strategy pattern, operational kill switches, and technical debt retirement)
 - [ ] Contrast push-based CI/CD pipelines with declarative pull-based GitOps (ArgoCD reconciliation loops, drift detection, sync waves)
 
+## System Design
+
+- [ ] Frame high-scale system design using a structured 4-step framework: Scope Requirements, High-Level Design, Deep-Dive Critical Components, and Scale/Bottlenecks
+- [ ] Formulate Back-of-the-Envelope capacity estimates: QPS (Read/Write), network bandwidth ingress/egress, and 5-year storage growth with indexing overhead
+- [ ] Evaluate the CAP Theorem and PACELC trade-offs across storage engines (CP vs AP under network partitions; Latency vs Consistency in normal operations)
+- [ ] Choose appropriate database paradigms: Relational (PostgreSQL, ACID, complex joins), Document (MongoDB, flexible schema), Key-Value (Redis, sub-millisecond cache), Columnar (Cassandra/ClickHouse, append-heavy time-series)
+- [ ] Apply distributed caching topologies (Cache-Aside, Write-Through, Write-Behind, Refresh-Ahead) and prevent Cache Stampede, Cache Penetration, and Cache Avalanche
+- [ ] Design distributed rate limiters using Token Bucket or Sliding Window Counter with atomic Redis Lua scripts to eliminate multi-round-trip latency and window boundary bursts
+- [ ] Implement robust horizontal database scaling: Read Replicas with replication lag management, Range vs Hash Partitioning, and Consistent Hashing with virtual nodes
+- [ ] Decouple microservice boundaries using Event-Driven Architecture, Transactional Outbox, and Idempotent Consumers over brittle distributed transactions (2PC/XA)
+- [ ] Guarantee financial consistency in payment workflows via client-generated Idempotency Keys (UUIDv7) propagated through all gateway calls
+- [ ] Architect high-concurrency flash sale inventory reservations using Redis in-memory atomic decrement (`DECRBY`) and asynchronous order queues to protect relational databases
+- [ ] Compare distributed ID generation schemes: Snowflake (64-bit time-sortable), UUIDv7, and Centralized Range Allocation (ZooKeeper/Redis ticket service)
+- [ ] Select appropriate network communication protocols: REST/JSON (public APIs), gRPC/HTTP/2 (internal microservice RPC), WebSockets/SSE (real-time bi-directional feeds)
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -366,3 +381,4 @@
 - [Docker questions](questions/docker.md)
 - [AWS questions](questions/aws.md)
 - [CI/CD questions](questions/ci-cd.md)
+- [System Design questions](questions/system-design.md)

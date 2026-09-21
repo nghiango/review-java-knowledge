@@ -370,6 +370,18 @@ Tagging release container images with mutable `:latest` tags causes severe deplo
 
 **Appears in:** `modules/26-ci-cd/broken-examples/no-rollback-path-pipeline`
 
+---
+
+### Non-Atomic Distributed Counter and Expiration Causes Permanent Key Lockout
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Redis, Distributed Rate Limiting, System Design · **Interview frequency:** High · **Production impact:** High
+
+Executing separate non-atomic `INCR` and `EXPIRE` commands across network boundaries creates an orphaned key hazard. If the application server crashes or network partitions occur between the increment and expiration calls, the Redis counter key is created without a TTL. Once the threshold is exceeded, affected users are permanently blocked with HTTP 429 status codes until operational intervention. Distributed counter increments and expiration must be wrapped in atomic Redis Lua scripts.
+
+**Appears in:** `modules/27-system-design/broken-examples/distributed-rate-limiter-naive-redis`
+
 ## Related
 
 - [Issue catalogue](index.md)

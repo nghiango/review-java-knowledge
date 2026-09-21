@@ -32,7 +32,7 @@
 | 24 | Docker | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
 | 25 | AWS | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
 | 26 | CI/CD | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
-| 27 | System Design | doc | ⬜ | ⬜ | ⬜ | ⬜ | — | ⬜ | ⬜ |
+| 27 | System Design | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
 | 28 | Architecture | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 29 | Design Patterns | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 30 | Senior Engineering | doc | ⬜ | ⬜ | ⬜ | ⬜ | — | ⬜ | ⬜ |

@@ -122,6 +122,18 @@ In Reactive Streams, the `onError` signal is terminal. When using `Mono.zip()` t
 
 **Appears in:** `modules/21-webclient-webflux/broken-examples/chain-without-error-handling`
 
+---
+
+### Fail-Closed Distributed Rate Limiting Collapses Entire Platform During Cache Outage
+
+**Type:** Resilience issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Redis, System Design, Resilience · **Interview frequency:** High · **Production impact:** Critical
+
+Configuring distributed edge or API gateway rate limiters to fail closed (rejecting all client requests with HTTP 429 when Redis cluster connection times out) elevates a caching or auxiliary tier degradation into a catastrophic total platform blackout. Rate limiters should fail open with graceful degradation, logging warnings and falling back to local JVM-bound in-memory limits while allowing production traffic to proceed.
+
+**Appears in:** `modules/27-system-design/broken-examples/distributed-rate-limiter-naive-redis`
+
 ## Related
 
 - [Issue catalogue](index.md)
