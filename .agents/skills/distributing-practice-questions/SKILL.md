@@ -18,12 +18,16 @@ so the answers are easy to recall.
 
 One page per topic that receives at least one question: `docs/topics/<slug>/practice.md`
 
-```markdown
+````markdown
 # <Topic> — Practice Q&A
 
 Quick-recall questions. Answers are collapsed; think before revealing.
 
 ### Q1. <Primary question>
+
+```java
+<the source question's code block, if it had one>
+```
 
 Merged from: Q1 + Q2
 Canonical: [Q4 — <title>](../<slug>/questions.md#<heading-anchor>)
@@ -38,13 +42,18 @@ Also relevant: [Core Java](../core-java/index.md)
 
 - [Concepts](concepts.md)
 - [Interview Questions](questions.md)
-```
+````
 
 - `<slug>` is taken **verbatim** from the curriculum slug registry; the folder must already exist.
 - Numbering restarts per page: `### Q1.`, `### Q2.`, …
-- `Merged from:`, `Canonical:` and `Also relevant:` go **directly under the `### Qn.` heading**, above
-  the admonition — they are provenance, not answer text, so they stay visible while the answer is
-  collapsed. Emit each line only when it applies.
+- **Keep the question's code block.** Carry the source snippet's code over unchanged, and give the
+  fence a language tag (`java`, `text`, `sql`, …) if it has none. The question's remaining prose goes
+  in the heading; the code block sits directly under it. A concrete snippet is what makes the
+  question understandable at a glance — only the **prose** has to stay short.
+- `Merged from:`, `Canonical:` and `Also relevant:` go **directly under the `### Qn.` heading** (after
+  the code block), above the admonition — they are provenance, not answer text, so they stay visible
+  while the answer is collapsed. Emit each line only when it applies. `Merged from:` lists scratch
+  variants only — updating an existing practice question in place does not add it.
 - `Canonical:` links the same-intent question in that topic's `questions.md` (anchor to its heading)
   when one exists; omit it otherwise.
 - `Also relevant:` links the sibling topic's **`index.md`** when the question also belongs to a
@@ -59,8 +68,9 @@ Also relevant: [Core Java](../core-java/index.md)
 2. **Classify** each Q&A to exactly one slug from the registry. Put secondary topics on an
    `Also relevant:` line — never a second copy.
 3. **De-duplicate.** Same intent → one **Primary Question**. Prefer the clearest source wording;
-   if no single variant covers every one, write a new short question that does. Record the variants
-   under it as `Merged from: Q1 + Q2`.
+   if no single variant covers every one, write a new short question that does. Keep the most
+   complete code block of the variants — shortening applies to the prose, never to the code. Record
+   the variants under it as `Merged from: Q1 + Q2`.
 4. **Check the repo for collisions.** *Same intent* means the same concept **and** the same expected
    answer — a related-but-different question stays separate. An existing `practice.md` question with
    the same intent is updated in place, never duplicated. A match in the canonical `questions.md` is
@@ -104,8 +114,9 @@ This deliberately differs from the canonical `questions.md` reveal contract (whi
 | The practice page answers; it does not re-explain | `concepts.md` is the canonical explanation — link it, never repeat it. |
 | One primary slug per question | A question stored under two topics drifts; questions are found by topic. |
 | Slug from the registry, verbatim | Never invent a topic folder — route an off-topic question to the nearest existing slug. |
-| Merged questions keep the clearest wording | The Primary Question is what gets recalled, so it must be short. |
-| Illustrative fragments stay inline; real lab code is a `--8<--` snippet | A short `em.find(...)` fragment is teaching text; copies of `modules/` source drift. |
+| Merged questions keep the clearest wording | The Primary Question is what gets recalled, so its **prose** must be short. |
+| Keep the source question's code block | The snippet is what makes the question understandable at a glance; it is not part of the prose you shorten. |
+| A snippet that is a repo file uses `--8<--`; a hand-written illustration stays inline | If the code exists as a file under `modules/` or `tracks/`, include it so it cannot drift; a short `em.find(...)` sketch that is not a file is teaching text. |
 | The scratch file is not published content | Never add it to nav or link it from topic pages — it is raw input. |
 | Re-running is idempotent | The scratch file grows over time — distribute only what is new, update what changed. |
 
@@ -126,6 +137,8 @@ Plus one summary line: `N scratch Q&As → M unique questions across K topics`.
 - Editing `questions.md` to "avoid duplication" — link the canonical question instead.
 - Answering "what is X" but never "so what breaks / what do I do instead".
 - Merging duplicates by keeping the *longest* question instead of the clearest.
+- Stripping the code block out of a question while shortening its prose — the example is what makes
+  the question concrete.
 - Duplicating an existing `practice.md` question instead of updating it in place.
 - A new page left out of `mkdocs.yml` nav, so it never appears in the site.
 - Treating the scratch file as a real page — adding it to nav or linking it.

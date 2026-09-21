@@ -17,6 +17,8 @@ Discover how Hibernate tracks entity modifications through snapshot comparison, 
 
 The [question bank](questions.md) spans 23 structured questions across Basic, Intermediate, Senior, and Production Scenario levels with dedicated runnable code examples.
 
+Quick-recall drilling with collapsed answers lives in [Practice Q&A](practice.md).
+
 ## Common Production Problems
 
 N+1 select cascades, cartesian product explosions from multiple eager collections, `LazyInitializationException` outside transactions, memory leaks from long-running batch sessions, and broken `equals()`/`hashCode()` hash set mutations are diagnosed in [Production](production.md).

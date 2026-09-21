@@ -106,6 +106,7 @@ nav:
           - Concepts: topics/jpa-hibernate/concepts.md
           - Internals: topics/jpa-hibernate/internals.md
           - Interview Questions: topics/jpa-hibernate/questions.md
+          - Practice Q&A: topics/jpa-hibernate/practice.md
           - Code Review: topics/jpa-hibernate/code-review.md
           - Solutions: topics/jpa-hibernate/solutions.md
           - Tests: topics/jpa-hibernate/tests.md
