@@ -422,6 +422,30 @@ A cascade of `instanceof` checks over an `Object` target relies on branch order 
 
 **Appears in:** [Java 25 / Boot 4 — primitive pattern matching loss](../tracks/java25-boot4/core-java/code-review.md#primitive-pattern-matching-loss)
 
+---
+
+### Hand-Rolled API Versioning Bypassing HandlerMapping
+
+**Type:** Architecture issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Spring MVC, API Versioning, HandlerInterceptor · **Interview frequency:** High · **Production impact:** Medium
+
+Hand-rolled request interceptors extracting version headers and storing them in request attributes bypass Spring MVC's HandlerMapping routing engine. This forces controllers into clumsy `if-else` branching, degrades OpenAPI schema generation, and returns non-standard error responses. Migrate to Spring Framework 7 first-class declarative API versioning on `@RequestMapping`.
+
+**Appears in:** [Java 25 / Boot 4 Spring MVC — Hand-Rolled API Versioning Interceptor](../tracks/java25-boot4/spring-mvc/code-review.md#review-target-1-legacyversioninterceptorjava-ordercontrollerjava)
+
+---
+
+### JSpecify Nullness Contract Breach in Web Controller and DTOs
+
+**Type:** API design issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Spring MVC, JSpecify, Nullness · **Interview frequency:** High · **Production impact:** High
+
+Under JSpecify `@NullMarked`, all unannotated reference types in a package implicitly promise non-null values. Returning `null` on missing attributes or failing to mark `@RequestParam(required = false)` with `@Nullable` violates the API contract, causing compiler warnings and downstream NullPointerExceptions in callers.
+
+**Appears in:** [Java 25 / Boot 4 Spring MVC — JSpecify Nullness Contract Violation](../tracks/java25-boot4/spring-mvc/code-review.md#review-target-2-customerprofilecontrollerjava)
+
 ## Related
 
 - [Issue catalogue](index.md)

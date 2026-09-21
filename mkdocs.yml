@@ -351,6 +351,16 @@ nav:
               - Tests: tracks/java25-boot4/concurrency/tests.md
               - Production: tracks/java25-boot4/concurrency/production.md
               - Exercises: tracks/java25-boot4/concurrency/exercises.md
+          - Spring MVC:
+              - Overview: tracks/java25-boot4/spring-mvc/index.md
+              - Concepts: tracks/java25-boot4/spring-mvc/concepts.md
+              - Internals: tracks/java25-boot4/spring-mvc/internals.md
+              - Interview Questions: tracks/java25-boot4/spring-mvc/questions.md
+              - Code Review: tracks/java25-boot4/spring-mvc/code-review.md
+              - Solutions: tracks/java25-boot4/spring-mvc/solutions.md
+              - Tests: tracks/java25-boot4/spring-mvc/tests.md
+              - Production: tracks/java25-boot4/spring-mvc/production.md
+              - Exercises: tracks/java25-boot4/spring-mvc/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md

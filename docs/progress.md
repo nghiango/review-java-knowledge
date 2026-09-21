@@ -46,7 +46,7 @@ the differences; the baseline remains the canonical explanation of each topic.
 |---|---|---|---|---|---|---|---|---|---|
 | 01 | Core Java | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 03 | Concurrency | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 06 | Spring MVC | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 06 | Spring MVC | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 07 | Spring Transactions | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 10 | REST API | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 11 | Spring Security | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
