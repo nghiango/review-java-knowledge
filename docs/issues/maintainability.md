@@ -330,6 +330,42 @@ Skipping test tasks (`-x test`) during packaging on the `main` trunk branch oper
 
 **Appears in:** `modules/26-ci-cd/broken-examples/tests-and-security-skipped-on-main`
 
+---
+
+### Domain Model Coupled Directly to Infrastructure and Framework Annotations
+
+**Type:** Maintainability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Hexagonal Architecture, Clean Architecture, DDD · **Interview frequency:** High · **Production impact:** High
+
+Annotating core business entities with framework and database annotations (`@Entity`, `@Table`, `@Component`, `@Autowired`) couples domain logic to infrastructure frameworks and persistence lifecycles. Domain models cannot be unit tested in isolation without Spring or persistence runners, and upgrading or swapping infrastructure frameworks requires intrusive refactoring of core business logic. In Hexagonal and Clean Architecture, domain models must remain pure POJOs depending only on inward contracts.
+
+**Appears in:** `modules/28-architecture/broken-examples/domain-depending-on-infrastructure`
+
+---
+
+### Anaemic Domain Model with Exposed Setters Leaking Business Invariants
+
+**Type:** Maintainability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Technology:** Domain-Driven Design, Object-Oriented Design · **Interview frequency:** High · **Production impact:** High
+
+Treating domain entities as passive data holders with public getters and setters forces business invariants, validation rules, and lifecycle transitions into procedural god services. Callers across the application can mutate fields into corrupt or inconsistent states without triggering recalculation or state machine checks. Encapsulate business logic within rich Aggregate Roots and protect internal collections using unmodifiable views.
+
+**Appears in:** `modules/28-architecture/broken-examples/anaemic-domain-with-god-service`
+
+---
+
+### Cross-Module Database Access Violating Bounded Context Isolation
+
+**Type:** Maintainability issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Modular Monolith, Bounded Contexts, Microservices · **Interview frequency:** High · **Production impact:** Critical
+
+Allowing one module in a modular monolith or microservices architecture to directly query or mutate database tables owned by another bounded context violates encapsulation. Changes to internal schemas immediately break foreign modules, domain lifecycle logic is bypassed, and database-level deadlocks emerge. Modules must interact strictly through published Java API contracts or asynchronous Domain Events.
+
+**Appears in:** `modules/28-architecture/broken-examples/cross-module-database-access`
+
 ## Related
 
 - [Issue catalogue](index.md)

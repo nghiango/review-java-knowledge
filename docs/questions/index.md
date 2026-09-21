@@ -30,6 +30,7 @@ Answer each question before reading its explanation.
 - [AWS](aws.md)
 - [CI/CD](ci-cd.md)
 - [System Design](system-design.md)
+- [Architecture](architecture.md)
 
 ## Related
 

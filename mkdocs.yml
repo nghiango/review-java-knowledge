@@ -294,6 +294,16 @@ nav:
           - Solutions: topics/system-design/solutions.md
           - Production: topics/system-design/production.md
           - Exercises: topics/system-design/exercises.md
+      - Architecture:
+          - Overview: topics/architecture/index.md
+          - Concepts: topics/architecture/concepts.md
+          - Internals: topics/architecture/internals.md
+          - Interview Questions: topics/architecture/questions.md
+          - Code Review: topics/architecture/code-review.md
+          - Solutions: topics/architecture/solutions.md
+          - Tests: topics/architecture/tests.md
+          - Production: topics/architecture/production.md
+          - Exercises: topics/architecture/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -338,6 +348,7 @@ nav:
       - AWS: questions/aws.md
       - CI/CD: questions/ci-cd.md
       - System Design: questions/system-design.md
+      - Architecture: questions/architecture.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:

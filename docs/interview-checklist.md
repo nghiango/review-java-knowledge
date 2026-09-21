@@ -352,6 +352,21 @@
 - [ ] Compare distributed ID generation schemes: Snowflake (64-bit time-sortable), UUIDv7, and Centralized Range Allocation (ZooKeeper/Redis ticket service)
 - [ ] Select appropriate network communication protocols: REST/JSON (public APIs), gRPC/HTTP/2 (internal microservice RPC), WebSockets/SSE (real-time bi-directional feeds)
 
+## Architecture
+
+- [ ] Contrast traditional Layered Architecture (database-driven) with Hexagonal (Ports & Adapters) and Clean Architecture (Dependency Rule)
+- [ ] Design pure domain models with zero framework imports (`jakarta.persistence.*`, `org.springframework.*`) to ensure microsecond unit testability
+- [ ] Differentiate Driving (Inbound / Use Cases) from Driven (Outbound / Persistence, Gateways) Ports and their respective adapters
+- [ ] Identify and refactor Anemic Domain Models (procedural property bags with public setters) into Rich Domain Aggregate Roots
+- [ ] Distinguish Entities (persistent lifecycle identity) from Value Objects (immutable, attribute-based equality, self-validating)
+- [ ] Enforce Aggregate consistency boundaries: modify exactly one aggregate root per database transaction and coordinate via Domain Events
+- [ ] Separate Domain Services (pure domain calculation spanning multiple models, zero I/O) from Application Services (use case orchestration)
+- [ ] Architect Modular Monoliths using package-private visibility, public API interfaces, and Spring Modulith event-driven inter-module communication
+- [ ] Codify architectural fitness functions in Java using ArchUnit to automatically fail CI builds on boundary or layer violations
+- [ ] Apply CQRS (Command Query Responsibility Segregation) to decouple write-optimized aggregates from read-optimized denormalized projections
+- [ ] Explain Event Sourcing mechanics: append-only event store, optimistic concurrency control via sequence numbers, and snapshotting
+- [ ] Prevent the Shared Database anti-pattern across bounded contexts to protect autonomous schema evolution and team ownership
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -382,3 +397,4 @@
 - [AWS questions](questions/aws.md)
 - [CI/CD questions](questions/ci-cd.md)
 - [System Design questions](questions/system-design.md)
+- [Architecture questions](questions/architecture.md)
