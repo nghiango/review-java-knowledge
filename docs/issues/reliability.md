@@ -442,6 +442,28 @@ Catching raw `RuntimeException` around `@HttpExchange` client calls and re-throw
 
 **Appears in:** [Java 25 / Boot 4 REST API — Declarative HTTP Client Leaks](../tracks/java25-boot4/rest-api/code-review.md#review-target-2-declarative-http-interface-proxy-configuration-leaks)
 
+### Thread.sleep in Asynchronous and Virtual Thread Tests
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** JUnit 5, Virtual Threads, Awaitility · **Interview frequency:** High · **Production impact:** High
+
+Using `Thread.sleep` to synchronize asynchronous test assertions causes intermittent failures in CI environments where CPU scheduling variance delays background task completion. Tests fail unpredictably under load and run unnecessarily slow when tasks finish fast. Always use poll-based synchronizers such as `Awaitility.await().atMost(...).until(...)`.
+
+**Appears in:** [Java 25 / Boot 4 Testing — Unbound Concurrency Flakiness](../tracks/java25-boot4/testing/code-review.md#review-target-1-unbound-concurrency-test-flakiness)
+
+---
+
+### Ignoring RFC 9457 ProblemDetail Structure in REST Endpoint Tests
+
+**Type:** Reliability issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Spring WebMvc, MockMvc, RFC 9457 · **Interview frequency:** High · **Production impact:** High
+
+Testing REST error endpoints by matching plain text or unparsed JSON strings masks regressions in RFC 9457 `ProblemDetail` compliance. Upstream clients relying on standardized error attributes (`type`, `title`, `status`, `detail`) break silently. Tests must assert `ProblemDetail` JSON schemas and extension properties directly using structured JSON path extractors.
+
+**Appears in:** [Java 25 / Boot 4 Testing — REST Test Client Assertion Drift](../tracks/java25-boot4/testing/code-review.md#review-target-2-rest-test-client-assertion-drift)
+
 ## Related
 
 - [Issue catalogue](index.md)

@@ -172,6 +172,20 @@ Subtasks forked using `CompletableFuture.supplyAsync()` or bare executors have i
 
 **Appears in:** [Java 25 / Boot 4 Spring Security — InheritableThreadLocal Context Pollution](../tracks/java25-boot4/spring-security/code-review.md#review-target-2-inheritablethreadlocal-security-context-pollution)
 
+---
+
+### Unbound Virtual Thread Dispatch in Tests
+
+**Type:** Concurrency issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Virtual threads, StructuredTaskScope, Test Execution · **Interview frequency:** Medium · **Production impact:** Medium
+
+Spawning fire-and-forget virtual threads in unit tests without bounding execution scopes or joining tasks causes uncoordinated threads to outlive test methods. This pollutes subsequent test execution and masks silent background exceptions. Concurrency tests must coordinate task completion using `StructuredTaskScope` or managed countdown latches.
+
+**Appears in:** [Java 25 / Boot 4 Testing — Unbound Concurrency Flakiness](../tracks/java25-boot4/testing/code-review.md#review-target-1-unbound-concurrency-test-flakiness)
+
+---
+
 ## Related
 
 - [Issue catalogue](index.md)

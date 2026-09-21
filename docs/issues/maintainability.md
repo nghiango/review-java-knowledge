@@ -482,6 +482,18 @@ Using fluent `.and()` method chaining and parameterless configurers (such as `cs
 
 **Appears in:** [Java 25 / Boot 4 Spring Security — Legacy Chaining DSL](../tracks/java25-boot4/spring-security/code-review.md#review-target-1-legacy-spring-security-dsl-chaining-matcher-ordering)
 
+### Asserting Internal Threading Implementation Details in Concurrency Tests
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Virtual threads, Testing, Assertions · **Interview frequency:** Medium · **Production impact:** Low
+
+Asserting internal thread pool worker counts or specific thread names couples test suites tightly to implementation details rather than verifying observable domain results. When the underlying execution model is refactored (e.g. from platform thread pools to virtual thread executors), tests break despite business logic remaining correct. Assert state mutations and asynchronous outcomes instead.
+
+**Appears in:** [Java 25 / Boot 4 Testing — Unbound Concurrency Flakiness](../tracks/java25-boot4/testing/code-review.md#review-target-1-unbound-concurrency-test-flakiness)
+
+---
+
 ## Related
 
 - [Issue catalogue](index.md)
