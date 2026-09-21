@@ -394,6 +394,30 @@ Singling out individual engineers and attributing production outages to "human c
 
 **Appears in:** `modules/30-senior-engineering/broken-examples/blame-oriented-post-mortem`
 
+---
+
+### ReentrantLock Leaked on the Exception Path
+
+**Type:** Reliability issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** `ReentrantLock` · **Interview frequency:** High · **Production impact:** Critical
+
+Acquiring a `ReentrantLock` outside a `try`/`finally` means the first exception thrown while the lock is held leaves it permanently owned. Unlike `synchronized`, which the compiler releases on every exit path, a manual `lock()`/`unlock()` pair has no such guarantee, so every subsequent caller parks forever. The symptom is a subsystem that stops responding while CPU stays low and the error rate is flat. Always release in `finally`, or prefer `synchronized`.
+
+**Appears in:** [Java 25 / Boot 4 — obsolete pinning refactor](../tracks/java25-boot4/core-java/code-review.md#obsolete-pinning-refactor)
+
+---
+
+### Primitive Pattern Narrowing Truncates Without Warning
+
+**Type:** Reliability issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Primitive patterns, narrowing conversion · **Interview frequency:** High · **Production impact:** Critical
+
+A primitive pattern proves the value's type, never its range. Casting a matched `int` to `byte` performs an unchecked narrowing conversion that keeps the low-order bits, so `(byte) 300` becomes `44` with no exception and no log entry. Corrupt values then flow into storage and reporting as if valid. Guard the pattern with a range clause (`when i >= Byte.MIN_VALUE && i <= Byte.MAX_VALUE`) or use `Math.toIntExact`, and fail loudly on the remaining case.
+
+**Appears in:** [Java 25 / Boot 4 — primitive pattern matching loss](../tracks/java25-boot4/core-java/code-review.md#primitive-pattern-matching-loss)
+
 ## Related
 
 - [Issue catalogue](index.md)

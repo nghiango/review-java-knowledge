@@ -410,6 +410,18 @@ Bikeshedding over variable names, whitespace, and subjective indentation prefere
 
 **Appears in:** `modules/30-senior-engineering/broken-examples/unhelpful-code-review-comments`
 
+---
+
+### Primitive Pattern Order Hides the Intended Wrapper Mapping
+
+**Type:** Design issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Primitive patterns, switch expressions · **Interview frequency:** Medium · **Production impact:** Medium
+
+A cascade of `instanceof` checks over an `Object` target relies on branch order and on the exact-conversion rules of primitive patterns, so whether a boxed value reaches a given branch is hard to reason about from the code alone. Replace the cascade with a `switch` over explicit wrapper cases (`Byte`, `Short`, `Integer`, `Long`, `Double`) and guarded clauses, so the intended mapping is visible and the ordering cannot silently change behaviour.
+
+**Appears in:** [Java 25 / Boot 4 — primitive pattern matching loss](../tracks/java25-boot4/core-java/code-review.md#primitive-pattern-matching-loss)
+
 ## Related
 
 - [Issue catalogue](index.md)

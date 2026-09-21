@@ -124,6 +124,18 @@ counters when eventually observed sums are acceptable; diagnose with JFR monitor
 
 **Appears in:** `modules/23-performance/broken-examples/lock-contention`
 
+---
+
+### Obsolete Virtual-Thread Pinning Workaround Kept After the Upgrade
+
+**Type:** Concurrency issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Virtual threads, ObjectMonitor · **Interview frequency:** High · **Production impact:** Medium
+
+Rewriting `synchronized` into `ReentrantLock` to avoid carrier pinning was correct on Java 21 and is obsolete on Java 24+, where a virtual thread blocking inside a monitor unmounts normally. Keeping the workaround adds a heap-allocated lock and a manual release path that the compiler previously guaranteed, so the "fix" now carries more risk than the problem it solved. Revert such locks unless `tryLock`, fairness or multiple `Condition`s are genuinely required.
+
+**Appears in:** [Java 25 / Boot 4 — obsolete pinning refactor](../tracks/java25-boot4/core-java/code-review.md#obsolete-pinning-refactor)
+
 ## Related
 
 - [Issue catalogue](index.md)

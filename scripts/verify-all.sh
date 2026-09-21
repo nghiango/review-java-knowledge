@@ -9,7 +9,7 @@ cd "$repo_root"
 ./gradlew compileBrokenExamples
 ./gradlew compileExamples
 
-if grep -R -n " issue:" modules/*/broken-examples \
+if grep -R -n " issue:" modules/*/broken-examples tracks/*/modules/*/broken-examples \
     --include='*.java' --include='*.kt' --include='Dockerfile' \
     --include='*.yml' --include='*.yaml' --include='*.json'; then
     echo "Categorized answer comment found in a clean review target." >&2

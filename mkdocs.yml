@@ -323,6 +323,23 @@ nav:
           - Solutions: topics/senior-engineering/solutions.md
           - Production: topics/senior-engineering/production.md
           - Exercises: topics/senior-engineering/exercises.md
+  - Tracks:
+      - Overview: tracks/index.md
+      - Java 25 / Spring Boot 4:
+          - Overview: tracks/java25-boot4/index.md
+          - What's New in Java: tracks/java25-boot4/whats-new-java.md
+          - What's New in Spring Boot: tracks/java25-boot4/whats-new-spring-boot.md
+          - Migration Guide: tracks/java25-boot4/migration.md
+          - Core Java:
+              - Overview: tracks/java25-boot4/core-java/index.md
+              - Concepts: tracks/java25-boot4/core-java/concepts.md
+              - Internals: tracks/java25-boot4/core-java/internals.md
+              - Interview Questions: tracks/java25-boot4/core-java/questions.md
+              - Code Review: tracks/java25-boot4/core-java/code-review.md
+              - Solutions: tracks/java25-boot4/core-java/solutions.md
+              - Tests: tracks/java25-boot4/core-java/tests.md
+              - Production: tracks/java25-boot4/core-java/production.md
+              - Exercises: tracks/java25-boot4/core-java/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
