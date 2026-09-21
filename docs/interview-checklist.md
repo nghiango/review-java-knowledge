@@ -369,6 +369,10 @@
 - [ ] Differentiate DDD (structural domain modeling & aggregates) from BDD (collaborative behavior discovery & executable specifications)
 - [ ] Implement Outside-In development: map BDD Given-When-Then scenarios to Hexagonal Driving Ports and verify Aggregate Root state transitions
 - [ ] Apply the Backend for Frontend (BFF) pattern: shape client-specific payloads (Mobile vs Web), reduce round-trips, and ban domain logic leaks into BFF adapters
+- [ ] Implement the Saga Pattern (Orchestration vs Choreography) to manage distributed transactions and coordinate idempotent compensating rollbacks (LIFO)
+- [ ] Design Microkernel / Plugin Architectures in Spring Boot using stable SPI interfaces, ordered plugin registries, and Open/Closed extensibility
+- [ ] Explain Cell-Based Architecture: partition platforms into self-contained cells via deterministic edge routing to contain failure blast radii
+- [ ] Evaluate Multi-Tenant Architecture strategies: Database-per-tenant vs Schema-per-tenant vs Shared Table with Row-Level Security (RLS)
 
 ## Related
 

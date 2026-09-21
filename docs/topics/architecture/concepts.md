@@ -341,3 +341,142 @@ flowchart LR
 > **The BFF Leaky Domain Anti-Pattern**:
 > A BFF is an **API presentation adapter**, never a business domain service. If business logic (e.g. discount calculation, tax rules, or order status validation) is placed in the Mobile BFF, it must inevitably be duplicated in the Web BFF. This creates divergent business rules, split-brain state mutations, and regression nightmares.
 > **Rule**: All business invariants belong strictly in the downstream DDD Aggregate Roots. The BFF merely formats and orchestrates delivery.
+
+---
+
+## 8. Event-Driven Saga Pattern (Distributed Transactions)
+
+### The Fallacy of Two-Phase Commit (2PC/XA)
+In distributed microservices, a single business transaction frequently spans multiple autonomous databases. Traditional distributed transactions using Two-Phase Commit (2PC / XA) suffer fatal production drawbacks:
+- **Lock Holding Across Networks**: Coordinators hold database row locks across remote network calls, destroying system throughput.
+- **Single Point of Failure**: If the transaction coordinator crashes during the prepare phase, participating databases remain locked indefinitely.
+- **CAP Theorem & Availability**: 2PC prioritizes Consistency ($C$) over Availability ($A$), causing cascade failures when any service is unreachable.
+
+### The Saga Solution: Sequence of Local Transactions
+A **Saga** is a sequence of local transactions where each transaction updates state within a single service and triggers the next step via messages or events:
+
+```mermaid
+flowchart LR
+    subgraph Forward["Forward Flow"]
+        T1["T1: Create Order<br/>(Ordering Service)"] --> T2["T2: Reserve Stock<br/>(Inventory Service)"]
+        T2 --> T3["T3: Charge Card<br/>(Payment Service)"]
+    end
+
+    subgraph Failure["Failure at T3 Triggers Compensation"]
+        T3 -.->|"Payment Declined"| C2["C2: Restock Inventory<br/>(Compensating Action)"]
+        C2 -.-> C1["C1: Cancel Order<br/>(Compensating Action)"]
+    end
+```
+
+### Orchestration vs. Choreography
+| Dimension | Choreography | Orchestration |
+|---|---|---|
+| **Coordination** | Decentralized: services subscribe to events and emit follow-ups. | Centralized: an explicit coordinator service tells participants what to execute. |
+| **Visibility** | Difficult to track overall workflow state; scattered across event handlers. | Simple: central state machine tracks exact progress and status. |
+| **Coupling** | Loose coupling; participants don't know who consumes their events. | Participants know the command contracts sent by the orchestrator. |
+| **Failure Handling** | Complex cascading rollbacks; high risk of cyclic dependencies. | Straightforward: orchestrator catches errors and triggers compensations in LIFO order. |
+| **Best Used When** | Simple 2–3 step workflows across autonomous teams. | Complex, multi-step business transactions ($> 3$ steps) with strict auditability. |
+
+---
+
+## 9. Microkernel / Plugin Architecture
+
+### Core Concept: Separation of Core and Extension Points
+The **Microkernel Architecture** (also known as the Plugin Pattern) divides a software system into two primary topologies:
+1. **Core Microkernel System**: Minimal, stable foundation containing the essential lifecycle coordination, shared data contexts, and extension registries.
+2. **Plugin Components**: Autonomous, specialized modules that plug into the core to extend functionality (e.g. calculation rules, validation strategies, third-party payment adapters) without modifying the core codebase.
+
+```mermaid
+flowchart TD
+    Core["Microkernel Core Engine<br/>(PricingCoreEngine)"]
+    Registry["Plugin Registry<br/>(PricingPluginRegistry)"]
+    
+    P1["Plugin 1: LoyaltyDiscountPlugin<br/>(Order: 10)"]
+    P2["Plugin 2: RegionalCouponPlugin<br/>(Order: 50)"]
+    P3["Plugin 3: VatTaxPlugin<br/>(Order: 100)"]
+
+    Registry --> Core
+    P1 -.->|"Registers via SPI"| Registry
+    P2 -.->|"Registers via SPI"| Registry
+    P3 -.->|"Registers via SPI"| Registry
+```
+
+### Key Rules for Microkernel Design
+- **Open/Closed Principle**: The core engine is closed for modification but open for extension via pluggable SPIs.
+- **Contract Stability**: The SPI interface (`PricingRulePlugin`) must remain stable; breaking SPI contracts breaks all third-party plugins.
+- **Execution Precedence**: Plugins must declare deterministic priority/ordering (e.g. `@Order`) so calculations execute predictably.
+
+---
+
+## 10. Cell-Based Architecture (Bulkhead at Infrastructure Scale)
+
+### The Blast Radius Problem in Standard Microservices
+In standard cloud microservices, an entire global platform typically shares a common pool of compute, database clusters, and message queues. A single poisoned payload, un-indexed query, or runaway background job can cascade across shared resources, triggering an outage that impacts **100% of active users**.
+
+### Cellular Partitioning Mechanics
+**Cell-Based Architecture** partitions the system into independent, self-contained, fully functional copies called **Cells**:
+- Each cell contains its own complete stack: API gateway, microservice compute, database replicas, and caches.
+- Cells share **zero runtime infrastructure** with each other.
+- A deterministic **Cell Router** at the edge hashes incoming requests (e.g. `hash(user_id) % cell_count`) and routes users to their assigned cell.
+
+```mermaid
+flowchart TD
+    Client["Client Traffic"] --> Router["Cell Router (Edge Hashing)"]
+
+    subgraph Cell0["Cell 0 (Tenants 0-25k)"]
+        Compute0["Compute Fleet"]
+        DB0[("Isolated Database")]
+        Compute0 --- DB0
+    end
+
+    subgraph Cell1["Cell 1 (Tenants 25k-50k) - [OUTAGE]"]
+        Compute1["Compute Fleet"]
+        DB1[("Isolated Database")]
+        Compute1 --- DB1
+    end
+
+    subgraph Cell2["Cell 2 (Tenants 50k-75k)"]
+        Compute2["Compute Fleet"]
+        DB2[("Isolated Database")]
+        Compute2 --- DB2
+    end
+
+    Router -->|"Hash(user) == 0"| Cell0
+    Router -->|"Hash(user) == 1"| Cell1
+    Router -->|"Hash(user) == 2"| Cell2
+```
+
+> [!TIP]
+> **Blast Radius Containment**:
+> If a database deadlock or corrupted deployment causes Cell-1 to crash, **only the users mapped to Cell-1 are impacted**. Cells 0, 2, and all other cells continue operating with 100% availability.
+
+---
+
+## 11. Multi-Tenant Architecture Strategies
+
+Modern enterprise SaaS applications must serve thousands of distinct corporate tenants. The choice of multi-tenancy model is an architectural trade-off between **isolation**, **cost**, and **operational complexity**:
+
+```mermaid
+flowchart LR
+    subgraph ModelA["1. Database-per-Tenant"]
+        T1App["Shared App"] --> DB1[("Tenant 1 DB")]
+        T1App --> DB2[("Tenant 2 DB")]
+    end
+
+    subgraph ModelB["2. Schema-per-Tenant"]
+        T2App["Shared App"] --> S1["Schema: tenant_1"]
+        T2App --> S2["Schema: tenant_2"]
+        S1 & S2 --- SingleDB[("Single Database Instance")]
+    end
+
+    subgraph ModelC["3. Shared Table (Row-Level Security)"]
+        T3App["Shared App"] --> SharedTable["Table: orders (WHERE tenant_id = ?)"]
+    end
+```
+
+| Strategy | Data Isolation | Operational Overhead | Resource Efficiency | Failure Risk |
+|---|---|---|---|---|
+| **Database-per-Tenant** | **Highest**: Physical database boundary; compliance friendly (HIPAA/GDPR). | High: thousands of database migrations, high connection pool limits. | Low: underutilized database idle capacity. | Zero risk of cross-tenant query leakage. |
+| **Schema-per-Tenant** | **Medium**: Logical schema separation within same database server. | Medium: schema-aware connection switching and migration tooling. | Medium: shared CPU and RAM across schemas. | Low: cross-schema query errors rare. |
+| **Shared Table (Discriminator / RLS)** | **Lowest**: Logical row-level segregation via `tenant_id` column. | **Lowest**: Single migration script updates all tenant data instantly. | **Highest**: Maximum density; shared connection pools and caching. | High: Developer forgetting `WHERE tenant_id = :id` leaks data unless guarded by DB RLS. |
+

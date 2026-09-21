@@ -283,6 +283,74 @@ Comprehensive, battle-tested interview questions exploring software architecture
 
     ??? example "Example"
         --8<-- "modules/28-architecture/src/examples/java/lab/architecture/questions/Q21SharedDatabaseAntiPatternExample.java"
+
+### 22. In distributed architectures, when should you choose Saga Orchestration over Choreography, and how are compensating transactions coordinated during failures?
+
+??? question "Reveal answer"
+    Distributed transactions spanning multiple microservices cannot rely on two-phase commit (2PC/XA) due to lock blocking, coordinator single points of failure, and latency overhead over networks. The **Saga Pattern** breaks the transaction into a sequence of local transactions where each step updates its local database and publishes an event or triggers the next step.
+
+    **Choreography vs. Orchestration**:
+    - **Choreography**: Fully decentralized; services react to domain events and emit follow-up events.
+      * *Pros*: Simple for 2–3 step workflows, zero central coordinator bottleneck, loose coupling.
+      * *Cons*: Workflow logic is scattered across services; difficult to visualize state; high risk of cyclic event dependencies and complex cascading rollbacks.
+    - **Orchestration**: A centralized Saga Orchestrator coordinates the workflow via an explicit state machine (sending command messages to participants and listening for completion replies).
+      * *Pros*: Centralized visibility into workflow status; straightforward timeouts, retries, and compensation coordination; ideal for complex workflows ($> 3$ steps).
+      * *Cons*: Risk of orchestrator becoming a "god class" if business logic leaks into the coordinator instead of remaining in domain services.
+
+    **Compensating Transactions**:
+    If any forward step fails (e.g., payment declined), the orchestrator triggers compensating actions in reverse order (LIFO) for all completed steps (e.g., release reserved inventory). Compensating actions must be **idempotent**, **retryable**, and able to handle out-of-order execution.
+
+    ??? example "Example"
+        --8<-- "modules/28-architecture/src/examples/java/lab/architecture/questions/Q22SagaOrchestrationVsChoreographyExample.java"
+
+### 23. How do you design a Microkernel (Plugin) Architecture in Spring Boot without violating the Open/Closed Principle?
+
+??? question "Reveal answer"
+    A **Microkernel (Plugin) Architecture** divides an application into a minimal, stable core system (the microkernel) and pluggable, extensible feature modules (plugins). The core defines the operational lifecycle and extension points (Service Provider Interfaces / SPIs), while plugins provide specialized algorithms, third-party integrations, or tenant-specific business rules.
+
+    **Implementation in Spring Boot**:
+    1. **Define Strict SPI Interfaces**: Define pure domain interfaces (e.g., `PricingRulePlugin`) in a shared API package, specifying contracts like `supports(Context)` and `apply(Context)`.
+    2. **Plugin Registry**: The core maintains a `PluginRegistry` that collects all registered beans implementing the SPI. Spring makes this trivial via constructor injection of `List<PricingRulePlugin>`.
+    3. **Order & Precedence**: Annotate plugins with `@Order` or implement an `Ordered` contract so the microkernel executes rules in deterministic priority order (e.g., apply base discounts before calculating percentage taxes).
+    4. **Dynamic Loading / Modularity**: Plugins can be conditionally enabled via `@ConditionalOnProperty`, dynamic Spring profiles, or discovered via Java `ServiceLoader` (SPI) for runtime modularity without modifying core engine source code.
+
+    ??? example "Example"
+        --8<-- "modules/28-architecture/src/examples/java/lab/architecture/questions/Q23MicrokernelPluginArchitectureExample.java"
+
+### 24. How does Cell-Based Architecture minimize blast radius and achieve fault isolation compared to traditional microservices?
+
+??? question "Reveal answer"
+    In a standard microservice deployment, a fleet of services shares common database clusters, caches, and message brokers across the entire platform. A poison message, bad deployment, or runaway database query can exhaust connections and trigger a global platform outage affecting 100% of users.
+
+    **Cell-Based Architecture Mechanics**:
+    1. **Self-Contained Units (Cells)**: The entire platform is deployed into independent, bounded, complete copies called **cells**. Each cell contains its own compute instances, internal gateways, caches, and databases dedicated to a deterministic subset of traffic (e.g., 25,000 specific users or tenants per cell).
+    2. **Cell Router / Gateway**: A lightweight, highly available routing tier inspects incoming requests and routes them deterministically (e.g., via consistent hashing of `user_id` or `tenant_id`) to the assigned cell.
+    3. **Blast Radius Containment**: A catastrophic failure, database deadlock, or corrupt data release within Cell-1 is completely isolated. Only 5% of users experience downtime, while the remaining 95% of users across Cells 2–20 experience zero degradation.
+    4. **Canary & Phased Rollouts**: New versions are deployed to a single canary cell first, verifying real production traffic before rolling out to subsequent cells.
+
+    ??? example "Example"
+        --8<-- "modules/28-architecture/src/examples/java/lab/architecture/questions/Q24CellBasedArchitectureRoutingExample.java"
+
+### 25. What are the trade-offs between Database-per-tenant, Schema-per-tenant, and Shared Table with Row-Level Security in Multi-Tenant Architectures?
+
+??? question "Reveal answer"
+    Multi-tenancy designs require balancing data isolation, operational complexity, hardware utilization, and regulatory compliance (GDPR, HIPAA):
+
+    1. **Database-per-Tenant**:
+       - *Structure*: Every customer gets a dedicated, isolated database instance.
+       - *Pros*: Maximum security, physical data segregation, independent backup/restore, customized maintenance windows, zero risk of cross-tenant query leakage.
+       - *Cons*: Highest infrastructure cost, heavy connection pool overhead, complex schema migration automation across thousands of databases.
+    2. **Schema-per-Tenant**:
+       - *Structure*: Single database instance, but separate SQL schema (`CREATE SCHEMA tenant_abc`) per customer.
+       - *Pros*: Logical data isolation with shared database server resources; simplified cross-tenant administrative reporting.
+       - *Cons*: Database catalog limits (PostgreSQL performance degrades with tens of thousands of schemas); table migration scripts must execute against every schema.
+    3. **Shared Table with Row-Level Security (RLS)**:
+       - *Structure*: Shared tables with a mandatory `tenant_id` discriminator column.
+       - *Pros*: Maximum resource efficiency, cheapest hosting, single unified schema migration for all tenants.
+       - *Cons*: Highest risk of accidental data leakage if an engineer forgets `WHERE tenant_id = :id`. Mitigated in production using PostgreSQL Row-Level Security (RLS) or Hibernate `@TenantId` paired with a verified `TenantContextHolder`.
+
+    ??? example "Example"
+        --8<-- "modules/28-architecture/src/examples/java/lab/architecture/questions/Q25MultiTenantIsolationStrategiesExample.java"
 <!-- --8<-- [end:senior] -->
 
 ---
@@ -290,7 +358,7 @@ Comprehensive, battle-tested interview questions exploring software architecture
 <!-- --8<-- [start:scenarios] -->
 ## Scenario Questions
 
-### 22. Scenario: A 5,000-line procedural `OrderService` with 30 database dependencies suffers frequent regressions. Redesign it into a Hexagonal DDD architecture.
+### 26. Scenario: A 5,000-line procedural `OrderService` with 30 database dependencies suffers frequent regressions. Redesign it into a Hexagonal DDD architecture.
 
 ??? question "Reveal answer"
     **Diagnosis**:
@@ -311,9 +379,9 @@ Comprehensive, battle-tested interview questions exploring software architecture
        - Add ArchUnit rules ensuring `domain` classes import nothing outside `java.*`, preventing regressions.
 
     ??? example "Example"
-        --8<-- "modules/28-architecture/src/examples/java/lab/architecture/questions/Q22GodServiceRefactoringScenarioExample.java"
+        --8<-- "modules/28-architecture/src/examples/java/lab/architecture/questions/Q26GodServiceRefactoringScenarioExample.java"
 
-### 23. Scenario: A microservices platform suffers severe latency and cascade timeouts due to synchronous distributed joins across 5 services. How do you redesign it?
+### 27. Scenario: A microservices platform suffers severe latency and cascade timeouts due to synchronous distributed joins across 5 services. How do you redesign it?
 
 ??? question "Reveal answer"
     **Incident Context**:
@@ -331,7 +399,36 @@ Comprehensive, battle-tested interview questions exploring software architecture
        - If `ShippingService` is down, dashboard views continue serving existing data with zero disruption.
 
     ??? example "Example"
-        --8<-- "modules/28-architecture/src/examples/java/lab/architecture/questions/Q23DistributedJoinResolutionScenarioExample.java"
+        --8<-- "modules/28-architecture/src/examples/java/lab/architecture/questions/Q27DistributedJoinResolutionScenarioExample.java"
+
+### 28. Scenario: A customer places an order involving 4 separate microservices. Step 3 fails due to a credit card decline after inventory was reserved. Design the resilient Saga rollback workflow.
+
+??? question "Reveal answer"
+    **Incident Scenario**:
+    In an e-commerce checkout flow, the four steps are:
+    1. Validate customer account and order items.
+    2. Reserve stock in `InventoryService` ($N$ items locked).
+    3. Charge customer via `PaymentGatewayService` (external 3rd-party credit card processor).
+    4. Create dispatch schedule in `ShippingService`.
+
+    During a checkout, Step 2 succeeds (inventory reserved), but Step 3 fails because the customer's credit card is declined with an HTTP 402 error.
+
+    **Resilient Saga Workflow Design**:
+    1. **Orchestrator Failure Detection**:
+       - The Saga Orchestrator catches the payment decline response from Step 3.
+       - It immediately transitions the saga state machine from `RUNNING` to `COMPENSATING`.
+    2. **Compensating Rollback Execution (LIFO)**:
+       - The orchestrator dispatches an asynchronous compensation command to `InventoryService`: `ReleaseStockCompensationCommand(orderId, items)`.
+       - `InventoryService` processes the compensation, restocks the inventory, and replies with `StockReleasedEvent`.
+    3. **Audit Logging & Client Notification**:
+       - The orchestrator marks the saga as `COMPENSATED` in its persistent event log.
+       - An `OrderCancelledEvent` is emitted to notify the customer that payment failed and their cart is retained.
+    4. **Guarantees & Invariants**:
+       - **Idempotency**: If the network times out during stock release, the orchestrator retries the release command. `InventoryService` must verify that inventory is only restocked once for this `orderId`.
+       - **Zero Zombie Holds**: Inventory holds have a TTL (Time-To-Live) backup expiry so that even if the orchestrator crashes permanently, inventory is automatically unlocked.
+
+    ??? example "Example"
+        --8<-- "modules/28-architecture/src/examples/java/lab/architecture/questions/Q28SagaCompensatingTransactionScenarioExample.java"
 <!-- --8<-- [end:scenarios] -->
 
 ## Related

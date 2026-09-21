@@ -4,10 +4,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Q23: Scenario: Resolving Performance Collapse Caused by Microservice Distributed Joins.
+ * Q27: Scenario: Resolving Performance Collapse Caused by Microservice Distributed Joins.
  * Demonstrates an asynchronous CQRS materialized view replacing $N+1$ distributed RPC calls.
  */
-public class Q23DistributedJoinResolutionScenarioExample {
+public class Q27DistributedJoinResolutionScenarioExample {
 
     // Materialized view pre-joining Customer and Order details
     public record OrderDetailView(

@@ -361,6 +361,9 @@ trade-offs.
 microservices; DDD (bounded contexts, aggregates, repositories, domain/application services);
 BDD (behavior discovery, Given-When-Then, separation from DDD, and combination/synergy driving hexagonal ports);
 BFF (Backend for Frontend pattern: client-specific response shaping, network optimization, and boundary rules);
+Saga distributed transactions (orchestration vs choreography, compensating workflows);
+microkernel / plugin architecture; cell-based architecture (blast radius containment);
+multi-tenant architecture strategies (database, schema, shared table RLS);
 CQRS; event-driven; event sourcing concepts. Always trade-offs, never dogma.
 
 **Broken examples (≥ 3):** domain depending on infrastructure · anaemic domain with god service ·

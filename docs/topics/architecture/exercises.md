@@ -370,3 +370,75 @@ Implement a Spring Boot Backend for Frontend (BFF) endpoint for mobile clients t
         }
     }
     ```
+
+---
+
+### Exercise 6: Implement a Resilient Distributed Saga Orchestrator
+
+**Goal**: Build a thread-safe distributed Saga coordinator that orchestrates a multi-step checkout workflow and executes compensating actions in reverse order upon failure.
+
+#### Requirements
+1. Implement a generic `SagaStep<T>` contract with `execute(context)` and idempotent `compensate(context)`.
+2. Implement `OrderFulfillmentSagaOrchestrator` that executes steps sequentially.
+3. If any step fails or throws an exception, stop forward execution and immediately execute `compensate()` on all previously completed steps in reverse (LIFO) order.
+4. Verify using unit tests that if Step 2 fails, Step 1 is compensated and the saga terminates in `COMPENSATED`.
+
+??? tip "Solution guidance"
+    ```java
+    public class SagaCoordinator<T> {
+        private final List<SagaStep<T>> steps;
+
+        public SagaCoordinator(List<SagaStep<T>> steps) {
+            this.steps = List.copyOf(steps);
+        }
+
+        public boolean execute(T context) {
+            List<SagaStep<T>> executed = new ArrayList<>();
+            for (SagaStep<T> step : steps) {
+                if (!step.execute(context)) {
+                    Collections.reverse(executed);
+                    for (SagaStep<T> s : executed) {
+                        s.compensate(context);
+                    }
+                    return false;
+                }
+                executed.add(step);
+            }
+            return true;
+        }
+    }
+    ```
+
+---
+
+### Exercise 7: Design a Microkernel Plugin System for Dynamic Rule Processing
+
+**Goal**: Create an extensible calculation microkernel where business discount and tax rules are injected as standalone plugins without modifying core calculation code.
+
+#### Requirements
+1. Create a `PricingRulePlugin` SPI defining `String getPluginId()`, `int getOrder()`, `boolean supports(PricingContext ctx)`, and `void apply(PricingContext ctx)`.
+2. Implement a `PricingPluginRegistry` that sorts registered plugins by `order` ascending.
+3. Implement `PricingCoreEngine` that executes applicable plugins sequentially against `PricingContext`.
+4. Add plugins for `LoyaltyDiscountPlugin` (Order: 10) and `VatTaxPlugin` (Order: 100).
+5. Verify via unit tests that discount applies before tax, and non-matching contexts remain unaltered.
+
+??? tip "Solution guidance"
+    ```java
+    public class PricingCoreEngine {
+        private final PricingPluginRegistry registry;
+
+        public PricingCoreEngine(PricingPluginRegistry registry) {
+            this.registry = registry;
+        }
+
+        public PricingContext calculate(PricingContext ctx) {
+            for (PricingRulePlugin plugin : registry.getPlugins()) {
+                if (plugin.supports(ctx)) {
+                    plugin.apply(ctx);
+                }
+            }
+            return ctx;
+        }
+    }
+    ```
+

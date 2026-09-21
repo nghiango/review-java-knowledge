@@ -3,10 +3,10 @@ package lab.architecture.questions;
 import java.math.BigDecimal;
 
 /**
- * Q22: Scenario: Refactoring a 5,000-line God Service into Hexagonal DDD Aggregates. Demonstrates
+ * Q26: Scenario: Refactoring a 5,000-line God Service into Hexagonal DDD Aggregates. Demonstrates
  * moving procedural price calculation and invariant logic from a service into an aggregate.
  */
-public class Q22GodServiceRefactoringScenarioExample {
+public class Q26GodServiceRefactoringScenarioExample {
 
     public static class RefactoredOrderAggregate {
         private BigDecimal subtotal = BigDecimal.ZERO;

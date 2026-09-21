@@ -98,3 +98,21 @@ BDD acceptance specifications bridge the gap between product requirements and au
 1. **Given-When-Then Narrative**: Scenarios read like natural business prose while executing as standard JUnit 5 tests.
 2. **Hexagonal Inbound Driving**: The test interacts with the system strictly through the Driving Port (`PlaceOrderUseCase`), ensuring application orchestration and aggregate invariants are tested together.
 3. **Microsecond Execution**: Executes in $< 5\text{ ms}$ because driven ports are stubbed with in-memory adapters, providing instantaneous feedback on every developer commit.
+
+---
+
+## 6. Testing Distributed Sagas & Compensating Actions
+
+Testing a distributed Saga orchestrator requires verifying two critical execution branches:
+1. **Happy Path**: All steps succeed sequentially, and the Saga terminates in `COMPLETED`.
+2. **Compensating Rollback (LIFO)**: A downstream step fails, triggering compensating rollback actions in strict reverse order for all previously executed steps, leaving the Saga in `COMPENSATED` with no lingering resources held.
+
+### Implementation: `OrderFulfillmentSagaTest.java`
+
+--8<-- "modules/28-architecture/src/test/java/lab/architecture/saga/OrderFulfillmentSagaTest.java"
+
+### Verification Checkpoints
+- **LIFO Sequence**: If Step 3 fails, Step 2 is compensated first, followed by Step 1.
+- **Resource Recovery**: `context.isInventoryReserved()` is confirmed to revert to `false` upon failure.
+- **Idempotency Readiness**: Compensations must succeed even if executed more than once.
+

@@ -213,3 +213,81 @@ flowchart TD
    - Tests run in standard JUnit 5 suites (`./gradlew test`) on every commit, preventing regression without flaky network failures.
 3. **Living Documentation**:
    - Scenario output logs directly generate human-readable HTML reports (e.g. Cucumber HTML / JGiven reports) audited by compliance officers and product stakeholders.
+
+---
+
+## 6. Saga State Machine & Compensating Execution Engine Mechanics
+
+In `lab.architecture.saga`, the `OrderFulfillmentSagaOrchestrator` implements an explicit distributed transaction coordinator:
+
+```mermaid
+stateDiagram-v2
+    [*] --> NOT_STARTED
+    NOT_STARTED --> RUNNING: execute()
+    
+    state RUNNING {
+        Step1: Step 1 ReserveInventory
+        Step2: Step 2 ProcessPayment
+        Step3: Step 3 DispatchShipping
+        Step1 --> Step2: Success
+        Step2 --> Step3: Success
+    }
+
+    RUNNING --> COMPLETED: All Steps Succeeded
+    RUNNING --> COMPENSATING: Any Step Failed
+
+    state COMPENSATING {
+        Comp2: Compensate Step 2 (Refund)
+        Comp1: Compensate Step 1 (Restock)
+        Comp2 --> Comp1: LIFO Order
+    }
+
+    COMPENSATING --> COMPENSATED: All Compensations Succeeded
+    COMPENSATING --> FAILED: Compensation Error (Alert Ops)
+    COMPLETED --> [*]
+    COMPENSATED --> [*]
+    FAILED --> [*]
+```
+
+### Internal Engine Invariants
+1. **LIFO Compensation Ordering**:
+   - Compensations must execute in strict reverse order of successful executions ($S_n \to S_{n-1} \dots \to S_1$) to prevent inconsistent intermediate state.
+2. **Idempotency Guarantee**:
+   - If an orchestrator node crashes mid-compensation, a standby node resumes the saga by re-executing `compensate(context)`. Every compensation step must be strictly idempotent.
+3. **Dead-Letter / Manual Escalation**:
+   - If a compensating step throws an unrecoverable exception, the saga transitions to `FAILED` and raises a P1 alert for human operational intervention.
+
+---
+
+## 7. Plugin Registry & Extension Point Mechanics in Spring Boot
+
+In `lab.architecture.plugin`, the microkernel discovers and coordinates dynamic rule plugins without compile-time coupling:
+
+```mermaid
+flowchart TD
+    subgraph SpringContext["Spring ApplicationContext"]
+        Bean1["VatTaxPlugin (@Component, Order=100)"]
+        Bean2["LoyaltyDiscountPlugin (@Component, Order=10)"]
+    end
+
+    subgraph Registry["PricingPluginRegistry"]
+        PluginsList["List&lt;PricingRulePlugin&gt;<br/>(Sorted by Order ascending)"]
+    end
+
+    subgraph Microkernel["PricingCoreEngine"]
+        Calculate["calculate(customerId, region, basePrice)"]
+    end
+
+    Bean1 & Bean2 -->|"Constructor Injection: List&lt;PricingRulePlugin&gt;"| Registry
+    Registry --> PluginsList
+    PluginsList -->|"Pipeline Invocation"| Calculate
+```
+
+### Internal Precedence Mechanics
+1. **Deterministic Execution**:
+   - `PricingPluginRegistry.register()` maintains an ordered list sorted by `PricingRulePlugin.getOrder()`.
+2. **Context-Aware Evaluation**:
+   - Before executing transformations, the engine evaluates `plugin.supports(context)` to filter out non-applicable plugins with zero performance overhead.
+3. **Immutability of the Core**:
+   - Introducing a new region-specific tax rule or seasonal discount requires authoring a new standalone class implementing `PricingRulePlugin` — zero lines of existing core calculation code are modified.
+
