@@ -341,6 +341,16 @@ nav:
               - Tests: tracks/java25-boot4/core-java/tests.md
               - Production: tracks/java25-boot4/core-java/production.md
               - Exercises: tracks/java25-boot4/core-java/exercises.md
+          - Concurrency:
+              - Overview: tracks/java25-boot4/concurrency/index.md
+              - Concepts: tracks/java25-boot4/concurrency/concepts.md
+              - Internals: tracks/java25-boot4/concurrency/internals.md
+              - Interview Questions: tracks/java25-boot4/concurrency/questions.md
+              - Code Review: tracks/java25-boot4/concurrency/code-review.md
+              - Solutions: tracks/java25-boot4/concurrency/solutions.md
+              - Tests: tracks/java25-boot4/concurrency/tests.md
+              - Production: tracks/java25-boot4/concurrency/production.md
+              - Exercises: tracks/java25-boot4/concurrency/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md

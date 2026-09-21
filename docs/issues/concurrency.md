@@ -136,6 +136,30 @@ Rewriting `synchronized` into `ReentrantLock` to avoid carrier pinning was corre
 
 **Appears in:** [Java 25 / Boot 4 — obsolete pinning refactor](../tracks/java25-boot4/core-java/code-review.md#obsolete-pinning-refactor)
 
+---
+
+### Orphan Subtasks and Resource Leakage in Unstructured Concurrency
+
+**Type:** Concurrency issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Virtual threads, CompletableFuture, StructuredTaskScope · **Interview frequency:** High · **Production impact:** High
+
+Subtasks forked using `CompletableFuture.supplyAsync()` or bare executors have independent lifecycles. If one subtask fails, sibling tasks continue executing as orphans in the background, consuming database connections, external bandwidth, and CPU. Use `StructuredTaskScope.open(Joiner.awaitAllSuccessfulOrThrow())` to coordinate tasks as a single unit of work and automatically cancel sibling tasks upon failure.
+
+**Appears in:** [Java 25 / Boot 4 Concurrency — Unstructured Concurrency & Orphan Task Leaks](../tracks/java25-boot4/concurrency/code-review.md#review-target-2-orderfulfillmentservicejava)
+
+---
+
+### InheritableThreadLocal Heap Bloat and Leaks in High-Throughput Virtual Threads
+
+**Type:** Memory issue · **Severity:** High · **Difficulty:** Senior
+
+**Track:** `java25-boot4` · **Technology:** Virtual threads, ThreadLocal, ScopedValue · **Interview frequency:** High · **Production impact:** High
+
+`InheritableThreadLocal` clones thread-local maps into every child thread. Spawning millions of virtual threads causes severe heap bloat, while missing `finally { tl.remove(); }` causes context pollution across requests. Migrate to Java 25 `ScopedValue` for immutable, stack-confined context sharing with zero cleanup boilerplate.
+
+**Appears in:** [Java 25 / Boot 4 Concurrency — Virtual Thread Context Propagation & Leaks](../tracks/java25-boot4/concurrency/code-review.md#review-target-1-tenantcontextholderjava)
+
 ## Related
 
 - [Issue catalogue](index.md)

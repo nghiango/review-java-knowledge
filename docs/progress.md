@@ -45,7 +45,7 @@ the differences; the baseline remains the canonical explanation of each topic.
 | # | Topic | Type | Delta docs | Q&A | Broken | Correct | Tests | Migration Q | Docs |
 |---|---|---|---|---|---|---|---|---|---|
 | 01 | Core Java | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 03 | Concurrency | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 03 | Concurrency | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 06 | Spring MVC | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 07 | Spring Transactions | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 10 | REST API | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |

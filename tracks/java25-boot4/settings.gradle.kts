@@ -21,3 +21,4 @@ rootProject.name = "lab-track-java25-boot4"
 includeBuild("build-logic")
 include("test-support")
 include("modules:01-core-java")
+include("modules:03-concurrency")
