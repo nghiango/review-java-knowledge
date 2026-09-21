@@ -33,7 +33,7 @@ Only the delta is implemented per module. Each module keeps the baseline's numbe
 | [10-rest-api](rest-api/index.md) | REST API | Delta implemented | declarative @HttpExchange, native versioning vs hand-rolled, RFC 8594 headers |
 | [11-spring-security](spring-security/index.md) | Spring Security | Delta implemented | Security 7 lambda-only DSL, virtual thread context propagation with ScopedValue |
 | [12-testing](testing/index.md) | Testing | Delta implemented | unified REST test client assertions, deterministic virtual thread tests with Awaitility, ArchUnit rules |
-| 18-resilience | Resilience | Planned | core retry vs Resilience4j |
+| [18-resilience](resilience/index.md) | Resilience | Delta implemented | core retry vs Resilience4j, virtual-thread friendly timeouts, lock-free circuit breaker |
 | 40-whats-new | Feature tour | Planned | runnable tour + migration checklist |
 
 ## Stack

@@ -51,7 +51,7 @@ the differences; the baseline remains the canonical explanation of each topic.
 | 10 | REST API | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 11 | Spring Security | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 12 | Testing | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 18 | Resilience | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 18 | Resilience | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 40 | What's New (track-only) | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 
 Track-level pages complete: [overview](tracks/java25-boot4/index.md),

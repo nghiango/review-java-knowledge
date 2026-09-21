@@ -182,7 +182,17 @@ Subtasks forked using `CompletableFuture.supplyAsync()` or bare executors have i
 
 Spawning fire-and-forget virtual threads in unit tests without bounding execution scopes or joining tasks causes uncoordinated threads to outlive test methods. This pollutes subsequent test execution and masks silent background exceptions. Concurrency tests must coordinate task completion using `StructuredTaskScope` or managed countdown latches.
 
-**Appears in:** [Java 25 / Boot 4 Testing — Unbound Concurrency Flakiness](../tracks/java25-boot4/testing/code-review.md#review-target-1-unbound-concurrency-test-flakiness)
+---
+
+### Carrier Thread Pinning in Synchronized Resilience Monitors
+
+**Type:** Concurrency issue · **Severity:** Critical · **Difficulty:** Senior
+
+**Track:** `java25-boot4` · **Technology:** Virtual Threads, Circuit Breaker, Resilience · **Interview frequency:** High · **Production impact:** Critical
+
+Using `synchronized` methods or monitors in resilience decorators (circuit breakers, rate limiters, retry loops) pins virtual threads to their OS carrier threads whenever contention or blocking delays occur. Under high load, all ForkJoinPool carrier threads become pinned, stalling the entire application. Replace synchronized monitors with lock-free atomic primitives (`AtomicReference`, `AtomicInteger`) or `ReentrantLock`.
+
+**Appears in:** [Java 25 / Boot 4 Resilience — Carrier-Pinning Circuit Breaker](../tracks/java25-boot4/resilience/code-review.md#review-target-2-carrier-pinning-circuit-breaker)
 
 ---
 

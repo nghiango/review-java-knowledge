@@ -462,7 +462,17 @@ Using `Thread.sleep` to synchronize asynchronous test assertions causes intermit
 
 Testing REST error endpoints by matching plain text or unparsed JSON strings masks regressions in RFC 9457 `ProblemDetail` compliance. Upstream clients relying on standardized error attributes (`type`, `title`, `status`, `detail`) break silently. Tests must assert `ProblemDetail` JSON schemas and extension properties directly using structured JSON path extractors.
 
-**Appears in:** [Java 25 / Boot 4 Testing — REST Test Client Assertion Drift](../tracks/java25-boot4/testing/code-review.md#review-target-2-rest-test-client-assertion-drift)
+---
+
+### Unbounded Retry Storm Without Jitter and Swallowed Interruption
+
+**Type:** Reliability issue · **Severity:** Critical · **Difficulty:** Senior
+
+**Track:** `java25-boot4` · **Technology:** Core Java, Spring Boot 4 Resilience · **Interview frequency:** High · **Production impact:** Critical
+
+Retrying outbound operations indefinitely with a static fixed delay and zero jitter causes synchronized retry waves (thundering herds) when recovering downstream services come back online. Swallowing `InterruptedException` prevents clean shutdown or cooperative cancellation. Non-retryable fatal client errors (such as `IllegalArgumentException`) must never be retried. Always enforce a finite `maxAttempts`, apply Full Jitter exponential backoff, and restore interrupted status.
+
+**Appears in:** [Java 25 / Boot 4 Resilience — Unbounded Retry Storm Without Jitter](../tracks/java25-boot4/resilience/code-review.md#review-target-1-unbounded-retry-storm-without-jitter)
 
 ## Related
 
