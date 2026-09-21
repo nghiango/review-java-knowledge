@@ -134,6 +134,18 @@ Configuring distributed edge or API gateway rate limiters to fail closed (reject
 
 **Appears in:** `modules/27-system-design/broken-examples/distributed-rate-limiter-naive-redis`
 
+---
+
+### Missing Socket Timeouts on Declarative HTTP Interface Clients
+
+**Type:** Resilience issue · **Severity:** Critical · **Difficulty:** Senior
+
+**Track:** `java25-boot4` · **Technology:** Spring Framework 7 `@HttpExchange`, RestClient · **Interview frequency:** High · **Production impact:** Critical
+
+Instantiating declarative HTTP interface clients via `RestClient.builder()` without explicitly specifying connection and socket read timeouts applies default infinite timeouts. During downstream network disruptions, thousands of virtual threads block indefinitely waiting for socket I/O, exhausting OS file descriptors and thread heap buffers. Always set explicit timeouts on the underlying `ClientHttpRequestFactory`.
+
+**Appears in:** [Java 25 / Boot 4 REST API — Declarative HTTP Client Leaks](../tracks/java25-boot4/rest-api/code-review.md#review-target-2-declarative-http-interface-proxy-configuration-leaks)
+
 ## Related
 
 - [Issue catalogue](index.md)

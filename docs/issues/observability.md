@@ -136,6 +136,18 @@ pressure. Prefer aggregate counters and sampled diagnostics while preserving uns
 
 **Appears in:** `modules/23-performance/broken-examples/excessive-allocation`
 
+---
+
+### Missing RFC 8594 Sunset and Deprecation Headers on Superseded API Versions
+
+**Type:** Observability issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** REST API, RFC 8594, HTTP Headers · **Interview frequency:** High · **Production impact:** High
+
+Serving superseded or legacy API versions without standard RFC 8594 `Deprecation`, `Sunset`, and `Link` response headers deprives API clients and automated client SDK monitoring systems of machine-readable deprecation alerts. Upstream clients remain unaware of upcoming decommissioning dates, triggering high-severity production incidents when the old version is turned off. Always attach RFC 8594 headers when serving deprecated endpoints.
+
+**Appears in:** [Java 25 / Boot 4 REST API — Ad-Hoc Header Versioning](../tracks/java25-boot4/rest-api/code-review.md#review-target-1-ad-hoc-header-versioning-missing-lifecycle-headers)
+
 ## Related
 
 - [Issue catalogue](index.md)

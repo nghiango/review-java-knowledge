@@ -27,10 +27,10 @@ Only the delta is implemented per module. Each module keeps the baseline's numbe
 | Module | Topic | Status | Delta focus |
 |---|---|---|---|
 | [01-core-java](core-java/index.md) | Core Java | Delta implemented | stream gatherers, flexible constructor bodies, unnamed variables, primitive patterns, unpinned virtual threads |
-| 03-concurrency | Concurrency | Planned | structured concurrency, scoped values, virtual thread scheduling |
-| 06-spring-mvc | Spring MVC | Planned | API versioning, JSpecify nullness, Jackson 3 |
-| 07-spring-transactions | Spring Transactions | Planned | transactional behaviour re-verification after the upgrade |
-| 10-rest-api | REST API | Planned | native versioning vs hand-rolled |
+| [03-concurrency](concurrency/index.md) | Concurrency | Delta implemented | structured concurrency, scoped values, virtual thread scheduling |
+| [06-spring-mvc](spring-mvc/index.md) | Spring MVC | Delta implemented | API versioning, JSpecify nullness, Jackson 3 |
+| [07-spring-transactions](spring-transactions/index.md) | Spring Transactions | Delta implemented | transactional behaviour re-verification after the upgrade |
+| [10-rest-api](rest-api/index.md) | REST API | Delta implemented | declarative @HttpExchange, native versioning vs hand-rolled, RFC 8594 headers |
 | 11-spring-security | Spring Security | Planned | Security 7 lambda-only DSL |
 | 12-testing | Testing | Planned | `RestTestClient`, new test slices |
 | 18-resilience | Resilience | Planned | core retry vs Resilience4j |

@@ -446,6 +446,30 @@ Under JSpecify `@NullMarked`, all unannotated reference types in a package impli
 
 **Appears in:** [Java 25 / Boot 4 Spring MVC — JSpecify Nullness Contract Violation](../tracks/java25-boot4/spring-mvc/code-review.md#review-target-2-customerprofilecontrollerjava)
 
+---
+
+### Imperative Version Branching Inside Resource Controller Methods
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Spring Boot 4 REST API, Versioning · **Interview frequency:** High · **Production impact:** Medium
+
+Evaluating API version headers via manual `if/else` checks inside a single controller method tightly couples multiple schema representations into one endpoint handler. This inflates cyclomatic complexity, impairs testability, and prevents OpenAPI generators from producing distinct versioned schemas. Use native Spring Framework 7 header or media type mappings on dedicated methods or controllers.
+
+**Appears in:** [Java 25 / Boot 4 REST API — Ad-Hoc Header Versioning](../tracks/java25-boot4/rest-api/code-review.md#review-target-1-ad-hoc-header-versioning-missing-lifecycle-headers)
+
+---
+
+### Manual HttpServiceProxyFactory Wiring Boilerplate
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Spring Framework 7 `@HttpExchange`, HttpServiceProxyFactory · **Interview frequency:** High · **Production impact:** Low
+
+Manually instantiating `RestClient`, `RestClientAdapter`, and `HttpServiceProxyFactory` in component constructors produces repetitive boilerplate across microservices and bypasses centralized Spring Boot 4 client registration. Standardize client generation through centralized configuration factories or modern declarative client registration.
+
+**Appears in:** [Java 25 / Boot 4 REST API — Declarative HTTP Client Leaks](../tracks/java25-boot4/rest-api/code-review.md#review-target-2-declarative-http-interface-proxy-configuration-leaks)
+
 ## Related
 
 - [Issue catalogue](index.md)

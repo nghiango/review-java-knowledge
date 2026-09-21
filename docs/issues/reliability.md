@@ -418,6 +418,30 @@ A primitive pattern proves the value's type, never its range. Casting a matched 
 
 **Appears in:** [Java 25 / Boot 4 — primitive pattern matching loss](../tracks/java25-boot4/core-java/code-review.md#primitive-pattern-matching-loss)
 
+---
+
+### Ad-Hoc Version Header Unhandled Failure Returns HTTP 500
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Spring Boot 4 REST API, RFC 9457 · **Interview frequency:** High · **Production impact:** High
+
+Evaluating custom API version headers imperatively inside resource controllers and throwing generic unchecked exceptions on unsupported versions returns HTTP 500 or unformatted error responses rather than client-actionable RFC 9457 `ProblemDetail` (HTTP 400 Bad Request or 406 Not Acceptable). Always declare supported version mappings or use centralized version exception handlers.
+
+**Appears in:** [Java 25 / Boot 4 REST API — Ad-Hoc Header Versioning](../tracks/java25-boot4/rest-api/code-review.md#review-target-1-ad-hoc-header-versioning-missing-lifecycle-headers)
+
+---
+
+### Swallowing Downstream RFC 9457 ProblemDetail in Declarative HTTP Clients
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Senior
+
+**Track:** `java25-boot4` · **Technology:** Spring Framework 7 `@HttpExchange`, RFC 9457 · **Interview frequency:** High · **Production impact:** High
+
+Catching raw `RuntimeException` around `@HttpExchange` client calls and re-throwing a generic exception completely discards the downstream service's RFC 9457 `ProblemDetail` diagnostic attributes (status code, title, detail, type, extension properties). Upstream clients and operations teams receive zero actionable context. Always configure `defaultStatusHandler` to capture and preserve remote problem details in typed domain exceptions.
+
+**Appears in:** [Java 25 / Boot 4 REST API — Declarative HTTP Client Leaks](../tracks/java25-boot4/rest-api/code-review.md#review-target-2-declarative-http-interface-proxy-configuration-leaks)
+
 ## Related
 
 - [Issue catalogue](index.md)
