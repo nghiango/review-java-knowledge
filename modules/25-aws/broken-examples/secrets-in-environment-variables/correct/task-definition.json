@@ -1,0 +1,61 @@
+{
+  "family": "payment-service-prod",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/paymentServiceTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::123456789012:role/paymentServiceTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "payment-service",
+      "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/payment-service:v2.1.0",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "SPRING_PROFILES_ACTIVE",
+          "value": "prod"
+        },
+        {
+          "name": "SPRING_DATASOURCE_URL",
+          "value": "jdbc:postgresql://aurora-pg.cluster-xyz.us-east-1.rds.amazonaws.com:5432/payments"
+        },
+        {
+          "name": "SPRING_DATASOURCE_USERNAME",
+          "value": "payment_app"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "SPRING_DATASOURCE_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:prod/payment-service/db-credentials:password::"
+        },
+        {
+          "name": "STRIPE_SECRET_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:prod/payment-service/stripe-api-key:key::"
+        },
+        {
+          "name": "JWT_SIGNING_SECRET",
+          "valueFrom": "arn:aws:ssm:us-east-1:123456789012:parameter/prod/payment-service/jwt-signing-key"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/payment-service-prod",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

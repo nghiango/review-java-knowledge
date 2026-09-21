@@ -1,0 +1,59 @@
+{
+  "family": "payment-service-prod",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::123456789012:role/paymentServiceTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "payment-service",
+      "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/payment-service:v2.1.0",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "SPRING_PROFILES_ACTIVE",
+          "value": "prod"
+        },
+        {
+          "name": "SPRING_DATASOURCE_URL",
+          "value": "jdbc:postgresql://aurora-pg.cluster-xyz.us-east-1.rds.amazonaws.com:5432/payments"
+        },
+        {
+          "name": "SPRING_DATASOURCE_USERNAME",
+          "value": "payment_master"
+        },
+        {
+          "name": "SPRING_DATASOURCE_PASSWORD",
+          "value": "SuperSecretP@ssw0rd!2026"
+        },
+        {
+          "name": "STRIPE_SECRET_KEY",
+          "value": "sk_live_51NABC1234567890XYZSecretStripeKey"
+        },
+        {
+          "name": "JWT_SIGNING_SECRET",
+          "value": "f47ac10b-58cc-4372-a567-0e02b2c3d479-very-secret-jwt-key"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/payment-service-prod",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

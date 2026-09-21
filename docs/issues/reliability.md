@@ -322,6 +322,30 @@ Using the shell form for `ENTRYPOINT java -jar app.jar` spawns `/bin/sh -c` as P
 
 **Appears in:** `modules/24-docker/broken-examples/missing-healthcheck-shutdown`
 
+---
+
+### Single-AZ Database Deployment Lacks High Availability and Automated Failover
+
+**Type:** Reliability issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Amazon RDS, Multi-AZ High Availability, Disaster Recovery · **Interview frequency:** High · **Production impact:** Critical
+
+Deploying production relational databases as single-AZ instances creates a single point of failure without automated failover capabilities. When underlying EC2 hypervisor crashes, host hardware faults, or Availability Zone network partitions occur, AWS must locate replacement hardware in the same AZ, attach existing EBS volumes, and replay uncheckpointed transaction logs—causing 15 to 35+ minutes of complete application outage. Multi-AZ deployments maintain synchronous standby replicas in distinct Availability Zones with automated DNS failover completed in 60–120 seconds and zero data loss ($RPO = 0$).
+
+**Appears in:** `modules/25-aws/broken-examples/single-az-rds-no-backup`
+
+---
+
+### Disabled Database Automated Backups Eliminates Point-In-Time-Recovery (PITR)
+
+**Type:** Reliability issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Amazon RDS, Backup Retention, Disaster Recovery · **Interview frequency:** High · **Production impact:** Critical
+
+Setting database backup retention to 0 disables continuous transaction log (WAL) archiving to Amazon S3. In the event of catastrophic logical data corruption (e.g. erroneous application migrations, accidental SQL `DROP TABLE` or mass `DELETE`, or ransomware tampering), the organization has zero recovery points. Production databases must maintain at least 7–35 days of automated backup retention to enable Point-In-Time-Recovery (PITR) to any second within the retention window.
+
+**Appears in:** `modules/25-aws/broken-examples/single-az-rds-no-backup`
+
 ## Related
 
 - [Issue catalogue](index.md)

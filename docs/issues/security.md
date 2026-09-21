@@ -157,6 +157,42 @@ Using `ARG` or `ENV` to pass private credentials (such as GitHub PAT tokens, NPM
 
 **Appears in:** `modules/24-docker/broken-examples/secrets-baked-into-image`
 
+---
+
+### Over-Permissive Wildcard IAM Policy
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** AWS IAM, Principle of Least Privilege, Cloud Security · **Interview frequency:** High · **Production impact:** Critical
+
+Granting wildcard actions (`"Action": "*"`, `"s3:*"`, `"kms:*"`) and wildcard resources (`"Resource": "*"`) to application runtime IAM roles empowers container workloads with destructive administrative permissions across the AWS account. In the event of a container compromise via Remote Code Execution (RCE) or a dependency CVE, an attacker can delete databases, purge SQS queues, destroy KMS encryption keys, or exfiltrate company data across buckets. Always scope IAM permissions strictly to required API actions, specific resource ARNs, and condition keys (`kms:EncryptionContext`).
+
+**Appears in:** `modules/25-aws/broken-examples/over-permissive-iam-policy`
+
+---
+
+### Plaintext Secrets in Container Environment Configuration
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** AWS ECS, Secrets Manager, Cloud Security · **Interview frequency:** High · **Production impact:** Critical
+
+Hardcoding production database passwords, live payment gateway tokens, and cryptographic signing keys inside container environment variable blocks (such as ECS task definition `environment` arrays or Docker Compose files) exposes credentials in plaintext to anyone with task inspection permissions. Furthermore, ECS task definition revisions are immutable, leaving permanent plaintext credentials in AWS account audit history. Externalize secrets to AWS Secrets Manager or SSM Parameter Store encrypted under KMS Customer Managed Keys, and inject them at container launch using task execution role permissions.
+
+**Appears in:** `modules/25-aws/broken-examples/secrets-in-environment-variables`
+
+---
+
+### Publicly Accessible Production Database Instance
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Technology:** Amazon RDS, VPC Security, Network Isolation · **Interview frequency:** High · **Production impact:** Critical
+
+Setting `publicly_accessible = true` on production database instances assigns a public IPv4 address, directly exposing relational database ports (such as PostgreSQL port 5432) to the public internet. Internet-facing databases are vulnerable to automated credential brute-forcing, distributed denial of service, and zero-day exploits in database networking stacks. Production databases must strictly reside within private isolated subnets accessible exclusively from backend application security groups.
+
+**Appears in:** `modules/25-aws/broken-examples/single-az-rds-no-backup`
+
 ## Related
 
 - [Issue catalogue](index.md)

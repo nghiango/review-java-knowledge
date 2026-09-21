@@ -304,6 +304,22 @@
 - [ ] Prevent secrets exposure in Docker images: never use `ARG` or `ENV` for credentials; use BuildKit `--mount=type=secret` or runtime injection
 - [ ] Compare container base image distributions (Alpine vs Debian-slim vs Distroless vs Chainguard) and evaluate musl vs glibc trade-offs
 
+## AWS
+
+- [ ] Explain operational tradeoffs between compute models: EC2 (IaaS), ECS Fargate (managed containers), EKS (Kubernetes), and AWS Lambda (Serverless)
+- [ ] Understand AWS Lambda SnapStart for Java (CRaC memory checkpointing, $< 200\text{ms}$ cold starts) and avoid snapshot state replay bugs (re-seeding `SecureRandom`)
+- [ ] Differentiate IAM Identity-Based Policies vs Resource-Based Policies and evaluate cross-account evaluation logic
+- [ ] Enforce Principle of Least Privilege: eliminate wildcard `"Action": "*"` and `"Resource": "*"` across S3, SQS, and KMS
+- [ ] Distinguish ECS Task Role (runtime application domain permissions) from ECS Task Execution Role (agent infrastructure bootstrap)
+- [ ] Implement EKS IAM Roles for Service Accounts (IRSA) with OIDC federation to prevent container-to-node privilege escalation
+- [ ] Externalize application credentials using AWS Secrets Manager (automated rotation) and SSM Parameter Store (SecureString) with KMS CMKs
+- [ ] Implement Envelope Encryption with AWS KMS (`GenerateDataKey` with 256-bit DEK, local AES-GCM encryption, immediate plaintext memory zeroing)
+- [ ] Compare Amazon RDS Multi-AZ ($RPO = 0$, automated standby failover in $< 120\text{s}$) with Read Replicas (asynchronous replication lag)
+- [ ] Explain Amazon Aurora distributed storage architecture: 6-way replication across 3 AZs, 4/6 write quorum, and instantaneous crash recovery
+- [ ] Prevent database connection exhaustion using Amazon RDS Proxy to multiplex connections across autoscaled ECS tasks and Lambda bursts
+- [ ] Differentiate VPC Gateway Endpoints (free for S3/DynamoDB) from Interface Endpoints (PrivateLink) to prevent NAT Gateway data transfer costs
+- [ ] Synchronize ALB Target Group Deregistration Delay with Spring Boot Graceful Shutdown to eliminate HTTP 502 Bad Gateway errors during deployments
+
 ## Related
 
 - [Roadmap](roadmap.md)
@@ -331,3 +347,4 @@
 - [Observability questions](questions/observability.md)
 - [Performance questions](questions/performance.md)
 - [Docker questions](questions/docker.md)
+- [AWS questions](questions/aws.md)

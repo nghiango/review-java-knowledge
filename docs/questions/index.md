@@ -27,6 +27,7 @@ Answer each question before reading its explanation.
 - [Observability](observability.md)
 - [Performance](performance.md)
 - [Docker](docker.md)
+- [AWS](aws.md)
 
 ## Related
 

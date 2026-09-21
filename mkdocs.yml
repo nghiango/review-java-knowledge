@@ -267,6 +267,15 @@ nav:
           - Solutions: topics/docker/solutions.md
           - Production: topics/docker/production.md
           - Exercises: topics/docker/exercises.md
+      - AWS:
+          - Overview: topics/aws/index.md
+          - Concepts: topics/aws/concepts.md
+          - Internals: topics/aws/internals.md
+          - Interview Questions: topics/aws/questions.md
+          - Code Review: topics/aws/code-review.md
+          - Solutions: topics/aws/solutions.md
+          - Production: topics/aws/production.md
+          - Exercises: topics/aws/exercises.md
   - Issues:
       - Catalogue: issues/index.md
       - Security: issues/security.md
@@ -308,6 +317,7 @@ nav:
       - Observability: questions/observability.md
       - Performance: questions/performance.md
       - Docker: questions/docker.md
+      - AWS: questions/aws.md
   - Reference:
       - Overview: reference/index.md
   - Contributing:
