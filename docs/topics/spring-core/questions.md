@@ -199,6 +199,39 @@ Four levels of interview questions covering Inversion of Control, Dependency Inj
         ```java
         --8<-- "modules/04-spring-core/src/examples/java/lab/springcore/questions/Q16EnvironmentPropertySourceExample.java"
         ```
+
+### 24. What is the execution contract of BeanPostProcessor lifecycle hooks and early initialization hazards?
+
+??? question "Reveal answer"
+
+    **Short Answer:** `BeanPostProcessor` (BPP) methods wrap bean creation: `postProcessBeforeInitialization` executes before custom init methods (`@PostConstruct`, `InitializingBean`), and `postProcessAfterInitialization` executes after init, typically creating AOP dynamic proxies.
+
+    **Internal Mechanism:** BPPs are instantiated very early in container startup. If a BPP injects standard application beans in its constructor or fields, it forces those target beans to be instantiated prematurely, bypassing subsequent BPP enhancements (such as autowiring, validation, and transactional proxy wrapping).
+
+    **Common Mistake:** Injecting domain services or repositories directly into custom `BeanPostProcessor` implementations, leading to unproxied "raw" beans that silently bypass `@Transactional` or `@Async` aspects. [Concepts](/topics/spring-core/concepts.md#4-the-spring-bean-lifecycle)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/04-spring-core/src/examples/java/lab/springcore/questions/Q24BeanPostProcessorLifecycleExample.java"
+        ```
+
+### 25. How does ConfigurationCondition evaluate ConfigurationPhase (PARSE_CONFIGURATION vs REGISTER_BEAN)?
+
+??? question "Reveal answer"
+
+    **Short Answer:** `ConfigurationCondition` controls *when* condition checks evaluate: `PARSE_CONFIGURATION` evaluates while parsing `@Configuration` classes before bean definitions exist, while `REGISTER_BEAN` evaluates during bean registration when other bean definitions can be inspected.
+
+    **Internal Mechanism:** Using `REGISTER_BEAN` allows conditions to query the `BeanFactory` to check whether specific bean definitions already exist (such as `@ConditionalOnBean`), avoiding false negative evaluation results during the initial configuration parsing phase.
+
+    **Common Mistake:** Using a standard `Condition` to check for other bean definitions during configuration parsing, which fails because candidate bean definitions have not been registered yet. [Concepts](/topics/spring-core/concepts.md#1-inversion-of-control-ioc-dependency-injection-di)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/04-spring-core/src/examples/java/lab/springcore/questions/Q25ConditionalPhaseEvaluationExample.java"
+        ```
+
 <!-- --8<-- [end:intermediate] -->
 
 <!-- --8<-- [start:senior] -->
@@ -257,6 +290,85 @@ Four levels of interview questions covering Inversion of Control, Dependency Inj
         ```java
         --8<-- "modules/04-spring-core/src/examples/java/lab/springcore/questions/Q21DefaultListableBeanFactoryInternalsExample.java"
         ```
+
+### 26. How does Spring's three-level singleton cache resolve circular dependencies and why does constructor injection prevent them?
+
+??? question "Reveal answer"
+
+    **Short Answer:** `DefaultSingletonBeanRegistry` uses three cache levels: `singletonObjects` (ready beans), `earlySingletonObjects` (instantiated beans exposed early), and `singletonFactories` (early reference/proxy factories). Constructor injection fails on cycles because instance instantiation itself cannot complete without resolving the dependent argument.
+
+    **Deep Explanation:** With setter/field injection, Spring instantiates Bean A with its default constructor, places an `ObjectFactory` for A in the 3rd level cache, and proceeds to populate A's properties. When Bean B needs A, B resolves A's early reference from the 3rd level cache (promoting it to the 2nd level) and completes injection. With constructor injection, neither A nor B can be instantiated first, causing `BeanCurrentlyInCreationException`.
+
+    **Internal Mechanism:** The 3rd level factory cache allows `SmartInstantiationAwareBeanPostProcessor` to generate early AOP proxies if necessary before full property injection.
+
+    **Example:** [Circular dependency resolution](/topics/spring-core/concepts.md#4-the-spring-bean-lifecycle).
+
+    **Common Mistake:** Relying on `@Lazy` or setter injection to hide circular dependencies instead of refactoring tangled domains into unidirectional dependencies or event-driven patterns.
+
+    **Production Consideration:** Constructor injection is preferred because it makes circular dependencies fail fast at startup and enforces immutability via `final` fields.
+
+    **Follow-up Questions:**
+    - How does the Dependency Inversion Principle prevent circular relationships in domain models? See [Design Patterns: Dependency Inversion](/topics/design-patterns/questions.md)
+    - How does Spring Boot 3 disable circular references by default via `spring.main.allow-circular-references=false`? See [Spring Boot: Configuration Properties](/topics/spring-boot/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/04-spring-core/src/examples/java/lab/springcore/questions/Q26CircularDependencyResolutionExample.java"
+        ```
+
+### 27. What are the mechanical limitations of CGLIB and JDK dynamic proxies regarding final methods and object identity?
+
+??? question "Reveal answer"
+
+    **Short Answer:** CGLIB generates runtime subclasses, so `final` classes cannot be proxied and `final` methods cannot be overridden or intercepted. JDK Dynamic Proxies require interfaces and cannot proxy concrete classes. Proxies are distinct wrapper instances, so `proxy == target` returns `false`.
+
+    **Deep Explanation:** When a caller invokes a `final` method on a CGLIB proxy, the JVM cannot dispatch through the generated subclass interceptor; execution falls directly through to the uninitialized proxy state or target method without triggering `@Transactional` or security advice.
+
+    **Internal Mechanism:** CGLIB uses bytecode generation (via ByteBuddy/ASM) to extend the target class and route method calls through method interceptors (`MethodInterceptor.intercept`).
+
+    **Example:** [Proxy mechanisms](/topics/spring-core/concepts.md#5-proxy-mechanisms-aop).
+
+    **Common Mistake:** Declaring business methods as `final` in Spring services and expecting transaction management or method security aspects to execute.
+
+    **Production Consideration:** Keep service classes and methods non-final when relying on CGLIB proxies, or use AspectJ compile-time/load-time weaving (LTW) when proxy limitations are unacceptable.
+
+    **Follow-up Questions:**
+    - How does self-invocation bypass transactional interceptors regardless of proxy type? See [Spring Transactions: Proxy Bypass](/topics/spring-transactions/questions.md#1-how-does-springs-transactional-annotation-work-under-the-hood-and-why-does-self-invocation-bypass-it)
+    - What differences exist between Java interface reflection and bytecode subclassing? See [JVM: Bytecode Execution](/topics/jvm/questions.md#2-what-is-java-bytecode-and-how-does-the-jvm-execute-it)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/04-spring-core/src/examples/java/lab/springcore/questions/Q27ProxyMechanismsAndBypassingExample.java"
+        ```
+
+### 28. How does Spring Framework 6 Ahead-Of-Time (AOT) engine compute RuntimeHints for GraalVM native images?
+
+??? question "Reveal answer"
+
+    **Short Answer:** In GraalVM native compilation, closed-world analysis removes unreferenced reflection, dynamic proxies, and resource files. Spring 6 AOT evaluates application configurations at build time and generates explicit `RuntimeHints` for reflection and proxy generation.
+
+    **Deep Explanation:** Standard JVM applications dynamically discover classes and invoke reflection at runtime. GraalVM AOT native compiler requires pre-declaring all reflection targets, serialization types, and JDK proxies during native image build time.
+
+    **Internal Mechanism:** Spring 6's AOT engine scans bean definitions, runs `BeanFactoryInitializationAotProcessor` implementations, and invokes registered `RuntimeHintsRegistrar` classes to generate `reflect-config.json` and `proxy-config.json`.
+
+    **Example:** [Spring AOT runtime hints](/topics/spring-core/concepts.md#1-inversion-of-control-ioc-dependency-injection-di).
+
+    **Common Mistake:** Relying on runtime reflection without registering `RuntimeHintsRegistrar`, causing `ClassNotFoundException` or `NoSuchMethodException` when executing as a GraalVM native executable.
+
+    **Production Consideration:** Implement `RuntimeHintsRegistrar` for third-party libraries and dynamic payloads parsed via reflection; test native compilation in CI via Spring Boot Native Test.
+
+    **Follow-up Questions:**
+    - How does class loading and linking in JVM JIT mode differ from GraalVM native static compilation? See [JVM: Class Loading Lifecycle](/topics/jvm/questions.md#1-what-are-the-phases-of-the-class-loading-and-linking-lifecycle)
+    - What performance tradeoffs exist between JVM JIT peak throughput and GraalVM native startup speed? See [Performance: Startup vs Peak Throughput](/topics/performance/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/04-spring-core/src/examples/java/lab/springcore/questions/Q28SpringAotReflectionHintsExample.java"
+        ```
+
 <!-- --8<-- [end:senior] -->
 
 <!-- --8<-- [start:scenarios] -->
@@ -289,6 +401,59 @@ Four levels of interview questions covering Inversion of Control, Dependency Inj
         ```java
         --8<-- "modules/04-spring-core/src/examples/java/lab/springcore/questions/Q23StartupBlockingInitScenarioExample.java"
         ```
+
+### 29. Production incident: Injecting prototype-scoped bean into a singleton service causes concurrent state contamination
+
+??? question "Reveal answer"
+
+    **Short Answer:** A singleton service injected with a prototype-scoped bean receives only one instance created during singleton instantiation; subsequent concurrent calls share this single instance, causing multi-threaded race conditions and data corruption.
+
+    **Deep Explanation:** In Spring, scope resolution occurs at injection time. When a singleton bean is created, its dependencies are resolved once. If a prototype bean carries mutable request state (e.g. tenant id or user parameters), all concurrent threads invoking the singleton share that single prototype instance.
+
+    **Internal Mechanism:** The `DefaultListableBeanFactory` creates the prototype bean during the singleton's dependency population phase and never re-resolves it unless requested explicitly.
+
+    **Example:** [Prototype in singleton lookup](/topics/spring-core/code-review.md).
+
+    **Common Mistake:** Expecting `@Scope("prototype")` on a collaborator to automatically provide a new instance on every method invocation of a singleton bean.
+
+    **Production Consideration:** Use `ObjectProvider<T>.getObject()`, `@Lookup` method injection, or scoped proxies (`ScopedProxyMode.TARGET_CLASS`) to resolve fresh instances dynamically upon invocation.
+
+    **Follow-up Questions:**
+    - How does safe publication guarantee memory visibility when resolving beans via `ObjectProvider`? See [Concurrency: Safe Publication](/topics/concurrency/questions.md#21-what-constitutes-safe-publication-of-shared-objects-in-the-java-memory-model)
+    - What memory and lifecycle cleanup concerns arise with prototype beans since Spring does not invoke destruction callbacks on prototypes? See [Spring Core: Bean Scopes](/topics/spring-core/concepts.md#3-bean-scopes-scoped-proxies)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/04-spring-core/src/examples/java/lab/springcore/questions/Q29PrototypeInSingletonLeakScenarioExample.java"
+        ```
+
+### 30. Production incident: Internal method call bypasses method-level security and auditing interceptors
+
+??? question "Reveal answer"
+
+    **Short Answer:** Calling a secured or transactional method from within the same class (`this.method()`) bypasses Spring AOP proxy interception, executing the target method without security checks or transaction boundaries.
+
+    **Deep Explanation:** Spring AOP is proxy-based. External callers invoke the proxy, which executes interceptors before delegating to the target instance. Once execution enters the target instance, any internal call to another method on `this` stays within the target instance without returning through the proxy, silently ignoring annotations like `@Secured`, `@PreAuthorize`, or `@Transactional`.
+
+    **Internal Mechanism:** The Java `this` reference points to the unwrapped target object in memory, not the Spring CGLIB/JDK proxy wrapper.
+
+    **Example:** [Self-invocation proxy failure](/topics/spring-core/code-review.md).
+
+    **Common Mistake:** Adding security or transactional annotations to internal helper methods and assuming they will be enforced when invoked from public methods in the same class.
+
+    **Production Consideration:** Refactor the secured method into a separate collaborator bean injected via constructor, or use `((CurrentClass) AopContext.currentProxy()).method()` with `@EnableAspectJAutoProxy(exposeProxy = true)`.
+
+    **Follow-up Questions:**
+    - How does Spring Security evaluate method security annotations during proxy dispatch? See [Spring Security: Method Security](/topics/spring-security/questions.md)
+    - How does this same proxy bypass mechanism affect database transaction rollback? See [Spring Transactions: Self-Invocation Bypass](/topics/spring-transactions/questions.md#1-how-does-springs-transactional-annotation-work-under-the-hood-and-why-does-self-invocation-bypass-it)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/04-spring-core/src/examples/java/lab/springcore/questions/Q30ProxySecurityBypassScenarioExample.java"
+        ```
+
 <!-- --8<-- [end:scenarios] -->
 
 ## Related
