@@ -200,6 +200,39 @@ Four levels of interview questions covering `@Transactional` proxy mechanics, pr
         ```java
         --8<-- "modules/07-spring-transactions/src/examples/java/lab/springtransactions/questions/Q16ReadOnlyRoutingDataSourceExample.java"
         ```
+
+### 24. What is the contract of TransactionSynchronization lifecycle callbacks (beforeCommit, afterCommit, afterCompletion)?
+
+??? question "Reveal answer"
+
+    **Short Answer:** `TransactionSynchronization` provides lifecycle callbacks: `beforeCommit` executes before SQL `COMMIT` (exceptions cause rollback); `afterCommit` executes after successful commit (for external side-effects like sending emails); `afterCompletion` executes on both commit and rollback (for resource cleanup).
+
+    **Internal Mechanism:** `TransactionSynchronizationManager` holds a `ThreadLocal<List<TransactionSynchronization>>` bound to the active transaction, which `AbstractPlatformTransactionManager` iterates through during commit and rollback operations.
+
+    **Common Mistake:** Emitting external message broker events or REST calls inside `beforeCommit`; if the subsequent database commit fails or deadlocks, the message was already sent, causing dual-write inconsistency. [Concepts](/topics/spring-transactions/concepts.md#6-transactionaleventlistener-and-transaction-synchronization)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/07-spring-transactions/src/examples/java/lab/springtransactions/questions/Q24SynchronizationCallbackPhasesExample.java"
+        ```
+
+### 25. How do you design replication-lag safe read-write splitting with AbstractRoutingDataSource?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Asynchronous database replication introduces lag between the Primary and Read Replicas. If a client writes and immediately reads on the replica, they see stale data. Guard against this using a "read-your-own-writes" window that routes reads to the Primary node for a short interval after any write.
+
+    **Internal Mechanism:** `AbstractRoutingDataSource.determineCurrentLookupKey()` checks both `TransactionSynchronizationManager.isCurrentTransactionReadOnly()` and a user/session `lastWriteTimestamp`; if `(now - lastWrite) < LAG_WINDOW_MS`, reads are routed to the Primary.
+
+    **Common Mistake:** Assuming `@Transactional(readOnly = true)` can always be routed to read replicas without accounting for read-your-own-writes consistency in customer-facing flows. [Concepts](/topics/spring-transactions/concepts.md#1-transaction-abstraction-architecture)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/07-spring-transactions/src/examples/java/lab/springtransactions/questions/Q25ReplicationLagSafeRoutingExample.java"
+        ```
+
 <!-- --8<-- [end:intermediate] -->
 
 <!-- --8<-- [start:senior] -->
@@ -263,6 +296,87 @@ Four levels of interview questions covering `@Transactional` proxy mechanics, pr
         ```java
         --8<-- "modules/07-spring-transactions/src/examples/java/lab/springtransactions/questions/Q21ProgrammaticSavepointRollbackExample.java"
         ```
+
+### 26. How does the Transactional Outbox Pattern guarantee atomic event emission and what are the trade-offs of CDC vs polling?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Instead of publishing messages directly to a message broker during a database transaction, an event record is written into an `outbox` table in the same local ACID transaction. An asynchronous process (CDC or SQL poller) reads the outbox table and delivers events to Kafka/RabbitMQ.
+
+    **Deep Explanation:** In dual-write architectures, saving to a database and publishing to Kafka cannot be coordinated atomically without 2PC. If the database commits and message publication fails, or vice versa, the system becomes permanently inconsistent. Writing an outbox record into the database table guarantees that business state and outgoing events commit atomically together.
+
+    **Internal Mechanism:** 
+    - **Polling Publisher**: Uses `SELECT ... FOR UPDATE SKIP LOCKED` on the outbox table and deletes/marks rows after publishing.
+    - **Change Data Capture (CDC)**: Uses Debezium / PostgreSQL logical replication to tail the Write-Ahead Log (`pg_wal`) directly with zero polling overhead.
+
+    **Example:** [Transactional Outbox Pattern](/topics/spring-transactions/concepts.md#1-transaction-abstraction-architecture).
+
+    **Common Mistake:** Emitting messages directly to Kafka inside an `@Transactional` method or using an un-polled outbox table that grows indefinitely.
+
+    **Production Consideration:** Use Debezium CDC for high-throughput microservices; use SQL polling (`SKIP LOCKED`) for simpler architectures without dedicated Kafka Connect infrastructure.
+
+    **Follow-up Questions:**
+    - How does Kafka achieve idempotent message production and exactly-once delivery semantics? See [Kafka: Idempotent Producer](/topics/kafka/questions.md)
+    - How do distributed data patterns coordinate data consistency across multiple microservice databases? See [Distributed Data Patterns: Outbox and Sagas](/topics/distributed-data-patterns/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/07-spring-transactions/src/examples/java/lab/springtransactions/questions/Q26CdcOutboxWalVsPollerExample.java"
+        ```
+
+### 27. What causes heuristic hazards in XA Two-Phase Commit and why do modern microservices adopt Sagas?
+
+??? question "Reveal answer"
+
+    **Short Answer:** In XA/2PC, a coordinator coordinates multiple participants. If a network partition occurs after participants vote `PREPARED`, participants hold row and table locks indefinitely. If a participant times out and unilaterally rolls back while another commits, a Heuristic Hazard occurs, causing split-brain data corruption.
+
+    **Deep Explanation:** Two-Phase Commit is an anti-availability protocol ($CP$ in CAP theorem). During Phase 1 (Prepare), database resources acquire exclusive locks. If the coordinator or network fails, locks remain held, stalling all concurrent traffic. Modern distributed systems favor the Saga pattern, which trades atomic isolation for eventual consistency through local transactions and compensating actions.
+
+    **Internal Mechanism:** The XA protocol defines `XAException.XA_HEURHAZ` when a participant heuristic decision conflicts with the global coordinator outcome.
+
+    **Example:** [Distributed transactions vs Sagas](/topics/spring-transactions/concepts.md#2-transaction-propagation-behaviors).
+
+    **Common Mistake:** Assuming XA/2PC provides zero-risk reliability in cloud environments with ephemeral containers and network latency.
+
+    **Production Consideration:** Adopt orchestration or choreography-based Sagas with idempotent compensating transactions and dead-letter queues.
+
+    **Follow-up Questions:**
+    - How do distributed systems resolve network partition split-brain scenarios? See [Distributed Systems: Consensus and Raft](/topics/distributed-systems/questions.md)
+    - How does Resilience4j configure retry and fallback compensation handlers? See [Resilience: Fault Tolerance Patterns](/topics/resilience/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/07-spring-transactions/src/examples/java/lab/springtransactions/questions/Q27XaTwoPhaseCommitHeuristicHazardExample.java"
+        ```
+
+### 28. How does HikariCP detect connection leaks using leakDetectionThreshold and thread stack tracing?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Setting `leakDetectionThreshold > 0` (e.g. 5000ms) causes HikariCP to schedule a `ProxyLeakTask` when a connection is borrowed. If the connection is not returned within the threshold, a warning log is emitted containing the stack trace of the thread that borrowed it.
+
+    **Deep Explanation:** Connection leaks occur when code borrows a JDBC `Connection` from the pool (either directly or via JPA `EntityManager`) and fails to close it (e.g. missing `try-with-resources`, long-running remote HTTP call in `@Transactional`, or infinite loop). HikariCP's leak detector captures `Thread.currentThread().getStackTrace()` at acquisition time, giving engineers the exact class, method, and line number responsible.
+
+    **Internal Mechanism:** When `connection.close()` is called, the scheduled `ScheduledFuture` running the `ProxyLeakTask` is cancelled; if the task executes before cancellation, it logs the leak warning.
+
+    **Example:** [HikariCP connection leak detection](/topics/spring-transactions/concepts.md#5-hikaricp-connection-pool-lifecycle-sizing).
+
+    **Common Mistake:** Setting `leakDetectionThreshold` lower than legitimate long-running batch transactions, producing false-positive leak warnings.
+
+    **Production Consideration:** Set `leakDetectionThreshold` to 2–3 times the expected p99 transaction duration (e.g. 5000ms–10000ms) in staging and production to detect leaked connections before the pool starves.
+
+    **Follow-up Questions:**
+    - How is the optimal database connection pool size calculated using the HikariCP formula? See [Database / SQL: Connection Pool Sizing](/topics/database-sql/questions.md#19-how-do-you-calculate-optimal-database-connection-pool-sizing-hikaricp-formula)
+    - What Micrometer pool metrics monitor pending connection acquisition threads? See [Observability: Connection Pool Telemetry](/topics/observability/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/07-spring-transactions/src/examples/java/lab/springtransactions/questions/Q28StatementClosureAndLeakTaskExample.java"
+        ```
+
 <!-- --8<-- [end:senior] -->
 
 <!-- --8<-- [start:scenarios] -->
@@ -300,4 +414,57 @@ Four levels of interview questions covering `@Transactional` proxy mechanics, pr
         ```java
         --8<-- "modules/07-spring-transactions/src/examples/java/lab/springtransactions/questions/Q23UnexpectedRollbackMultiServiceScenarioExample.java"
         ```
+
+### 29. Production Incident: Silent partial commit and UnexpectedRollbackException from swallowed exceptions in nested transactions
+
+??? question "Reveal answer"
+
+    **Short Answer:** A service method called a collaborator method (both `Propagation.REQUIRED`); when the collaborator threw an exception, the physical transaction was marked `rollback-only`. The caller swallowed the exception in a `try-catch` block and attempted to return normally, triggering an `UnexpectedRollbackException` on commit.
+
+    **Deep Explanation:** In Spring declarative transactions, all participating methods with `Propagation.REQUIRED` share the same physical database connection and transaction boundary. When an inner method encounters an uncaught runtime exception, Spring's transaction interceptor marks the underlying transaction `rollback-only`. If the outer caller catches the exception and attempts to commit, Spring throws `UnexpectedRollbackException` because it cannot fulfill the commit contract.
+
+    **Internal Mechanism:** `AbstractPlatformTransactionManager.processCommit()` checks `status.isRollbackOnly()`; if true, it rolls back the physical transaction and throws `UnexpectedRollbackException`.
+
+    **Example:** [Rollback rules and nested boundaries](/topics/spring-transactions/code-review.md).
+
+    **Common Mistake:** Catching exceptions from collaborator services in a `try-catch` block without realizing the underlying physical transaction has already been irrevocably marked for rollback.
+
+    **Production Consideration:** Use `Propagation.REQUIRES_NEW` if inner service failure should allow outer transactions to commit, or use programmatic Savepoints (`Propagation.NESTED`) to rollback only the inner work.
+
+    **Follow-up Questions:**
+    - How does the JPA PersistenceContext react when a transaction is marked rollback-only? See [JPA / Hibernate: Entity Lifecycle](/topics/jpa-hibernate/questions.md#2-what-are-the-four-entity-lifecycle-states-in-jpa-and-how-do-transitions-occur)
+    - How do checked exceptions behave under default Spring rollback rules? See [Spring Transactions: Rollback Rules](/topics/spring-transactions/questions.md#5-what-are-springs-default-rollback-rules-and-how-do-checked-exceptions-behave)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/07-spring-transactions/src/examples/java/lab/springtransactions/questions/Q29PartialCommitSilentFailureScenarioExample.java"
+        ```
+
+### 30. Production Incident: HikariCP connection pool starvation caused by un-timed remote HTTP calls inside @Transactional
+
+??? question "Reveal answer"
+
+    **Short Answer:** A slow downstream microservice call placed inside an `@Transactional` method caused threads to hold borrowed database connections idle for seconds; during a traffic spike, all 10 HikariCP connections became exhausted, rejecting incoming requests with connection acquisition timeouts.
+
+    **Deep Explanation:** A database connection is borrowed the moment the transaction begins and is held until the transaction commits or rolls back. If an application makes external HTTP calls, writes to message brokers, or performs CPU-intensive encryption inside `@Transactional`, the JDBC connection is held hostage despite being completely idle on the database engine.
+
+    **Internal Mechanism:** HikariCP's `getConnection()` blocks waiting on a free connection; when `connectionTimeout` (default 30,000ms) elapses, it throws `SQLTransientConnectionException: HikariPool - Connection is not available`.
+
+    **Example:** [Remote call in transaction](/topics/spring-transactions/code-review.md).
+
+    **Common Mistake:** Annotating an entire controller or orchestrator method with `@Transactional` instead of scoping transactions tightly around database persistence operations.
+
+    **Production Consideration:** Keep transactions as short as possible. Use `TransactionTemplate` or separate transactional services for database operations, and execute all external network I/O strictly outside transaction boundaries.
+
+    **Follow-up Questions:**
+    - How does Tomcat worker thread starvation interact with HikariCP connection pool exhaustion? See [Spring MVC: Tomcat Worker Starvation](/topics/spring-mvc/questions.md#29-production-incident-tomcat-http-thread-pool-starvation-caused-by-un-timed-synchronous-downstream-calls)
+    - How do circuit breakers and timeouts isolate downstream latency spikes? See [Resilience: Fault Tolerance Patterns](/topics/resilience/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/07-spring-transactions/src/examples/java/lab/springtransactions/questions/Q30SlowRemoteCallPoolStarvationScenarioExample.java"
+        ```
+
 <!-- --8<-- [end:scenarios] -->
