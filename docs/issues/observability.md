@@ -148,6 +148,18 @@ Serving superseded or legacy API versions without standard RFC 8594 `Deprecation
 
 **Appears in:** [Java 25 / Boot 4 REST API — Ad-Hoc Header Versioning](../tracks/java25-boot4/rest-api/code-review.md#review-target-1-ad-hoc-header-versioning-missing-lifecycle-headers)
 
+---
+
+### Unconfigured Destination Drops Outbound Notifications Silently
+
+**Type:** Observability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Spring Boot, Messaging, Observability · **Interview frequency:** High · **Production impact:** High
+
+When an outbound notification component encounters an unconfigured destination (`topic == null`), silently dropping the message with an innocuous return value (e.g. `return "skipped";`) leaves zero operational footprint. No warning or error log is generated, no drop metric or dead-letter alert increments, and health indicators remain green while business events vanish. Unconfigured mandatory destinations must abort startup or record explicit dropped-message metrics and errors.
+
+**Appears in:** [Java 25 / Boot 4 What's New — Silently Renamed Configuration Property](../tracks/java25-boot4/whats-new/code-review.md#review-target-3-silently-renamed-configuration-property)
+
 ## Related
 
 - [Issue catalogue](index.md)

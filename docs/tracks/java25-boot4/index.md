@@ -34,7 +34,7 @@ Only the delta is implemented per module. Each module keeps the baseline's numbe
 | [11-spring-security](spring-security/index.md) | Spring Security | Delta implemented | Security 7 lambda-only DSL, virtual thread context propagation with ScopedValue |
 | [12-testing](testing/index.md) | Testing | Delta implemented | unified REST test client assertions, deterministic virtual thread tests with Awaitility, ArchUnit rules |
 | [18-resilience](resilience/index.md) | Resilience | Delta implemented | core retry vs Resilience4j, virtual-thread friendly timeouts, lock-free circuit breaker |
-| 40-whats-new | Feature tour | Planned | runnable tour + migration checklist |
+| [40-whats-new](whats-new/index.md) | Feature tour | Complete | runnable feature tour, FFM API, SecurityManager removal, and migration checklist |
 
 ## Stack
 

@@ -241,6 +241,30 @@ Failing to clean up thread-local security credentials after executing background
 
 **Appears in:** [Java 25 / Boot 4 Spring Security — InheritableThreadLocal Context Pollution](../tracks/java25-boot4/spring-security/code-review.md#review-target-2-inheritablethreadlocal-security-context-pollution)
 
+---
+
+### Authorization Depends on Disabled SecurityManager
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** `SecurityManager`, `AccessController`, JEP 486 · **Interview frequency:** High · **Production impact:** Critical
+
+On Java 25, the `SecurityManager` is permanently disabled (JEP 486) and `System.getSecurityManager()` always returns `null`. Basing authorization decisions on whether a SecurityManager is present or relying on it to enforce code permissions creates a complete authorization bypass. Applications must enforce authorization at the domain or service layer using explicit caller principals and authorities.
+
+**Appears in:** [Java 25 / Boot 4 What's New — SecurityManager-Based Authorization](../tracks/java25-boot4/whats-new/code-review.md#review-target-2-securitymanager-based-authorization)
+
+---
+
+### Fail-Open Authorization Default Grants Unauthenticated Access
+
+**Type:** Security issue · **Severity:** Critical · **Difficulty:** Basic
+
+**Track:** `java25-boot4` · **Technology:** Authorization design · **Interview frequency:** High · **Production impact:** Critical
+
+Defaulting to allow access when a security component is missing (`if (securityManager == null) return true;` or `if (caller == null) return true;`) is a catastrophic fail-open flaw. When running in environments where the component is unconfigured, disabled, or removed, all callers—including anonymous or untrusted clients—are granted unrestricted access. Security gates must always fail closed.
+
+**Appears in:** [Java 25 / Boot 4 What's New — SecurityManager-Based Authorization](../tracks/java25-boot4/whats-new/code-review.md#review-target-2-securitymanager-based-authorization)
+
 ## Related
 
 - [Issue catalogue](index.md)

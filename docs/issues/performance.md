@@ -264,6 +264,30 @@ Compiling and packaging Java applications inside a single-stage Dockerfile bundl
 
 **Appears in:** `modules/24-docker/broken-examples/fat-image-root-user`
 
+---
+
+### Off-Heap Native Memory Access Without Bounds Checks
+
+**Type:** Memory issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** `sun.misc.Unsafe`, Pointer Arithmetic · **Interview frequency:** High · **Production impact:** Critical
+
+Using raw pointer arithmetic without validating indices allows reads and writes beyond allocated buffer boundaries. Writing outside allocated off-heap space silently overwrites unrelated native memory structures, leading to corrupt payloads, fatal SIGSEGV process crashes, or exploitable memory safety vulnerabilities. Always enforce strict spatial bounds checks via the Foreign Function & Memory API (`MemorySegment`).
+
+**Appears in:** [Java 25 / Boot 4 What's New — Unsafe Off-Heap Buffer](../tracks/java25-boot4/whats-new/code-review.md#review-target-1-unsafe-off-heap-buffer)
+
+---
+
+### Native Off-Heap Memory Leak Without AutoCloseable Lifecycle
+
+**Type:** Resource leak issue · **Severity:** Critical · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Native Memory, `Arena`, `AutoCloseable` · **Interview frequency:** High · **Production impact:** Critical
+
+Allocating native off-heap memory without binding it to a deterministic owner or `AutoCloseable` lifecycle causes native memory to leak for the life of the OS process if an exception escapes before manual deallocation or if a caller forgets to invoke cleanup. Because off-heap memory is invisible to JVM garbage collection pauses, the process eventually exhausts host RAM and is killed by the OS Out-Of-Memory (OOM) killer. Use `Arena.ofConfined()` within `try-with-resources`.
+
+**Appears in:** [Java 25 / Boot 4 What's New — Unsafe Off-Heap Buffer](../tracks/java25-boot4/whats-new/code-review.md#review-target-1-unsafe-off-heap-buffer)
+
 ## Related
 
 - [Issue catalogue](index.md)

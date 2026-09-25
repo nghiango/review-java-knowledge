@@ -474,6 +474,66 @@ Retrying outbound operations indefinitely with a static fixed delay and zero jit
 
 **Appears in:** [Java 25 / Boot 4 Resilience — Unbounded Retry Storm Without Jitter](../tracks/java25-boot4/resilience/code-review.md#review-target-1-unbounded-retry-storm-without-jitter)
 
+---
+
+### Deprecated AccessController Check Never Throws
+
+**Type:** Reliability issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** `AccessController`, JEP 486 · **Interview frequency:** Medium · **Production impact:** Medium
+
+`AccessController.checkPermission()` is deprecated for removal and on Java 25 becomes an empty no-op that never throws `SecurityException`. Enclosing it in a `try-catch` block gives developers and auditors the false impression that permission enforcement is active when in reality the check is dead code.
+
+**Appears in:** [Java 25 / Boot 4 What's New — SecurityManager-Based Authorization](../tracks/java25-boot4/whats-new/code-review.md#review-target-2-securitymanager-based-authorization)
+
+---
+
+### Renamed Configuration Property Binds to Nothing Without Error
+
+**Type:** Configuration issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** `@ConfigurationProperties`, Spring Boot 4 binding · **Interview frequency:** High · **Production impact:** High
+
+When upgrading to Spring Boot 4, property keys that were renamed in `application.yml` or auto-configurations fail to bind to un-migrated target fields. Because Spring Boot's relaxed binder treats missing keys as optional, fields remain uninitialized (`null` or `0`) and the application starts cleanly without error. If application logic does not guard against nulls, features silently stop working or messages are dropped.
+
+**Appears in:** [Java 25 / Boot 4 What's New — Silently Renamed Configuration Property](../tracks/java25-boot4/whats-new/code-review.md#review-target-3-silently-renamed-configuration-property)
+
+---
+
+### Unvalidated Configuration Properties Class Permits Incomplete Binding
+
+**Type:** Reliability issue · **Severity:** High · **Difficulty:** Basic
+
+**Track:** `java25-boot4` · **Technology:** `@ConfigurationProperties`, `@Validated`, Jakarta Validation · **Interview frequency:** High · **Production impact:** High
+
+Omitting `@Validated` and Jakarta Validation annotations (`@NotBlank`, `@NotNull`, `@Positive`) on `@ConfigurationProperties` classes permits partially bound or completely empty configuration objects to be injected into downstream components. Startup succeeds even when critical database URLs, credentials, or queue topics are absent. Always enforce startup validation to fail fast during the deployment step.
+
+**Appears in:** [Java 25 / Boot 4 What's New — Silently Renamed Configuration Property](../tracks/java25-boot4/whats-new/code-review.md#review-target-3-silently-renamed-configuration-property)
+
+---
+
+### Mutable JavaBean Property Binding Exposes Half-Bound State
+
+**Type:** Reliability issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** `@ConfigurationProperties`, Java Records, Constructor Binding · **Interview frequency:** Medium · **Production impact:** Medium
+
+Using traditional mutable JavaBeans with no-arg constructors and public setters for configuration binding allows other threads or lifecycle callbacks to observe the bean in a half-bound state. Furthermore, mutable properties can be modified at runtime after startup. Use immutable Java records with constructor-driven binding to guarantee atomic initialization and thread safety.
+
+**Appears in:** [Java 25 / Boot 4 What's New — Silently Renamed Configuration Property](../tracks/java25-boot4/whats-new/code-review.md#review-target-3-silently-renamed-configuration-property)
+
+---
+
+### Unsafe Memory Access Deprecated for Removal
+
+**Type:** Deployment issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** `sun.misc.Unsafe`, Foreign Function & Memory API, JEP 498 · **Interview frequency:** High · **Production impact:** Medium
+
+Under JEP 498, calling off-heap memory allocation and access methods on `sun.misc.Unsafe` emits JVM runtime warnings. In subsequent Java releases, these methods will throw `UnsupportedOperationException` and be permanently removed. Services must migrate to the standardized Foreign Function & Memory API (`java.lang.foreign.Arena` and `MemorySegment`) to prevent future deployment breakage.
+
+**Appears in:** [Java 25 / Boot 4 What's New — Unsafe Off-Heap Buffer](../tracks/java25-boot4/whats-new/code-review.md#review-target-1-unsafe-off-heap-buffer)
+
 ## Related
 
 - [Issue catalogue](index.md)

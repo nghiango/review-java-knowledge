@@ -52,7 +52,7 @@ the differences; the baseline remains the canonical explanation of each topic.
 | 11 | Spring Security | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 12 | Testing | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 18 | Resilience | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 40 | What's New (track-only) | code | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 40 | What's New (track-only) | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 Track-level pages complete: [overview](tracks/java25-boot4/index.md),
 [Java delta](tracks/java25-boot4/whats-new-java.md),

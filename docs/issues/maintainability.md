@@ -494,6 +494,28 @@ Asserting internal thread pool worker counts or specific thread names couples te
 
 ---
 
+### Authorization Gate Ignores Caller Identity
+
+**Type:** Maintainability issue · **Severity:** High · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Authorization design, Principal model · **Interview frequency:** High · **Production impact:** High
+
+Accepting a caller identity parameter (such as `userId`) without consulting it inside the authorization gate creates a deceptive API signature. Reviewers assume object-level or user-level access controls are active, when the check actually relies on JVM-global permissions or static state that treats all callers identically. Authorization decisions must be a pure, testable function of the authenticated caller and their assigned authorities.
+
+**Appears in:** [Java 25 / Boot 4 What's New — SecurityManager-Based Authorization](../tracks/java25-boot4/whats-new/code-review.md#review-target-2-securitymanager-based-authorization)
+
+---
+
+### JDK-Internal Unsafe Field Accessed via Reflection
+
+**Type:** Maintainability issue · **Severity:** Medium · **Difficulty:** Intermediate
+
+**Track:** `java25-boot4` · **Technology:** Java Reflection, Strong Encapsulation · **Interview frequency:** Medium · **Production impact:** Low
+
+Reflectively modifying the accessibility of private JDK fields like `sun.misc.Unsafe.theUnsafe` bypasses module encapsulation boundaries. It breaks when JVM internals change or when running with `--illegal-access=deny`. Code should utilize supported public platform APIs (`java.lang.foreign`) rather than hacking internal JVM handles.
+
+**Appears in:** [Java 25 / Boot 4 What's New — Unsafe Off-Heap Buffer](../tracks/java25-boot4/whats-new/code-review.md#review-target-1-unsafe-off-heap-buffer)
+
 ## Related
 
 - [Issue catalogue](index.md)
