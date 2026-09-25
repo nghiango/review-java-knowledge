@@ -199,6 +199,39 @@ Four levels of interview questions covering DispatcherServlet request lifecycles
         ```java
         --8<-- "modules/06-spring-mvc/src/examples/java/lab/springmvc/questions/Q16HttpCachingHeadersExample.java"
         ```
+
+### 24. How does asynchronous HTTP streaming work with StreamingResponseBody vs ResponseBodyEmitter?
+
+??? question "Reveal answer"
+
+    **Short Answer:** `StreamingResponseBody` streams raw binary/text bytes directly to the client's `OutputStream` on an application worker thread without buffering the full payload in heap memory; `ResponseBodyEmitter` streams serialized objects converted via `HttpMessageConverter` over time.
+
+    **Internal Mechanism:** When a controller returns `StreamingResponseBody`, Spring MVC initiates Servlet 3.0+ asynchronous processing, frees the container thread, and schedules a worker thread to write chunks directly to `response.getOutputStream()`, flushing per chunk.
+
+    **Common Mistake:** Buffering large reports, CSVs, or files into a `byte[]` or `ByteArrayOutputStream` before returning a `ResponseEntity`, risking JVM heap `OutOfMemoryError` on high-concurrency downloads. [Concepts](/topics/spring-mvc/concepts.md#5-asynchronous-request-processing)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/06-spring-mvc/src/examples/java/lab/springmvc/questions/Q24StreamingResponseBodyExample.java"
+        ```
+
+### 25. How do you validate and secure multipart file uploads against path traversal and file exhaustion?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Enforce strict file size limits (`spring.servlet.multipart.max-file-size`), validate MIME types via content inspection rather than raw client extension headers, and sanitize filenames by stripping directory traversal sequences (`..`, `/`, `\`).
+
+    **Internal Mechanism:** Attackers submit filenames like `../../etc/cron.d/malicious.jpg` (Zip Slip / Path Traversal) or multi-gigabyte multipart files (Denial of Service). Spring MVC parses multipart uploads via `StandardServletMultipartResolver`, requiring application validation on `MultipartFile` properties.
+
+    **Common Mistake:** Using `file.getOriginalFilename()` directly in file system paths without sanitization, allowing arbitrary file overwrites outside the target upload directory. [Concepts](/topics/spring-mvc/concepts.md#3-input-validation-jakarta-validation)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/06-spring-mvc/src/examples/java/lab/springmvc/questions/Q25MultipartUploadSecurityExample.java"
+        ```
+
 <!-- --8<-- [end:intermediate] -->
 
 <!-- --8<-- [start:senior] -->
@@ -259,6 +292,85 @@ Four levels of interview questions covering DispatcherServlet request lifecycles
         ```java
         --8<-- "modules/06-spring-mvc/src/examples/java/lab/springmvc/questions/Q21RestClientCustomizerInterceptorsExample.java"
         ```
+
+### 26. Why is ForwardedHeaderFilter essential when generating absolute URIs with UriComponentsBuilder behind reverse proxies?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Reverse proxies and API gateways terminate TLS and forward requests to internal instances over plain HTTP. `ForwardedHeaderFilter` adapts request host, scheme, and port from trusted `X-Forwarded-*` headers, preventing host header injection and broken `201 Created` Location URLs.
+
+    **Deep Explanation:** When a client sends a request to `https://api.example.com`, the reverse proxy forwards it to `http://internal-pod:8080`. Without `ForwardedHeaderFilter`, `ServletUriComponentsBuilder.fromCurrentRequest()` generates internal URLs like `http://internal-pod:8080/api/orders/42` in redirect or `Location` response headers, leaking internal topology and breaking HTTPS navigation.
+
+    **Internal Mechanism:** `ForwardedHeaderFilter` wraps the `HttpServletRequest` to override `getScheme()`, `getServerName()`, and `getServerPort()` from `Forwarded` or `X-Forwarded-Proto`/`X-Forwarded-Host` headers while discarding untrusted upstream proxy values.
+
+    **Example:** [URI building and security](/topics/spring-mvc/concepts.md#1-front-controller-pattern-dispatcherservlet).
+
+    **Common Mistake:** Enabling forwarded header reflection without restricting trusted proxy IP ranges (`server.forward-headers-strategy=framework`), allowing attackers to spoof `X-Forwarded-Host` for password reset link poisoning.
+
+    **Production Consideration:** Configure `server.forward-headers-strategy=framework` and validate that ingress load balancers sanitize untrusted client headers before forwarding.
+
+    **Follow-up Questions:**
+    - How do REST APIs construct hypermedia links and resource URIs securely? See [REST API: Hypermedia and URIs](/topics/rest-api/questions.md)
+    - What security headers prevent man-in-the-middle downgrade attacks? See [Spring Security: Security Headers](/topics/spring-security/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/06-spring-mvc/src/examples/java/lab/springmvc/questions/Q26ForwardedHeaderSecurityExample.java"
+        ```
+
+### 27. How do you implement a custom HttpMessageConverter for proprietary binary protocols in Spring MVC?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Extend `AbstractHttpMessageConverter<T>`, declare supported `MediaType`s, and implement `readInternal` / `writeInternal` to serialize domain objects to binary wire formats (e.g. Protocol Buffers, FlatBuffers).
+
+    **Deep Explanation:** High-throughput microservice communication often trades human-readable JSON for compact binary serialization. Spring MVC evaluates the request's `Content-Type` and `Accept` headers against registered `HttpMessageConverter` beans during `HandlerAdapter` invocation.
+
+    **Internal Mechanism:** `RequestResponseBodyMethodProcessor` iterates through converter candidates until `converter.canRead()` or `converter.canWrite()` matches the negotiated `MediaType`.
+
+    **Example:** [Message converters](/topics/spring-mvc/concepts.md#1-front-controller-pattern-dispatcherservlet).
+
+    **Common Mistake:** Adding custom converters to `configureMessageConverters` instead of `extendMessageConverters`, which inadvertently overwrites default Jackson and string converters.
+
+    **Production Consideration:** Support both JSON and binary media types using HTTP Content Negotiation to allow public clients to consume JSON while internal services utilize compact binary payloads.
+
+    **Follow-up Questions:**
+    - How does Spring MVC resolve media types using HTTP Content Negotiation? See [REST API: Content Negotiation](/topics/rest-api/questions.md#19-how-does-spring-mvc-internally-execute-http-content-negotiation)
+    - How do binary serialization protocols compare with JSON in CPU and memory profiling? See [Performance: Serialization Benchmarks](/topics/performance/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/06-spring-mvc/src/examples/java/lab/springmvc/questions/Q27ProtobufHttpMessageConverterExample.java"
+        ```
+
+### 28. How does Spring MVC handle asynchronous request timeouts with DeferredResult and custom error resolution?
+
+??? question "Reveal answer"
+
+    **Short Answer:** `DeferredResult.onTimeout()` defines callback logic when background worker processing exceeds a configured timeout deadline, allowing the controller to return a clean HTTP `504 Gateway Timeout` or `408 Request Timeout` instead of hanging client connections.
+
+    **Deep Explanation:** In asynchronous request processing, if a background worker hangs indefinitely (e.g. deadlocked or slow external dependency), the client connection remains open. Configuring a timeout on `DeferredResult` registers an OS timer. If the timer elapses before `setResult()` is called, Spring MVC triggers `onTimeout()` and dispatches an error response.
+
+    **Internal Mechanism:** `StandardServletAsyncWebRequest` tracks timeout handlers using the container's `AsyncContext.addListener()`.
+
+    **Example:** [Async processing](/topics/spring-mvc/concepts.md#5-asynchronous-request-processing).
+
+    **Common Mistake:** Forgetting to set a result or error result inside `onTimeout()`, causing the servlet container to throw an unhandled `AsyncRequestTimeoutException` that renders an unformatted 500 error.
+
+    **Production Consideration:** Always pair `onTimeout()` with background task cancellation (`future.cancel(true)`) to prevent zombie worker threads from consuming resources after the client has been sent a timeout response.
+
+    **Follow-up Questions:**
+    - How do CompletableFuture asynchronous pipelines handle stage timeouts with `orTimeout()`? See [Concurrency: CompletableFuture Composition](/topics/concurrency/questions.md#16-how-do-thenapply-thencompose-and-thencombine-differ-in-completablefuture)
+    - How do Resilience4j TimeLimiter and CircuitBreaker interact with asynchronous controllers? See [Resilience: Fault Tolerance Patterns](/topics/resilience/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/06-spring-mvc/src/examples/java/lab/springmvc/questions/Q28AsyncTimeoutHandlingExample.java"
+        ```
+
 <!-- --8<-- [end:senior] -->
 
 <!-- --8<-- [start:scenarios] -->
@@ -297,4 +409,57 @@ Four levels of interview questions covering DispatcherServlet request lifecycles
         ```java
         --8<-- "modules/06-spring-mvc/src/examples/java/lab/springmvc/questions/Q23CorsOriginCredentialVulnerabilityScenarioExample.java"
         ```
+
+### 29. Production Incident: Tomcat HTTP thread pool starvation caused by un-timed synchronous downstream calls
+
+??? question "Reveal answer"
+
+    **Short Answer:** A slow external payment or identity service caused request latency to spike from 50ms to 8s; within seconds, all 200 Tomcat worker threads became blocked waiting on socket reads, rejecting new incoming connections with 503/504 errors.
+
+    **Deep Explanation:** In standard synchronous servlet architectures, one Tomcat thread is pinned per HTTP connection. When an un-timed downstream call blocks, the thread cannot serve other users. When all `server.tomcat.threads.max` threads are parked on socket I/O, the TCP accept queue fills and the server drops traffic.
+
+    **Internal Mechanism:** Embedded Tomcat's `NioEndpoint` worker executor exhausts `maxThreads`, transitioning from active worker execution to thread pool starvation.
+
+    **Example:** [Tomcat worker exhaustion](/topics/spring-mvc/code-review.md).
+
+    **Common Mistake:** Sizing Tomcat `maxThreads` to 1000+, which increases context-switching overhead, kernel thread memory consumption, and exhausts database connection pools without fixing the root cause.
+
+    **Production Consideration:** Enforce strict connect (2s) and read (3s) timeouts on all `RestClient` instances; use Circuit Breakers (`Resilience4j`) with fallbacks; enable virtual threads in Spring Boot 3.2+ for I/O-bound endpoints.
+
+    **Follow-up Questions:**
+    - How do thread pool sizing parameters and queue limits behave under high concurrency? See [Concurrency: ThreadPoolExecutor Configuration](/topics/concurrency/questions.md#14-what-are-the-core-parameters-of-threadpoolexecutor-and-how-do-its-4-rejection-policies-work)
+    - How does the Bulkhead pattern isolate cascading thread pool exhaustion across microservices? See [Resilience: Bulkhead Pattern](/topics/resilience/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/06-spring-mvc/src/examples/java/lab/springmvc/questions/Q29TomcatWorkerExhaustionScenarioExample.java"
+        ```
+
+### 30. Production Incident: Jackson infinite recursion stack overflow error on bidirectional entity serialization
+
+??? question "Reveal answer"
+
+    **Short Answer:** Returning JPA entities directly from `@RestController` methods with bidirectional `@OneToMany` / `@ManyToOne` associations causes Jackson to serialize parent $\to$ child $\to$ parent $\to$ child infinitely until `StackOverflowError` or HTTP 500 error cascade.
+
+    **Deep Explanation:** Jackson's `ObjectMapper` inspects entity getter methods reflectively. When a parent `Department` has `getEmployees()` and child `Employee` has `getDepartment()`, Jackson traverses both getters recursively. This not only consumes CPU and crashes with `StackOverflowError`, but also triggers lazy loading of entire database graphs.
+
+    **Internal Mechanism:** Jackson's `BeanSerializer` invokes object property writers recursively without cycle detection unless explicitly configured.
+
+    **Example:** [Jackson circular references](/topics/spring-mvc/code-review.md).
+
+    **Common Mistake:** Adding `@JsonIgnore` haphazardly to entity fields, which couples database persistence entities to presentation serialization concerns.
+
+    **Production Consideration:** Never return JPA entities directly from REST controllers. Map entity state to immutable Java records (DTOs) with explicit response shapes, completely decoupling internal ORM relationships from external API contracts.
+
+    **Follow-up Questions:**
+    - How does the `@JsonManagedReference` and `@JsonBackReference` annotation pair break circular serialization? See [JPA / Hibernate: Entity Associations](/topics/jpa-hibernate/questions.md#11-what-is-the-difference-between-joincolumn-and-mappedby)
+    - How do DTO projections prevent Mass Assignment vulnerabilities in Spring Boot? See [REST API: Mass Assignment Prevention](/topics/rest-api/questions.md#16-what-is-mass-assignment-vulnerability-cwe-915-and-how-do-dtos-prevent-it)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/06-spring-mvc/src/examples/java/lab/springmvc/questions/Q30JsonCircularReferenceScenarioExample.java"
+        ```
+
 <!-- --8<-- [end:scenarios] -->
