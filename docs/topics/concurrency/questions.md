@@ -217,6 +217,39 @@ Four levels of interview questions covering memory consistency, synchronization 
         ```java
         --8<-- "modules/03-concurrency/src/examples/java/lab/concurrency/questions/Q16CompletableFutureCompositionExample.java"
         ```
+
+### 24. What is Structured Concurrency and how does it prevent thread leaks during subtask failure?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Structured concurrency treats concurrent tasks executed in different threads as a single atomic unit of work, ensuring subtask lifetimes are strictly bounded by lexical code blocks and cancelling orphan sibling tasks when any subtask fails.
+
+    **Internal Mechanism:** With structured task scopes (e.g. `StructuredTaskScope.ShutdownOnFailure`), failure of a child task automatically triggers cancellation (interruption) of all other concurrent children in the scope, ensuring no rogue background threads outlive the enclosing method.
+
+    **Common Mistake:** Spawning unbounded uncoordinated threads using `CompletableFuture.runAsync` or `executor.submit` without cancellation handles, leaving orphaned threads running and leaking database connections or CPU cycles after a request times out. [Concepts](/topics/concurrency/concepts.md#7-java-21-virtual-threads-structured-concurrency)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/03-concurrency/src/examples/java/lab/concurrency/questions/Q24StructuredConcurrencyExample.java"
+        ```
+
+### 25. How do VarHandle memory access modes (plain, opaque, acquire/release, volatile) differ?
+
+??? question "Reveal answer"
+
+    **Short Answer:** `VarHandle` offers fine-grained control over hardware memory barriers: `plain` has no memory fences; `opaque` guarantees coherence without ordering; `acquire/release` enforces one-way ordering; `volatile` enforces bidirectional global memory fences.
+
+    **Internal Mechanism:** `setRelease` prevents prior memory writes from being reordered after the store; `getAcquire` prevents subsequent memory reads from being reordered before the load. This allows lock-free message passing with significantly fewer CPU pipeline stalls than full volatile barriers.
+
+    **Common Mistake:** Using full volatile reads and writes when only unidirectional one-way release/acquire synchronization is required, incurring unnecessary memory bus invalidation on ARM/x86 architectures. [Concepts](/topics/concurrency/concepts.md#3-java-memory-model-jmm-happens-before)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/03-concurrency/src/examples/java/lab/concurrency/questions/Q25VarHandleAccessModesExample.java"
+        ```
+
 <!-- --8<-- [end:intermediate] -->
 
 <!-- --8<-- [start:senior] -->
@@ -289,6 +322,85 @@ Four levels of interview questions covering memory consistency, synchronization 
         ```java
         --8<-- "modules/03-concurrency/src/examples/java/lab/concurrency/questions/Q21SafePublicationPatternsExample.java"
         ```
+
+### 26. How do lock-free data structures prevent the ABA problem using versioned atomic references?
+
+??? question "Reveal answer"
+
+    **Short Answer:** The ABA problem occurs in CAS loops when a memory address changes from value A to B and back to A; CAS succeeds despite intervening structural modifications. It is resolved using monotonic versioning via `AtomicStampedReference`.
+
+    **Deep Explanation:** In a lock-free Treiber stack, if thread 1 reads top $A$ (pointing to $B$), pauses, and thread 2 pops $A$, pops $B$, and pushes $A$ back onto the stack, thread 1's CAS $(A \to B)$ succeeds. However, node $B$ was already unlinked and may contain recycled garbage, corrupting the stack structure.
+
+    **Internal Mechanism:** `AtomicStampedReference` pairs the memory reference with an integer stamp (version number); both must match atomically via CAS for the update to succeed.
+
+    **Example:** [Lock-free Treiber stack](/topics/concurrency/concepts.md#4-synchronization-lock-free-primitives).
+
+    **Common Mistake:** Assuming raw CAS on object identity (`AtomicReference`) is sufficient for dynamic linked-node data structures with object recycling.
+
+    **Production Consideration:** Use standard Java concurrent collections (`ConcurrentLinkedQueue`) which utilize garbage collection and unlinking markers, avoiding manual ABA management.
+
+    **Follow-up Questions:**
+    - How does optimistic concurrency control in JPA mirror ABA prevention through row versioning? See [JPA / Hibernate: Optimistic vs Pessimistic Locking](/topics/jpa-hibernate/questions.md#15-how-do-optimistic-locking-and-pessimistic-locking-differ-in-jpa)
+    - How does Java garbage collection eliminate pointer recycling ABA hazards compared to manual C/C++ memory management? See [JVM: GC Reachability](/topics/jvm/questions.md#7-what-is-a-garbage-collection-root-and-object-reachability)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/03-concurrency/src/examples/java/lab/concurrency/questions/Q26LockFreeStackAbaExample.java"
+        ```
+
+### 27. What causes virtual thread carrier pinning and why does ReentrantLock avoid it?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Virtual threads mount on OS platform carrier threads. Blocking inside a `synchronized` block/method or native call pins the virtual thread to its carrier, preventing other virtual threads from executing on that worker. `ReentrantLock` uses `LockSupport.park()`, allowing the virtual thread to cleanly unmount.
+
+    **Deep Explanation:** HotSpot's object monitor implementation (`synchronized`) ties thread state to native OS thread control blocks. When a virtual thread blocks on an intrinsic lock monitor, HotSpot cannot detach the continuation from the carrier stack. In contrast, `ReentrantLock` uses `AbstractQueuedSynchronizer` and Java-level virtual thread parking.
+
+    **Internal Mechanism:** When `LockSupport.park()` is called on a virtual thread, HotSpot captures its call frame into the heap continuation and unmounts it from the `ForkJoinPool` carrier thread, freeing the carrier to execute other virtual threads.
+
+    **Example:** [Virtual thread carrier pinning](/topics/concurrency/concepts.md#7-java-21-virtual-threads-structured-concurrency).
+
+    **Common Mistake:** Migrating an I/O-intensive legacy codebase to virtual threads without replacing `synchronized` database connection blocks or JDBC driver internal monitors.
+
+    **Production Consideration:** Detect carrier pinning by running with `-Djdk.tracePinnedThreads=full` and replace synchronized critical sections with `ReentrantLock` or `StampedLock`.
+
+    **Follow-up Questions:**
+    - How does prolonged carrier pinning exhaust HikariCP database connection pool availability? See [Spring Transactions: Connection Pool Starvation](/topics/spring-transactions/questions.md#3-compare-propagationrequired-and-propagationrequires_new-what-are-the-connection-pool-implications-of-each)
+    - How do database driver connection timeouts interact with virtual thread unmounting? See [Database / SQL: Connection Timeouts](/topics/database-sql/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/03-concurrency/src/examples/java/lab/concurrency/questions/Q27VirtualThreadCarrierPinningExample.java"
+        ```
+
+### 28. Why does LongAdder outperform AtomicLong under high write contention across multiple CPU sockets?
+
+??? question "Reveal answer"
+
+    **Short Answer:** `AtomicLong` forces all threads to CAS-update a single 64-bit memory address, causing CPU cache-line bouncing (false sharing). `LongAdder` maintains a dynamically scaled array of cache-line padded `Cell`s, distributing updates across distinct cores.
+
+    **Deep Explanation:** On multi-core SMP/NUMA systems, when a core modifies a shared volatile address, hardware MESI cache coherency protocols invalidate the L1/L2 cache lines of all other cores. With dozens of threads incrementing an `AtomicLong`, CPU cycles are wasted spinning and refetching cache lines over the bus.
+
+    **Internal Mechanism:** `LongAdder` extends `Striped64`. Each thread hashes its thread ID to a separate `Cell` slot. Under thread contention, the array resizes up to the number of CPU cores, ensuring zero false sharing.
+
+    **Example:** [LongAdder striped contention](/topics/concurrency/concepts.md#4-synchronization-lock-free-primitives).
+
+    **Common Mistake:** Using `LongAdder` when an atomic read-modify-write operation (like `compareAndSet` or exact instantaneous monotonic sequencing) is required; `LongAdder.sum()` returns an eventually consistent snapshot.
+
+    **Production Consideration:** Default to `LongAdder` for metrics, telemetry counters, and request rate tracking; reserve `AtomicLong` for sequence generators and lock-free state machines.
+
+    **Follow-up Questions:**
+    - How does hardware cache-line padding and `@Contended` prevent false sharing at the byte level? See [Core Java: False Sharing Padding](/topics/core-java/questions.md#8-high-frequency-counter-updates-on-multi-socket-servers-cause-heavy-cpu-pipeline-stalls-diagnose-and-redesign-it)
+    - What Micrometer counter implementations utilize LongAdder for thread-safe throughput tracking? See [Observability: Metrics and Counters](/topics/observability/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/03-concurrency/src/examples/java/lab/concurrency/questions/Q28LongAdderCellContentionExample.java"
+        ```
+
 <!-- --8<-- [end:senior] -->
 
 <!-- --8<-- [start:scenarios] -->
@@ -323,6 +435,59 @@ Four levels of interview questions covering memory consistency, synchronization 
         ```java
         --8<-- "modules/03-concurrency/src/examples/java/lab/concurrency/questions/Q23VirtualThreadPinningScenarioExample.java"
         ```
+
+### 29. Production incident: Single-pool task delegation causes thread pool starvation deadlock
+
+??? question "Reveal answer"
+
+    **Short Answer:** Submitting dependent subtasks to the same bounded thread pool that executes their parent tasks causes self-deadlock when parent tasks occupy all worker threads while waiting on queued subtasks.
+
+    **Deep Explanation:** When high concurrency arrives, parent tasks are scheduled onto all available worker threads in the pool. Each parent then submits child tasks into the pool's work queue and invokes `future.get()` or `future.join()`. Because all worker threads are parked waiting for results, no thread is free to dequeue and run the child tasks, creating a permanent deadlock with 0% CPU utilization.
+
+    **Internal Mechanism:** Circular wait condition on worker thread availability in a single shared bounded queue.
+
+    **Example:** [Thread pool self-deadlock](/topics/concurrency/code-review.md).
+
+    **Common Mistake:** Sizing the thread pool larger without isolating parent and child execution pipelines; higher thread counts merely delay deadlock until traffic spikes.
+
+    **Production Consideration:** Use separate, dedicated thread pools for orchestration tasks versus blocking subtasks, or use asynchronous non-blocking composition (`CompletableFuture.thenCompose`) which never blocks worker threads during subtask execution.
+
+    **Follow-up Questions:**
+    - How does Spring's `@Async` annotation configure separate task executors to avoid pool starvation? See [Spring Core: Asynchronous Execution](/topics/spring-core/questions.md)
+    - How does the Bulkhead pattern isolate downstream call dependencies from crashing upstream services? See [Resilience: Bulkhead Pattern](/topics/resilience/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/03-concurrency/src/examples/java/lab/concurrency/questions/Q29ThreadPoolStarvationDeadlockScenarioExample.java"
+        ```
+
+### 30. Production incident: MDC trace context and SecurityContext silently lost across CompletableFuture pipeline stages
+
+??? question "Reveal answer"
+
+    **Short Answer:** Asynchronous tasks dispatched to standard `ForkJoinPool` or `ExecutorService` run on worker threads that do not inherit `ThreadLocal` context from the request-handling thread, stripping correlation IDs and authentication tokens.
+
+    **Deep Explanation:** In Spring Boot / servlet architectures, request tracing (`MDC`) and authentication (`SecurityContextHolder`) are stored in `ThreadLocal` variables. When application logic calls `CompletableFuture.supplyAsync()` or switches execution pools, worker threads have empty `ThreadLocal` maps. Logs become un-correlated, and downstream secured method calls throw `AccessDeniedException` or operate as anonymous users.
+
+    **Internal Mechanism:** `ThreadLocal` storage is isolated per OS thread; standard task dispatch does not copy or propagate thread-local values across execution boundaries.
+
+    **Example:** [Async context propagation](/topics/concurrency/code-review.md).
+
+    **Common Mistake:** Using `InheritableThreadLocal`, which only copies context at thread *creation* time, failing completely with pooled reusable threads.
+
+    **Production Consideration:** Use Micrometer Observation / Context Propagation library, or wrap executor services with task decorators (`ContextPropagatingTaskDecorator`) that snapshot context on submission and restore/clean it up on worker threads.
+
+    **Follow-up Questions:**
+    - How does Spring Security configure `DelegatingSecurityContextAsyncTaskExecutor` for context handover? See [Spring Security: Asynchronous Context Propagation](/topics/spring-security/questions.md)
+    - How do OpenTelemetry and W3C TraceContext standards structure correlation identifiers across microservice boundaries? See [Observability: Distributed Tracing](/topics/observability/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/03-concurrency/src/examples/java/lab/concurrency/questions/Q30AsyncContextPropagationScenarioExample.java"
+        ```
+
 <!-- --8<-- [end:scenarios] -->
 
 ## Related
