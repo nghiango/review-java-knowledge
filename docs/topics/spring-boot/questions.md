@@ -235,6 +235,39 @@ Categorized interview questions with model answers and compilable code examples.
         ```java
         --8<-- "modules/05-spring-boot/src/examples/java/lab/springboot/questions/Q16VirtualThreadsConfigurationExample.java"
         ```
+
+### Q24: How does relaxed binding and JSR-380 validation work in `@ConfigurationProperties`?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Relaxed binding matches properties regardless of casing convention (kebab-case, camelCase, snake_case, UPPER_CASE), while `@Validated` triggers JSR-380 Bean Validation at startup to fail-fast on malformed configurations.
+
+    **Internal Mechanism:** The `ConfigurationPropertyName` engine canonicalizes property names into lowercase, dashed words, stripping special characters so environment variables (e.g. `ACME_PAYMENTSERVICE_MAXRETRYATTEMPTS`) bind seamlessly to Java fields (`maxRetryAttempts`).
+
+    **Common Mistake:** Omitting `@Validated` on `@ConfigurationProperties` classes, allowing invalid or missing configuration values to start successfully and fail unexpectedly during production request processing. [Concepts](/topics/spring-boot/concepts.md#4-type-safe-configuration-properties)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/05-spring-boot/src/examples/java/lab/springboot/questions/Q24RelaxedBindingAndValidationExample.java"
+        ```
+
+### Q25: How do `@AutoConfigureBefore` and `@AutoConfigureAfter` determine auto-configuration ordering?
+
+??? question "Reveal answer"
+
+    **Short Answer:** In Spring Boot 3, `@AutoConfiguration(before = ..., after = ...)` establishes explicit topological sort order among auto-configuration classes, guaranteeing that prerequisite beans are registered before dependent `@ConditionalOnMissingBean` checks evaluate.
+
+    **Internal Mechanism:** `AutoConfigurationSorter` parses `@AutoConfiguration`, `@AutoConfigureBefore`, and `@AutoConfigureAfter` annotations to build an adjacency graph and computes execution order, ensuring upstream infrastructure beans are registered before downstream starter configurations.
+
+    **Common Mistake:** Using `@Order` or `@Priority` on auto-configuration classes; standard Spring bean ordering annotations have no effect on auto-configuration sorting. [Concepts](/topics/spring-boot/concepts.md#2-auto-configuration-engine)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/05-spring-boot/src/examples/java/lab/springboot/questions/Q25AutoConfigOrderingRulesExample.java"
+        ```
+
 <!-- --8<-- [end:intermediate] -->
 
 ---
@@ -361,6 +394,85 @@ Categorized interview questions with model answers and compilable code examples.
     **Follow-up Questions:**
     - How do you register custom converters with the `Binder`?
     - How does `BindHandler.onSuccess` enable property audit logging?
+
+### Q26: What are the startup phases from `ApplicationStartingEvent` to `ApplicationReadyEvent`, and what are the production risks of lazy initialization?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Spring Boot fires events across distinct lifecycle phases: starting environment preparation, context creation, bean instantiation, command-line runners, and readiness probe activation. Lazy initialization accelerates startup but conceals configuration bugs and introduces runtime latency spikes.
+
+    **Deep Explanation:** Setting `spring.main.lazy-initialization=true` prevents beans from instantiating until first accessed. While this reduces microservice cold-start times in local development, production workloads suffer severe first-request tail latency (warmup penalty) and runtime `BeanCreationException`s that would otherwise fail-fast during deployment.
+
+    **Internal Mechanism:** `SpringApplicationRunListeners` broadcasts events: `ApplicationStartingEvent` $\to$ `ApplicationEnvironmentPreparedEvent` $\to$ `ApplicationContextInitializedEvent` $\to$ `ApplicationPreparedEvent` $\to$ `ApplicationStartedEvent` $\to$ `ApplicationReadyEvent`.
+
+    **Example:** [Application startup lifecycle](/topics/spring-boot/concepts.md#6-embedded-runtimes-graceful-shutdown).
+
+    **Common Mistake:** Enabling lazy initialization in production without pre-warming HTTP connection pools, ORM entity graphs, and JIT compiler caches.
+
+    **Production Consideration:** Keep lazy initialization disabled in production environments; use AppCDS and Spring AOT instead to reduce startup duration without sacrificing deployment-time validation.
+
+    **Follow-up Questions:**
+    - How does Micrometer track startup milestones using `StartupTimeline` metrics? See [Observability: Startup Telemetry](/topics/observability/questions.md)
+    - How does Spring TestContext Framework cache application contexts across integration tests? See [Testing: Context Caching](/topics/testing/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/05-spring-boot/src/examples/java/lab/springboot/questions/Q26StartupPhasesAndLazyInitExample.java"
+        ```
+
+### Q27: How do you harden Spring Boot Actuator with custom `HealthIndicator`s and `SanitizingFunction`?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Isolate management endpoints on an internal management port, expose only `health` and `info` publicly, register custom composite `HealthIndicator`s for downstream dependencies, and use `SanitizingFunction` to mask secrets.
+
+    **Deep Explanation:** Exposing Actuator endpoints publicly without network perimeter controls or role-based authentication risks sensitive data exfiltration (via `/actuator/env`) or remote denial-of-service (via `/actuator/heapdump`). Implementing `SanitizingFunction` guarantees custom secret keys (e.g. `api-key`, `private-token`) are redacted from `/actuator/env` and `/actuator/configprops`.
+
+    **Internal Mechanism:** Spring Boot iterates through registered `SanitizingFunction` beans in `EndpointMediaTypes` and sanitizes property pairs before rendering JSON response trees.
+
+    **Example:** [Actuator hardening](/topics/spring-boot/concepts.md#5-actuator-production-telemetry).
+
+    **Common Mistake:** Relying solely on default regex keys (`*password*`, `*secret*`), leaving proprietary credentials unmasked.
+
+    **Production Consideration:** Separate management traffic using `management.server.port=9090`, configure Kubernetes readiness/liveness health groups (`management.endpoint.health.group.readiness.include=...`), and require `ROLE_ACTUATOR_ADMIN` on management endpoints.
+
+    **Follow-up Questions:**
+    - How does Spring Security configure authorization rules for Actuator request matchers? See [Spring Security: Actuator Authorization](/topics/spring-security/questions.md)
+    - How do Kubernetes readiness probes differ from liveness probes during traffic routing? See [Observability: Health Probes](/topics/observability/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/05-spring-boot/src/examples/java/lab/springboot/questions/Q27ActuatorHardeningAndHealthExample.java"
+        ```
+
+### Q28: How does `spring-context-indexer` reduce classpath scanning overhead in large microservice deployments?
+
+??? question "Reveal answer"
+
+    **Short Answer:** `spring-context-indexer` processes annotations at compile time and writes `META-INF/spring.components`. At startup, Spring loads this static candidate list directly, eliminating expensive runtime bytecode scanning across large JAR libraries.
+
+    **Deep Explanation:** In large microservices or multi-module monoliths with hundreds of dependencies, standard `@ComponentScan` uses ASM `ClassReader` to inspect every `.class` file on the classpath during bootstrap. This consumes significant CPU and I/O cycles, inflating container startup latency.
+
+    **Internal Mechanism:** When `CandidateComponentsIndexLoader.loadIndex()` discovers `META-INF/spring.components`, `ClassPathScanningCandidateComponentProvider` switches from filesystem directory traversal to direct candidate index lookup.
+
+    **Example:** [Context indexing optimization](/topics/spring-boot/concepts.md#1-opinionated-defaults-starters).
+
+    **Common Mistake:** Enabling classpath scanning with broad wildcard base packages (`com.*`), which bypasses index optimization and scans every dependency.
+
+    **Production Consideration:** Include `org.springframework:spring-context-indexer` as an annotation processor in all internal modules to optimize container launch times in Kubernetes.
+
+    **Follow-up Questions:**
+    - How does modular monolith architecture enforce explicit package sharing boundaries? See [Architecture: Modular Monoliths](/topics/architecture/questions.md)
+    - How does Spring Core discover and merge `BeanDefinition` metadata? See [Spring Core: Bean Discovery](/topics/spring-core/questions.md#21-how-does-defaultlistablebeanfactory-register-and-merge-rootbeandefinition-instances)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/05-spring-boot/src/examples/java/lab/springboot/questions/Q28ContextIndexingOptimizationExample.java"
+        ```
+
 <!-- --8<-- [end:senior] -->
 
 ---
@@ -415,4 +527,57 @@ Categorized interview questions with model answers and compilable code examples.
     **Follow-up Questions:**
     - Why is a `preStop` sleep hook often recommended in Kubernetes pod specs alongside graceful shutdown?
     - How does `SmartLifecycle` phase ordering coordinate database pool shutdown after task executor completion?
+
+### Q29: Production Incident: Container rolling deployment drops in-flight HTTP requests despite Kubernetes graceful termination
+
+??? question "Reveal answer"
+
+    **Short Answer:** Although `server.shutdown=graceful` was set, the Kubernetes pod lifecycle sent `SIGTERM` simultaneously with endpoint deregistration; upstream ingress routers forwarded requests to the terminating pod before iptables rules propagated. Fix with a container `preStop` sleep hook.
+
+    **Deep Explanation:** In Kubernetes, when a pod enters `Terminating` state, two parallel asynchronous actions occur: (1) kubelet sends `SIGTERM` to the container process, and (2) endpoints controller removes the pod IP from the Service endpoint list and kube-proxy updates iptables/ipvs rules. Because network rule propagation takes several seconds, ingress routers continue routing incoming traffic to the pod after Spring Boot has stopped accepting new connections.
+
+    **Internal Mechanism:** The embedded web server immediately rejects new SYN packets with TCP RST while draining in-flight requests, causing client-facing 502 Bad Gateway errors.
+
+    **Example:** [Kubernetes graceful shutdown](/topics/spring-boot/code-review.md).
+
+    **Common Mistake:** Relying solely on `server.shutdown=graceful` without a `preStop: exec: command: ["sleep", "10"]` hook in the container spec.
+
+    **Production Consideration:** Set `terminationGracePeriodSeconds: 45` in Kubernetes, add a `sleep 10` preStop hook, and configure `spring.lifecycle.timeout-per-shutdown-phase: 30s` to ensure clean connection draining without premature SIGKILL.
+
+    **Follow-up Questions:**
+    - How do Docker container lifecycle signals (SIGTERM vs SIGKILL) translate to JVM shutdown hooks? See [Docker: Container Lifecycle](/topics/docker/questions.md)
+    - How does Spring MVC handle client connection resets and abort signals? See [Spring MVC: Request Processing](/topics/spring-mvc/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/05-spring-boot/src/examples/java/lab/springboot/questions/Q29KubernetesGracefulShutdownScenarioExample.java"
+        ```
+
+### Q30: Production Incident: Dynamic configuration refresh with `@RefreshScope` produces stale state and memory leaks in asynchronous tasks
+
+??? question "Reveal answer"
+
+    **Short Answer:** Asynchronous tasks or long-lived background threads cached direct target instance references instead of calling through the `@RefreshScope` proxy, reading obsolete configuration values and retaining garbage-collected bean instances.
+
+    **Deep Explanation:** Beans marked with `@RefreshScope` are lazily instantiated proxies backed by a target source cache in `RefreshScope`. When `/actuator/refresh` triggers, `ContextRefresher` clears the cache so subsequent method calls instantiate fresh beans with new environment properties. If an async task or thread-pool worker stores the inner target instance in a field or `ThreadLocal`, it bypasses the proxy and holds obsolete configuration permanently.
+
+    **Internal Mechanism:** `RefreshScope.refreshAll()` broadcasts `RefreshScopeRefreshedEvent` and destroys cached bean instances in the scope's internal cache map.
+
+    **Example:** [Dynamic refresh scope](/topics/spring-boot/code-review.md).
+
+    **Common Mistake:** Injecting `@RefreshScope` beans into non-refreshable singleton beans and copying their configuration fields into local state during startup.
+
+    **Production Consideration:** Invoke methods on the proxy directly or re-read properties dynamically from `@ConfigurationProperties` beans without storing local copies; audit memory with heap dumps to detect uncollected legacy scope instances.
+
+    **Follow-up Questions:**
+    - How does Spring Cloud Config server distribute configuration change notifications via Spring Cloud Bus? See [Spring Cloud: Centralized Configuration](/topics/spring-cloud/questions.md)
+    - How does volatile memory visibility guarantee thread-safe dynamic configuration updates? See [Concurrency: Safe Publication](/topics/concurrency/questions.md#21-what-constitutes-safe-publication-of-shared-objects-in-the-java-memory-model)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/05-spring-boot/src/examples/java/lab/springboot/questions/Q30RefreshScopeDynamicConfigScenarioExample.java"
+        ```
+
 <!-- --8<-- [end:scenarios] -->
