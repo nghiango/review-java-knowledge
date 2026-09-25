@@ -26,6 +26,7 @@ public final class Q24ClassDataSharingExample {
         }
 
         // Reduced startup time: ~30-50% faster class loading
-        // Reduced memory footprint: shared read-only memory pages shared across multiple JVM processes
+        // Reduced memory footprint: shared read-only memory pages shared across multiple JVM
+        // processes
     }
 }

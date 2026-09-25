@@ -1,12 +1,11 @@
 package lab.corejava.questions;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 @SuppressWarnings("unused")
 public final class Q28FalseSharingPaddingExample {
     private Q28FalseSharingPaddingExample() {}
 
-    // False sharing hazard: core1 writing to valueA invalidates core2's L1/L2 cache line holding valueB
+    // False sharing hazard: core1 writing to valueA invalidates core2's L1/L2 cache line holding
+    // valueB
     public static class UnpaddedValues {
         public volatile long valueA = 0L;
         public volatile long valueB = 0L; // Sits on the same 64-byte L1 CPU cache line

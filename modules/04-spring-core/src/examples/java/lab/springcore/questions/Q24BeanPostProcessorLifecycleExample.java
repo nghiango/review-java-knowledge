@@ -25,7 +25,8 @@ public final class Q24BeanPostProcessorLifecycleExample {
     // 3. postProcessAfterInitialization (e.g. AOP proxy creation, transactional proxy wrapping)
     public static class CustomAuditingPostProcessor implements BeanPostProcessor {
         @Override
-        public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+        public Object postProcessBeforeInitialization(Object bean, String beanName)
+                throws BeansException {
             if (bean instanceof SampleService s) {
                 s.state = s.state + " -> before-init";
             }
@@ -33,7 +34,8 @@ public final class Q24BeanPostProcessorLifecycleExample {
         }
 
         @Override
-        public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        public Object postProcessAfterInitialization(Object bean, String beanName)
+                throws BeansException {
             if (bean instanceof SampleService s) {
                 s.state = s.state + " -> after-init";
             }

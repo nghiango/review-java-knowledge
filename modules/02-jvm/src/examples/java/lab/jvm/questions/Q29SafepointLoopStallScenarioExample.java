@@ -24,6 +24,7 @@ public final class Q29SafepointLoopStallScenarioExample {
 
         // Java 10+ HotSpot feature: Loop Strip Mining (-XX:+UseCountedLoopSafepoints)
         // Splits the loop into an inner vectorizable loop and an outer loop with safepoints,
-        // eliminating "Time To Safepoint" (TTSP) p99 latency stalls while maintaining peak throughput.
+        // eliminating "Time To Safepoint" (TTSP) p99 latency stalls while maintaining peak
+        // throughput.
     }
 }

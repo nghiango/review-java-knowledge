@@ -35,7 +35,8 @@ public final class Q26JitInliningDevirtualizationExample {
         // Bimorphic call site (2 receiver types):
         // C2 generates conditional branch (if instanceof JsonFormatter else XmlFormatter).
         // Megamorphic call site (>= 3 receiver types):
-        // Inline cache bails out; reverts to full vtable lookup via invokevirtual, causing inlining failure!
+        // Inline cache bails out; reverts to full vtable lookup via invokevirtual, causing inlining
+        // failure!
         return formatter.format(text);
     }
 

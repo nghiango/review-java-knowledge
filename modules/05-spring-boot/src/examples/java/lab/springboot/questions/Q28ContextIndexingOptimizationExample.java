@@ -1,6 +1,5 @@
 package lab.springboot.questions;
 
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 @SuppressWarnings("unused")
@@ -19,7 +18,8 @@ public final class Q28ContextIndexingOptimizationExample {
 
     public static void main(String[] args) {
         // Standard classpath scanning in large monolithic JARs parses thousands of .class files
-        // using ASM ClassReader during startup, consuming CPU cycles and inflating container launch time.
+        // using ASM ClassReader during startup, consuming CPU cycles and inflating container launch
+        // time.
         // With CandidateComponentsIndex active:
         // ClassPathScanningCandidateComponentProvider bypasses filesystem walking and loads
         // the pre-indexed bean candidate list in a single direct file read!

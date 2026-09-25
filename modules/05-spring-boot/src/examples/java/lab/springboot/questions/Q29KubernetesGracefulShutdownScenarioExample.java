@@ -21,16 +21,23 @@ public final class Q29KubernetesGracefulShutdownScenarioExample {
             activeRequestsDrained.set(true);
         }
 
-        public boolean isAcceptingTraffic() { return acceptingTraffic.get(); }
-        public boolean isDrained() { return activeRequestsDrained.get(); }
+        public boolean isAcceptingTraffic() {
+            return acceptingTraffic.get();
+        }
+
+        public boolean isDrained() {
+            return activeRequestsDrained.get();
+        }
     }
 
     public static void main(String[] args) {
         GracefulShutdownTracker tracker = new GracefulShutdownTracker();
         tracker.initiateShutdown();
 
-        // In Kubernetes, a preStop hook (e.g. `sleep 10`) is essential to allow kube-proxy and ingress
-        // controllers to deregister the pod endpoint before the container begins shutting down its server.
+        // In Kubernetes, a preStop hook (e.g. `sleep 10`) is essential to allow kube-proxy and
+        // ingress
+        // controllers to deregister the pod endpoint before the container begins shutting down its
+        // server.
         boolean accepting = tracker.isAcceptingTraffic(); // false
         boolean drained = tracker.isDrained(); // true
     }

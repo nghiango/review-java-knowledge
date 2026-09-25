@@ -30,9 +30,12 @@ public final class Q27VirtualThreadCarrierPinningExample {
     }
 
     public static void main(String[] args) throws Exception {
-        Thread vt = Thread.ofVirtual().start(() -> {
-            nonPinnedOperation();
-        });
+        Thread vt =
+                Thread.ofVirtual()
+                        .start(
+                                () -> {
+                                    nonPinnedOperation();
+                                });
         vt.join();
         boolean finished = !vt.isAlive(); // true
     }

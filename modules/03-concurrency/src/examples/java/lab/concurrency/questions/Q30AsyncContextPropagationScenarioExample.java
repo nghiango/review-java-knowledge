@@ -11,7 +11,8 @@ public final class Q30AsyncContextPropagationScenarioExample {
 
     private static final ThreadLocal<String> TRACE_ID = new ThreadLocal<>();
 
-    // Propagating wrapper that captures caller thread context and restores it on the executor worker
+    // Propagating wrapper that captures caller thread context and restores it on the executor
+    // worker
     public static <T> Supplier<T> withContext(Supplier<T> supplier) {
         String captured = TRACE_ID.get();
         return () -> {
@@ -34,15 +35,19 @@ public final class Q30AsyncContextPropagationScenarioExample {
         TRACE_ID.set("trace-abc-123");
 
         // 1. Unwrapped stage: ThreadLocal is NOT propagated; returns null!
-        CompletableFuture<String> stageWithoutContext = CompletableFuture.supplyAsync(() -> {
-            return TRACE_ID.get(); // null (executed on pool worker thread without context!)
-        }, pool);
+        CompletableFuture<String> stageWithoutContext =
+                CompletableFuture.supplyAsync(
+                        () -> {
+                            return TRACE_ID.get(); // null (executed on pool worker thread without
+                            // context!)
+                        },
+                        pool);
 
         // 2. Wrapped stage: captures and restores context across thread boundary
-        CompletableFuture<String> stageWithContext = CompletableFuture.supplyAsync(
-            withContext(() -> TRACE_ID.get()), // "trace-abc-123"
-            pool
-        );
+        CompletableFuture<String> stageWithContext =
+                CompletableFuture.supplyAsync(
+                        withContext(() -> TRACE_ID.get()), // "trace-abc-123"
+                        pool);
 
         String unwrappedVal = stageWithoutContext.get(); // null
         String wrappedVal = stageWithContext.get(); // "trace-abc-123"

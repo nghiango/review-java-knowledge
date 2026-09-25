@@ -1,7 +1,6 @@
 package lab.springboot.questions;
 
 import org.springframework.boot.availability.AvailabilityChangeEvent;
-import org.springframework.boot.availability.LivenessState;
 import org.springframework.boot.availability.ReadinessState;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -28,7 +27,9 @@ public final class Q26StartupPhasesAndLazyInitExample {
             }
         }
 
-        public boolean isReady() { return isReady; }
+        public boolean isReady() {
+            return isReady;
+        }
     }
 
     public static void main(String[] args) {

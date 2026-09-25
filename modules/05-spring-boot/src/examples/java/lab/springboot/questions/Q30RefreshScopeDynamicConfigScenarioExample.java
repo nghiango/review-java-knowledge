@@ -27,7 +27,9 @@ public final class Q30RefreshScopeDynamicConfigScenarioExample {
             this.discountRate = newRate;
         }
 
-        public double getDiscountRate() { return discountRate; }
+        public double getDiscountRate() {
+            return discountRate;
+        }
     }
 
     public static void main(String[] args) {
@@ -38,7 +40,9 @@ public final class Q30RefreshScopeDynamicConfigScenarioExample {
         service.updateDiscount(0.20);
         double price2 = service.calculatePrice(100.0); // 80.0
 
-        // Pitfall: If an asynchronous or thread-pool task retains a reference to the inner target bean
-        // rather than invoking through the RefreshScope proxy, it continues reading stale configuration!
+        // Pitfall: If an asynchronous or thread-pool task retains a reference to the inner target
+        // bean
+        // rather than invoking through the RefreshScope proxy, it continues reading stale
+        // configuration!
     }
 }

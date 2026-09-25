@@ -1,8 +1,5 @@
 package lab.springcore.questions;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import org.springframework.aop.framework.ProxyFactory;
 
 @SuppressWarnings({"unused", "ReferenceEquality"})
@@ -28,7 +25,8 @@ public final class Q27ProxyMechanismsAndBypassingExample {
     public static void main(String[] args) {
         SimpleCalculator target = new SimpleCalculator();
 
-        // Spring ProxyFactory defaults to CGLIB for classes, JDK Dynamic Proxy when interfaces are configured
+        // Spring ProxyFactory defaults to CGLIB for classes, JDK Dynamic Proxy when interfaces are
+        // configured
         ProxyFactory factory = new ProxyFactory(target);
         factory.addInterface(Calculator.class);
 

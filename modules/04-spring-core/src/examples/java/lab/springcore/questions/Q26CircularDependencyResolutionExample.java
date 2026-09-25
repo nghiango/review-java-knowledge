@@ -10,8 +10,10 @@ public final class Q26CircularDependencyResolutionExample {
 
     // Spring's 3-level singleton cache in DefaultSingletonBeanRegistry:
     // 1st level: singletonObjects - fully initialized beans (Map<String, Object>)
-    // 2nd level: earlySingletonObjects - instantiated beans exposed early, before properties set (Map<String, Object>)
-    // 3rd level: singletonFactories - factories capable of creating early references/proxies (Map<String, ObjectFactory<?>>)
+    // 2nd level: earlySingletonObjects - instantiated beans exposed early, before properties set
+    // (Map<String, Object>)
+    // 3rd level: singletonFactories - factories capable of creating early references/proxies
+    // (Map<String, ObjectFactory<?>>)
     public static class ThreeLevelCacheSimulation {
         private final Map<String, Object> singletonObjects = new HashMap<>();
         private final Map<String, Object> earlySingletonObjects = new HashMap<>();
@@ -50,9 +52,11 @@ public final class Q26CircularDependencyResolutionExample {
         // Bean A is instantiated with empty constructor, placed in 3rd level factory cache:
         cache.addSingletonFactory("serviceA", () -> "early-instance-A");
 
-        // Bean B injecting Bean A resolves early reference from 3rd level cache, promoting it to 2nd level:
+        // Bean B injecting Bean A resolves early reference from 3rd level cache, promoting it to
+        // 2nd level:
         Object earlyA = cache.getSingleton("serviceA", true); // "early-instance-A"
 
-        // Constructor injection fails on cycles because instance creation itself requires the dependency!
+        // Constructor injection fails on cycles because instance creation itself requires the
+        // dependency!
     }
 }

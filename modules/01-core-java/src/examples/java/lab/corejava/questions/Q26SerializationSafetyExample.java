@@ -46,9 +46,11 @@ public final class Q26SerializationSafetyExample {
             oos.writeObject(account);
         }
 
-        try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()))) {
+        try (ObjectInputStream ois =
+                new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()))) {
             SafeAccount restored = (SafeAccount) ois.readObject();
-            int bal = restored.balance(); // 500 (canonical constructor validated fields upon deserialization)
+            int bal = restored.balance(); // 500 (canonical constructor validated fields upon
+            // deserialization)
         }
     }
 }

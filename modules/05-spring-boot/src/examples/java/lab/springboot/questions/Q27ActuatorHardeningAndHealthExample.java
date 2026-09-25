@@ -17,9 +17,9 @@ public final class Q27ActuatorHardeningAndHealthExample {
             boolean gatewayReachable = true;
             if (gatewayReachable) {
                 return Health.up()
-                    .withDetail("gateway", "payment-internal-service")
-                    .withDetail("latencyMs", 12)
-                    .build();
+                        .withDetail("gateway", "payment-internal-service")
+                        .withDetail("latencyMs", 12)
+                        .build();
             }
             return Health.down().withDetail("reason", "Gateway timeout").build();
         }
@@ -43,7 +43,8 @@ public final class Q27ActuatorHardeningAndHealthExample {
         String code = status.getStatus().getCode(); // "UP"
 
         SanitizingFunction sanitizer = new CustomSecretSanitizer();
-        SanitizableData secretData = new SanitizableData(null, "payment.apiKey", "super-secret-123");
+        SanitizableData secretData =
+                new SanitizableData(null, "payment.apiKey", "super-secret-123");
         SanitizableData sanitized = sanitizer.apply(secretData);
         Object sanitizedValue = sanitized.getValue(); // "******"
     }

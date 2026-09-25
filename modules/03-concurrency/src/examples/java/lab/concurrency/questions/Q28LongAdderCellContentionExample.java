@@ -9,7 +9,8 @@ public final class Q28LongAdderCellContentionExample {
 
     public static void main(String[] args) {
         // AtomicLong: single memory location updated via compare-and-swap (CAS).
-        // Under 64+ concurrent threads, CAS retries spin heavily, burning CPU cycles in cache-line ping-pong.
+        // Under 64+ concurrent threads, CAS retries spin heavily, burning CPU cycles in cache-line
+        // ping-pong.
         AtomicLong atomicCounter = new AtomicLong(0L);
         atomicCounter.incrementAndGet(); // CAS loop updating single variable
 

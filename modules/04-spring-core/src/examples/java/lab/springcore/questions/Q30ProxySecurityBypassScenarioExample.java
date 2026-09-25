@@ -21,7 +21,8 @@ public final class Q30ProxySecurityBypassScenarioExample {
         // Public entrypoint without explicit security annotation
         public void processOrder(Long orderId) {
             // Self-invocation bug: calls executeDirectRefund() directly via 'this'!
-            // 'this' refers to the raw unproxied target instance, completely bypassing Spring AOP proxy interceptor!
+            // 'this' refers to the raw unproxied target instance, completely bypassing Spring AOP
+            // proxy interceptor!
             executeDirectRefund(orderId);
         }
 
@@ -41,6 +42,7 @@ public final class Q30ProxySecurityBypassScenarioExample {
     public static void main(String[] args) {
         SensitiveOrderService service = new SensitiveOrderService();
         boolean initialized = service != null; // true
-        // Self-invocation bypasses all Spring proxy interceptors (@Transactional, @Secured, @Cacheable)
+        // Self-invocation bypasses all Spring proxy interceptors (@Transactional, @Secured,
+        // @Cacheable)
     }
 }

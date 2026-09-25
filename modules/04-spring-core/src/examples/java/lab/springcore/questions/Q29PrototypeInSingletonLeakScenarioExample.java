@@ -10,13 +10,19 @@ public final class Q29PrototypeInSingletonLeakScenarioExample {
     public static class RequestContextHolder {
         private String userId;
 
-        public void setUserId(String userId) { this.userId = userId; }
-        public String getUserId() { return userId; }
+        public void setUserId(String userId) {
+            this.userId = userId;
+        }
+
+        public String getUserId() {
+            return userId;
+        }
     }
 
     // Problematic Singleton: Direct field injection caches a SINGLE prototype instance forever!
     public static class FlawedSingletonService {
-        private final RequestContextHolder holder; // Sits in singleton memory, shared across all threads!
+        private final RequestContextHolder
+                holder; // Sits in singleton memory, shared across all threads!
 
         public FlawedSingletonService(RequestContextHolder holder) {
             this.holder = holder;
@@ -36,23 +42,36 @@ public final class Q29PrototypeInSingletonLeakScenarioExample {
         }
 
         public String handleRequest(String user) {
-            RequestContextHolder fresh = holderProvider.getObject(); // Fresh instance created each call
+            RequestContextHolder fresh =
+                    holderProvider.getObject(); // Fresh instance created each call
             fresh.setUserId(user);
             return fresh.getUserId();
         }
     }
 
     public static void main(String[] args) {
-        ObjectProvider<RequestContextHolder> mockProvider = new ObjectProvider<>() {
-            @Override
-            public RequestContextHolder getObject(Object... args) { return new RequestContextHolder(); }
-            @Override
-            public RequestContextHolder getIfAvailable() { return new RequestContextHolder(); }
-            @Override
-            public RequestContextHolder getIfUnique() { return new RequestContextHolder(); }
-            @Override
-            public RequestContextHolder getObject() { return new RequestContextHolder(); }
-        };
+        ObjectProvider<RequestContextHolder> mockProvider =
+                new ObjectProvider<>() {
+                    @Override
+                    public RequestContextHolder getObject(Object... args) {
+                        return new RequestContextHolder();
+                    }
+
+                    @Override
+                    public RequestContextHolder getIfAvailable() {
+                        return new RequestContextHolder();
+                    }
+
+                    @Override
+                    public RequestContextHolder getIfUnique() {
+                        return new RequestContextHolder();
+                    }
+
+                    @Override
+                    public RequestContextHolder getObject() {
+                        return new RequestContextHolder();
+                    }
+                };
 
         SafeSingletonService safeService = new SafeSingletonService(mockProvider);
         String user = safeService.handleRequest("user-99"); // "user-99"

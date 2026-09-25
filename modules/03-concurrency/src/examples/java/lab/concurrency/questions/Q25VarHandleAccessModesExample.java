@@ -15,7 +15,8 @@ public final class Q25VarHandleAccessModesExample {
 
     static {
         try {
-            COUNT_HANDLE = MethodHandles.lookup().findVarHandle(CounterHolder.class, "count", int.class);
+            COUNT_HANDLE =
+                    MethodHandles.lookup().findVarHandle(CounterHolder.class, "count", int.class);
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
         }
