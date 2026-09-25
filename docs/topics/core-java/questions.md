@@ -242,6 +242,38 @@
         --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q16SuppressedExceptionsExample.java"
         ```
 
+### 9. How do pattern matching for switch and record patterns enhance type safety and exhaustiveness?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Pattern matching for switch eliminates unsafe explicit casting and enables compile-time exhaustiveness checking over sealed hierarchies, while record patterns deconstruct components directly with optional `when` guards.
+
+    **Internal Mechanism:** The compiler verifies exhaustiveness over sealed type hierarchies without requiring an unnecessary `default` clause, and translates pattern matching via `invokedynamic` calling `TypeSwitch` bootstrap methods.
+
+    **Common Mistake:** Adding an explicit `default` branch to a sealed switch statement, which silently disables compiler warnings when a new permitted subtype is added to the hierarchy. [Concepts](/topics/core-java/concepts.md#immutability-and-java-21-data-types)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q24PatternMatchingSwitchExample.java"
+        ```
+
+### 10. What contract do Sequenced Collections introduce and how do their reverse-order views work?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Sequenced collections (`SequencedCollection`, `SequencedSet`, `SequencedMap`) provide a uniform contract for collections with defined encounter order (`getFirst()`, `getLast()`, `addFirst()`, `addLast()`) and lightweight `reversed()` views.
+
+    **Internal Mechanism:** The `reversed()` method returns an un-copied reverse-ordered view backed directly by the original collection; mutations through either view reflect immediately in the other.
+
+    **Common Mistake:** Manually creating reversed copies of lists or deques using iteration or `Collections.reverse()`, which incurs $O(N)$ allocation and breaks synchronization with the underlying source. [Concepts](/topics/core-java/concepts.md#collections)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q25SequencedCollectionsExample.java"
+        ```
+
 <!-- --8<-- [end:intermediate] -->
 
 <!-- --8<-- [start:senior] -->
@@ -367,6 +399,84 @@
         --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q21ResourceSafetyAndAtomicityExample.java"
         ```
 
+### 6. Legacy Java native serialization introduces remote code execution and invariant bypass risks. How do you safely eliminate it?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Standard `java.io.Serializable` bypasses class constructors during deserialization, creating security vulnerabilities and invariant violations. Migrate to records or explicit formats (JSON, Protobuf).
+
+    **Deep Explanation:** When an object is deserialized via `ObjectInputStream`, the JVM instantiates it using bytecode reflection without calling its constructor or validation logic. Malicious byte streams can instantiate corrupt domain states or trigger gadget chains leading to arbitrary code execution.
+
+    **Internal Mechanism:** Records deserialize through their canonical constructor, guaranteeing that constructor preconditions, range checks, and defensive copies cannot be bypassed during deserialization.
+
+    **Example:** [Record immutability](/topics/core-java/concepts.md#immutability-and-java-21-data-types).
+
+    **Common Mistake:** Relying on `readObject()` to patch up broken invariants after unconstrained field assignment has already occurred.
+
+    **Production Consideration:** Configure JVM serialization filters (`jdk.serialFilter`) to reject unvetted class names if legacy RMI or serialization must temporarily remain.
+
+    **Follow-up Questions:**
+    - How does class loading and bytecode verification interact with deserialization gadgets? See [JVM: Class Loading Lifecycle](/topics/jvm/questions.md#1-what-are-the-phases-of-the-class-loading-and-linking-lifecycle)
+    - How does Spring Security protect against serialization vulnerabilities in session tokens? See [Spring Security: Session Management](/topics/spring-security/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q26SerializationSafetyExample.java"
+        ```
+
+### 7. A plugin system encounters ClassCastException and Metaspace leaks during dynamic reloading. Diagnose and redesign it.
+
+??? question "Reveal answer"
+
+    **Short Answer:** Class identity is defined by the pair `(FullyQualifiedName, DefiningClassLoader)`. Retaining references to loaded classes or their ClassLoader prevents Metaspace garbage collection and causes ClassCastException upon cast.
+
+    **Deep Explanation:** A class is only eligible for unloading when its defining `ClassLoader` is unreachable. Static fields, `ThreadLocal`s, or callbacks registered into parent application loaders prevent the child loader from being collected, pinning its entire Metaspace allocation.
+
+    **Internal Mechanism:** The JVM enforces that types loaded by separate `ClassLoader` instances are completely disjoint in the type system, even if compiled from byte-for-byte identical source code.
+
+    **Example:** [ClassLoader isolation](/topics/core-java/concepts.md).
+
+    **Common Mistake:** Closing a `URLClassLoader` without dereferencing all instances, threads, and thread-local variables created by that loader.
+
+    **Production Consideration:** Isolate plugin communication through shared interfaces loaded strictly by the parent/bootstrap ClassLoader, and mandate explicit lifecycle teardown.
+
+    **Follow-up Questions:**
+    - What JVM flags track Metaspace memory allocations and class unloading events? See [JVM: Metaspace Internals](/topics/jvm/questions.md#4-what-is-metaspace-and-how-does-it-differ-from-permgen)
+    - How does Spring Framework manage bean definitions dynamically across application contexts? See [Spring Core: IoC Container](/topics/spring-core/questions.md#1-what-is-inversion-of-control-ioc-and-how-does-dependency-injection-di-relate-to-it)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q27ClassLoaderIsolationExample.java"
+        ```
+
+### 8. High-frequency counter updates on multi-socket servers cause heavy CPU pipeline stalls. Diagnose and redesign it.
+
+??? question "Reveal answer"
+
+    **Short Answer:** Atomic variables (`AtomicLong`) or shared volatile fields suffer from CPU cache-line bouncing (false sharing) under heavy multi-threaded write contention; redesign using striped cell accumulators (`LongAdder`).
+
+    **Deep Explanation:** Multi-core processors fetch memory in 64-byte cache lines. When multiple CPU cores repeatedly modify variables on the same or adjacent addresses, hardware cache coherency protocols (MESI) invalidate the entire cache line across all cores, saturating the interconnect bus.
+
+    **Internal Mechanism:** `LongAdder` dynamically scales an internal array of padded `Cell`s (annotated with `@Contended`) based on thread contention, so each worker thread writes to an independent cache line.
+
+    **Example:** [Concurrent data structures](/topics/core-java/concepts.md).
+
+    **Common Mistake:** Using `AtomicLong.incrementAndGet()` in hot loops and assuming CAS hardware instructions scale linearly with CPU core counts.
+
+    **Production Consideration:** Use `LongAdder` or `LongAccumulator` when throughput matters more than reading an instantaneous point-in-time exact sum; use `AtomicLong` only when strict monotonic sequencing is required.
+
+    **Follow-up Questions:**
+    - How does the Java Memory Model guarantee visibility of cell updates upon summation? See [Concurrency: Safe Publication](/topics/concurrency/questions.md#21-what-constitutes-safe-publication-of-shared-objects-in-the-java-memory-model)
+    - How are hardware cache misses and IPC (instructions per cycle) diagnosed using profilers? See [Performance: Hardware Counters and Profiling](/topics/performance/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q28FalseSharingPaddingExample.java"
+        ```
+
 <!-- --8<-- [end:senior] -->
 
 <!-- --8<-- [start:scenarios] -->
@@ -418,6 +528,58 @@
 
         ```java
         --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q23StreamConcurrencyBugScenarioExample.java"
+        ```
+
+### Scenario 3: Container killed by OS OOM-Killer despite low heap occupancy during high-throughput I/O
+
+??? question "Reveal answer"
+
+    **Short Answer:** Inspect off-heap native allocations (`DirectByteBuffer` or Netty byte buffers); off-heap allocations bypass JVM heap limits and trigger host cgroup memory kill (Exit 137).
+
+    **Deep Explanation:** `ByteBuffer.allocateDirect()` allocates native memory via C `malloc`. The JVM tracks this via a lightweight heap reference associated with a `Cleaner` (PhantomReference). If heap pressure remains too low to trigger GC, old direct buffers are never unmapped, leading to silent native exhaustion.
+
+    **Internal Mechanism:** Direct buffers only deallocate native memory when their corresponding Java phantom reference is cleared and enqueued during a garbage collection cycle.
+
+    **Example:** [Direct memory leak scenario](/topics/core-java/code-review.md).
+
+    **Common Mistake:** Tuning `-Xmx` higher, which actually worsens the problem because higher heap limits delay garbage collection of direct buffer phantom references.
+
+    **Production Consideration:** Limit direct memory with `-XX:MaxDirectMemorySize` to force a synchronous JVM `OutOfMemoryError` before the Linux OOMKiller destroys the container, and use pooled direct buffers with deterministic release (`try-finally`).
+
+    **Follow-up Questions:**
+    - How does Netty manage reference-counted off-heap byte buffers in reactive applications? See [WebClient / WebFlux: Buffer Management](/topics/webclient-webflux/questions.md)
+    - How do Native Memory Tracking (NMT) and jemalloc profiling isolate off-heap leaks? See [JVM: Memory Architecture and NMT](/topics/jvm/questions.md#3-how-is-jvm-memory-divided-between-stack-and-heap)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q29DirectMemoryLeakScenarioExample.java"
+        ```
+
+### Scenario 4: A scheduled background job stops executing without any error logged
+
+??? question "Reveal answer"
+
+    **Short Answer:** An unhandled `RuntimeException` or `Error` escaped from the runnable task passed to `ScheduledExecutorService`, permanently cancelling all future periodic executions.
+
+    **Deep Explanation:** According to the `ScheduledExecutorService.scheduleAtFixedRate` contract, if any execution of the task encounters an unhandled exception, subsequent executions are suppressed and the returned `ScheduledFuture` transitions to cancelled/done.
+
+    **Internal Mechanism:** The worker thread catches the uncaught exception, stores it in the `FutureTask` outcome state, and ceases re-queuing the task for future scheduled periods.
+
+    **Example:** [Scheduled executor error suppression](/topics/core-java/code-review.md).
+
+    **Common Mistake:** Assuming unhandled exceptions are logged to stdout/stderr or routed to `Thread.UncaughtExceptionHandler`.
+
+    **Production Consideration:** Always wrap the entire body of scheduled runnable tasks in a top-level `try-catch (Throwable t)` block that logs failures and increments an error metric.
+
+    **Follow-up Questions:**
+    - How do Spring's `@Scheduled` and `TaskScheduler` handle uncaught exceptions? See [Spring Boot: Scheduling Internals](/topics/spring-boot/questions.md)
+    - What thread pool sizing and rejection policies prevent executor queue starvation? See [Concurrency: ThreadPoolExecutor Configuration](/topics/concurrency/questions.md#14-what-are-the-core-parameters-of-threadpoolexecutor-and-how-do-its-4-rejection-policies-work)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/Q30ScheduledExecutorFailureScenarioExample.java"
         ```
 
 <!-- --8<-- [end:scenarios] -->

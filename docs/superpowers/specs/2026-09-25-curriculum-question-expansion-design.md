@@ -53,13 +53,7 @@ All code examples must:
   List<String> immutable = List.of("a", "b");
   // immutable.add("c"); // throws UnsupportedOperationException
   ```
-- Be embedded into `docs/topics/<slug>/questions.md` using the PyMdown snippets syntax:
-  ```markdown
-  ??? example "Example"
-      ```java
-      --8<-- "modules/NN-slug/src/examples/java/lab/topic/questions/QxxExample.java"
-      ```
-  ```
+- Be embedded into `docs/topics/<slug>/questions.md` using the PyMdown snippets syntax (e.g. `--8<--` followed by the module example file path in quotes).
 
 ---
 
@@ -86,19 +80,19 @@ All code examples must:
     - Example: `Q10SequencedCollectionsExample.java`
   - **Senior Q19:** Object serialization vulnerabilities and migration to records, Jackson, or Protobuf without object graph deserialization hazards.
     - Example: `Q19SerializationSafetyExample.java`
-    - Cross-links: [JVM Metaspace & Bytecode](../jvm/questions.md), [Security Serialization](../spring-security/questions.md)
+    - Cross-links: JVM Metaspace & Bytecode, Security Serialization
   - **Senior Q20:** Custom ClassLoaders, class identity (`ClassCastException` across classloaders), and preventing ClassLoader memory leaks on dynamic unloading.
     - Example: `Q20ClassLoaderIsolationExample.java`
-    - Cross-links: [JVM Class Loading Lifecycle](../jvm/questions.md)
+    - Cross-links: JVM Class Loading Lifecycle
   - **Senior Q21:** Cache-line false sharing, padding, and data locality in Java data structures (`@Contended` vs field padding).
     - Example: `Q21FalseSharingPaddingExample.java`
-    - Cross-links: [Concurrency JMM Safe Publication](../concurrency/questions.md), [Performance Hardware Architecture](../performance/questions.md)
+    - Cross-links: Concurrency JMM Safe Publication, Performance Hardware Architecture
   - **Scenario 3:** Native off-heap DirectByteBuffer leak when handling high-throughput network buffers leading to OS kill without heap memory alert.
     - Example: `Q22DirectMemoryLeakScenarioExample.java`
-    - Cross-links: [JVM Off-Heap Diagnostics](../jvm/questions.md), [WebFlux Netty Buffer Leaks](../webclient-webflux/questions.md)
+    - Cross-links: JVM Off-Heap Diagnostics, WebFlux Netty Buffer Leaks
   - **Scenario 4:** Uncaught `RuntimeException` in scheduled executor thread terminates periodic execution silently.
     - Example: `Q23ScheduledExecutorFailureScenarioExample.java`
-    - Cross-links: [Concurrency ThreadPoolExecutor Policies](../concurrency/questions.md), [Spring Core Async Exception Handling](../spring-core/questions.md)
+    - Cross-links: Concurrency ThreadPoolExecutor Policies, Spring Core Async Exception Handling
 
 ### 4.2 Module 02: JVM (`modules/02-jvm`, `docs/topics/jvm/`)
 * **New Questions (7 total):**
@@ -108,19 +102,19 @@ All code examples must:
     - Example: `Q10GenerationalZgcExample.java`
   - **Senior Q19:** JIT compiler inlining budgets, megamorphic call sites (`invokevirtual` devirtualization), and performance cliff identification using JFR.
     - Example: `Q19JitInliningDevirtualizationExample.java`
-    - Cross-links: [Core Java Polymorphism](../core-java/questions.md), [Performance Profiling](../performance/questions.md)
+    - Cross-links: Core Java Polymorphism, Performance Profiling
   - **Senior Q20:** Metaspace exhaustion from runtime bytecode generation proxies (CGLIB, ByteBuddy) and class unloading constraints.
     - Example: `Q20MetaspaceBytecodeLeakExample.java`
-    - Cross-links: [Spring Core CGLIB Proxies](../spring-core/questions.md), [Core Java ClassLoaders](../core-java/questions.md)
+    - Cross-links: Spring Core CGLIB Proxies, Core Java ClassLoaders
   - **Senior Q21:** Safepoints, thread-local handshakes, and uncounted loop safepoint polling overhead affecting p99.9 latency SLAs.
     - Example: `Q21SafepointPollingHandshakeExample.java`
-    - Cross-links: [Concurrency Thread States](../concurrency/questions.md), [Observability Latency Tracing](../observability/questions.md)
+    - Cross-links: Concurrency Thread States, Observability Latency Tracing
   - **Scenario 3:** Latency spikes at p99 caused by safepoint stalls in long-running `int` counted loops without loop strip mining.
     - Example: `Q22SafepointLoopStallScenarioExample.java`
-    - Cross-links: [Performance JFR Analysis](../performance/questions.md)
+    - Cross-links: Performance JFR Analysis
   - **Scenario 4:** Native memory exhaustion caused by unclosed `Deflater`/`Inflater` or JNI bindings exceeding cgroup limits.
     - Example: `Q23NativeMemoryExhaustionScenarioExample.java`
-    - Cross-links: [Docker Container Limits](../docker/questions.md), [JVM Container Memory Limits](../jvm/questions.md)
+    - Cross-links: Docker Container Limits, JVM Container Memory Limits
 
 ### 4.3 Module 03: Concurrency (`modules/03-concurrency`, `docs/topics/concurrency/`)
 * **New Questions (7 total):**
@@ -130,19 +124,19 @@ All code examples must:
     - Example: `Q10VarHandleAccessModesExample.java`
   - **Senior Q19:** Lock-free stack/queue implementation and ABA problem remediation using `AtomicStampedReference`.
     - Example: `Q19LockFreeStackAbaExample.java`
-    - Cross-links: [Core Java Data Structures](../core-java/questions.md), [Database Optimistic Versioning](../database-sql/questions.md)
+    - Cross-links: Core Java Data Structures, Database Optimistic Versioning
   - **Senior Q20:** Virtual thread carrier pinning hazards: `synchronized` blocks vs `ReentrantLock`, native methods, and filesystem I/O.
     - Example: `Q20VirtualThreadCarrierPinningExample.java`
-    - Cross-links: [Spring Transactions Connection Holding](../spring-transactions/questions.md), [Database Connection Pools](../database-sql/questions.md)
+    - Cross-links: Spring Transactions Connection Holding, Database Connection Pools
   - **Senior Q21:** Scalable high-contention counters: `LongAdder` cell striped contention vs CAS spin loops (`AtomicLong`).
     - Example: `Q21LongAdderCellContentionExample.java`
-    - Cross-links: [Core Java False Sharing](../core-java/questions.md), [Observability Metric Counters](../observability/questions.md)
+    - Cross-links: Core Java False Sharing, Observability Metric Counters
   - **Scenario 3:** Thread pool starvation deadlock caused by submitting dependent child tasks into the same bounded worker pool.
     - Example: `Q22ThreadPoolStarvationDeadlockScenarioExample.java`
-    - Cross-links: [Spring Core Async Executors](../spring-core/questions.md), [Resilience Bulkhead Isolation](../resilience/questions.md)
+    - Cross-links: Spring Core Async Executors, Resilience Bulkhead Isolation
   - **Scenario 4:** Silent loss of `SecurityContext` and MDC correlation IDs across reactive/asynchronous `CompletableFuture` stages.
     - Example: `Q23AsyncContextPropagationScenarioExample.java`
-    - Cross-links: [Spring Security Context Propagation](../spring-security/questions.md), [Observability Distributed Tracing](../observability/questions.md)
+    - Cross-links: Spring Security Context Propagation, Observability Distributed Tracing
 
 ### 4.4 Module 04: Spring Core (`modules/04-spring-core`, `docs/topics/spring-core/`)
 * **New Questions (7 total):**
@@ -152,19 +146,19 @@ All code examples must:
     - Example: `Q10ConditionalPhaseEvaluationExample.java`
   - **Senior Q19:** Circular dependencies resolution internals in Spring (three-level cache in `DefaultSingletonBeanRegistry`) and why constructor injection cleanly breaks cycles.
     - Example: `Q19CircularDependencyResolutionExample.java`
-    - Cross-links: [Design Patterns Dependency Inversion](../design-patterns/questions.md)
+    - Cross-links: Design Patterns Dependency Inversion
   - **Senior Q20:** CGLIB vs JDK dynamic proxies: final class/method interception limitations, `equals`/`hashCode` proxy bypassing, and self-invocation traps.
     - Example: `Q20ProxyMechanismsAndBypassingExample.java`
-    - Cross-links: [Spring Transactions Self-Invocation](../spring-transactions/questions.md), [Spring Security Method Security](../spring-security/questions.md)
+    - Cross-links: Spring Transactions Self-Invocation, Spring Security Method Security
   - **Senior Q21:** Ahead-Of-Time (AOT) engine and GraalVM Native Image compilation boundaries in Spring Framework 6.
     - Example: `Q21SpringAotReflectionHintsExample.java`
-    - Cross-links: [JVM Class Loading](../jvm/questions.md), [Performance Startup Optimization](../performance/questions.md)
+    - Cross-links: JVM Class Loading, Performance Startup Optimization
   - **Scenario 3:** Concurrency race condition and state contamination caused by injecting a prototype bean into a singleton bean without `ObjectProvider` or `@Lookup`.
     - Example: `Q22PrototypeInSingletonLeakScenarioExample.java`
-    - Cross-links: [Concurrency Safe Publication](../concurrency/questions.md)
+    - Cross-links: Concurrency Safe Publication
   - **Scenario 4:** Silent bypass of `@PreAuthorize` security checks caused by intra-class method calls within a proxy-based service.
     - Example: `Q23ProxySecurityBypassScenarioExample.java`
-    - Cross-links: [Spring Security Method Security](../spring-security/questions.md), [Spring Transactions Proxy Bypass](../spring-transactions/questions.md)
+    - Cross-links: Spring Security Method Security, Spring Transactions Proxy Bypass
 
 ### 4.5 Module 05: Spring Boot (`modules/05-spring-boot`, `docs/topics/spring-boot/`)
 * **New Questions (7 total):**
@@ -174,19 +168,19 @@ All code examples must:
     - Example: `Q10AutoConfigurationOrderingExample.java`
   - **Senior Q19:** Spring Boot application startup phases: `ApplicationStartingEvent` through `ApplicationReadyEvent`, and lazy initialization (`spring.main.lazy-initialization`) risks in production.
     - Example: `Q19StartupPhasesAndLazyInitExample.java`
-    - Cross-links: [Observability Startup Metrics](../observability/questions.md), [Testing Context Caching](../testing/questions.md)
+    - Cross-links: Observability Startup Metrics, Testing Context Caching
   - **Senior Q20:** Production Actuator hardening: role-based endpoint exposure, sensitive data sanitization (`SanitizingFunction`), and custom composite `HealthIndicator`s.
     - Example: `Q20ActuatorHardeningAndHealthExample.java`
-    - Cross-links: [Spring Security Actuator Authorization](../spring-security/questions.md), [Observability Health Probes](../observability/questions.md)
+    - Cross-links: Spring Security Actuator Authorization, Observability Health Probes
   - **Senior Q21:** Reducing classpath scanning overhead in large microservices using `spring-context-indexer` and modular component scanning.
     - Example: `Q21ContextIndexingOptimizationExample.java`
-    - Cross-links: [Architecture Modular Monoliths](../architecture/questions.md), [Spring Core Bean Discovery](../spring-core/questions.md)
+    - Cross-links: Architecture Modular Monoliths, Spring Core Bean Discovery
   - **Scenario 3:** Kubernetes rolling deployment drops in-flight HTTP requests during SIGTERM because graceful shutdown was unconfigured or premature connection reset occurred.
     - Example: `Q22KubernetesGracefulShutdownScenarioExample.java`
-    - Cross-links: [Docker Container Lifecycles](../docker/questions.md), [Spring MVC Request Processing](../spring-mvc/questions.md)
+    - Cross-links: Docker Container Lifecycles, Spring MVC Request Processing
   - **Scenario 4:** Stale configuration and memory leakage caused by improper `@RefreshScope` usage during Spring Cloud Config dynamic refresh.
     - Example: `Q23RefreshScopeDynamicConfigScenarioExample.java`
-    - Cross-links: [Spring Cloud Configuration](../spring-cloud/questions.md), [Concurrency Safe Publication](../concurrency/questions.md)
+    - Cross-links: Spring Cloud Configuration, Concurrency Safe Publication
 
 ---
 
