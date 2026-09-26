@@ -438,12 +438,56 @@ How does the Hierarchy of Controls apply to software engineering action items?
         High-Leverage Replacement: "Configure CI pipeline to run Flyway migrations against an
         anonymized production-scale staging database with automated EXPLAIN query cost assertions."
         ```
+
+---
+
+### 24. How do you measure and reduce Developer Cognitive Load across team codebases?
+
+How do Team Topologies stream-aligned vs platform teams reduce domain and extraneous cognitive friction?
+
+??? question "Reveal answer"
+    - **Types of Cognitive Load (Skelton & Pais, *Team Topologies*)**:
+      1. **Intrinsic Cognitive Load**: Fundamental aspects of programming (e.g. Java syntax, Spring dependency injection conventions). Handled via training.
+      2. **Extraneous Cognitive Load**: Friction caused by environment, tools, and unnecessary ceremony (e.g. manual Kubernetes YAML authoring, complex flaky CI build steps, searching for secrets). This is pure waste.
+      3. **Germane Cognitive Load**: Mental effort dedicated to solving core business domain problems (e.g. tax calculation rules, fraud detection algorithms). This is high-value work.
+    - **Engineering Remediation via Platform Engineering**:
+      - Establish **Platform Teams** providing a "Thinnest Viable Platform" (TVP): self-service CI/CD pipelines, golden-path Spring Boot starter templates, and automated local Testcontainers environments.
+      - Stream-aligned backend engineers focus 90% of their mental bandwidth on germane domain logic rather than debugging Docker network routing.
+
+??? example "Example"
+    ```text
+    Reducing Extraneous Cognitive Load:
+    - Replace 50-step onboarding wiki with a single `./scripts/run-module.sh` setup command.
+    - Standardize common observability via corporate Spring Boot starter.
+    - Automate database migration testing in CI rather than manual developer verification.
+    ```
+
+---
+
+### 25. How do you establish an effective On-Call and Incident Response culture that prevents engineer burnout?
+
+How do secondary escalation rotations, alert hygiene, and paging thresholds maintain operational sustainability?
+
+??? question "Reveal answer"
+    - **Core Pillars of Sustainable On-Call**:
+      1. **Paging Should Be Rare & Actionable**: Engineers should only be paged for user-impacting emergencies requiring human intervention ($SLO \text{ breach}$, outage). Informational warnings belong in Slack or daytime dashboards, never in PagerDuty pages.
+      2. **Primary and Secondary Rotations**: Always assign a secondary on-call engineer to absorb escalation overflows, mentor junior on-callers, and handle daytime operational interruptions so the primary can sleep undisturbed when off-shift.
+      3. **Compensation and Comp Time**: Compensate on-call rotations fairly and mandate compensatory time off ("sleep-in policy") the morning after a night with disruptive pages.
+      4. **Strict Alert Fatigue Triage**: If an alert fires more than 3 times in a single week without requiring code remediation, it is either silenced, tuned, or downgraded to daytime ticketing.
+
+??? example "Example"
+    ```text
+    On-Call Health Scorecard (Reviewed Monthly):
+    - Off-hours pages per shift: Target < 2 pages / week.
+    - Flapping alerts silenced: > 95% actionable pages.
+    - Comp-time taken: 100% of disrupted engineers.
+    ```
 <!-- --8<-- [end:intermediate] -->
 
 ---
 
 <!-- --8<-- [start:senior] -->
-## Senior Technical Leadership & Strategy (17–21)
+## Senior Technical Leadership & Strategy (17–21, 26–28)
 
 ### 17. How would you design and implement an organization-wide RFC / Architecture Decision process across multiple autonomous engineering teams?
 
@@ -608,12 +652,89 @@ How can tools like ArchUnit enforce Clean / Hexagonal Architecture automatically
                     .should().beFreeOfCycles();
         }
         ```
+
+---
+
+### 26. How do you design and execute a Multi-Quarter Technology Migration (e.g. Java 8 to 21, or Monolith to Microservices) without freezing feature delivery?
+
+How do you maintain momentum, handle team resistance, and establish measurable milestone gates?
+
+??? question "Reveal answer"
+    - **The Failure Mode of "The Big Freeze"**:
+      - Halting product development for 6 months to execute a pure technical rewrite almost always fails: competitors advance, product leadership loses trust, and the project is cancelled mid-way.
+    - **Strategy for Continuous Incremental Migration**:
+      1. **Carve Out Capacity Budget**: Negotiate a permanent, dedicated 20% engineering allocation ("Technical Health Budget") in every sprint cycle alongside 80% product roadmap delivery.
+      2. **Automate Deprecations & Migration Tooling**:
+         - Use tools like **OpenRewrite** to automate 80% of repetitive code transformations (e.g. migrating JUnit 4 to 5, updating Spring Boot properties, converting getters/setters to records).
+      3. **Strangler Pattern with Parity Shadowing**:
+         - Migrate one cohesive bounded context at a time. Deploy shadow traffic (dark launches) to verify behavioral parity under live production workloads.
+      4. **Measurable Milestone Scorecards**:
+         - Track migration burn-down publicly on an internal Grafana dashboard: `% of microservices on Java 21`, `% of deprecated API calls remaining`. Celebrate each milestone publicly.
+
+??? example "Example"
+    ```text
+    Migration Scorecard Milestones:
+    - Phase 1: Toolchain & Build Migration (Gradle 8, Temurin JDK 21 in CI).
+    - Phase 2: Automated Bytecode Refactoring via OpenRewrite.
+    - Phase 3: Module-by-module production rollout via Canary deployments.
+    - Phase 4: Deprecation and deletion of legacy code paths.
+    ```
+
+---
+
+### 27. How do you resolve Intractable Technical Disagreements between senior engineers without eroding team morale?
+
+Compare Consensus vs Consent, Disagree and Commit, and Spike-Based Empirical Adjudication.
+
+??? question "Reveal answer"
+    - **Why Seeking Pure Consensus Paralyzes Teams**:
+      - Striving for 100% agreement on every architectural decision results in endless bikeshedding, lowest-common-denominator compromise, and decision fatigue.
+    - **Framework for Breaking Deadlocks**:
+      1. **Consent over Consensus**: Instead of asking *"Does everyone agree this is the single best approach?"*, ask: *"Does anyone have a reasoned, evidence-based objection why this approach will cause catastrophic failure?"* If not, proceed.
+      2. **Time-Bounded Proof of Concept (Spike)**:
+         - When two senior engineers passionately advocate for competing technologies (e.g. gRPC vs REST), allocate a strictly time-bounded 48-hour spike.
+         - Evaluate both approaches against pre-agreed objective criteria: throughput, developer ergonomics, backward compatibility, and debuggability. Evidence dissolves dogma.
+      3. **Principled Escalation & "Disagree and Commit"**:
+         - The Lead / Staff Engineer makes the final call. Teammates must practice Amazon's *Disagree and Commit*: once the decision is finalized, everyone works to make it successful without passive-aggressive resistance.
+
+??? example "Example"
+    ```text
+    Empirical Decision Matrix:
+    - Criteria: P99 Latency (< 10ms), Schema Evolution Safety, Client SDK Generation.
+    - Result: Evidence from 48h spike dictates decision, not senior hierarchy.
+    ```
+
+---
+
+### 28. How do you establish Engineering Leveling Rubrics and Promotion Calibrations that eliminate bias and reward high-leverage technical impact?
+
+How do you distinguish Senior, Staff, and Principal engineering competencies beyond simple tenure or coding speed?
+
+??? question "Reveal answer"
+    - **The Problem with Tenure and Raw Output**:
+      - Promoting engineers based on years of experience or volume of PRs created promotes fast coders who generate technical debt while ignoring systemic architects who prevent problems before they occur.
+    - **Scope and Leverage Progression**:
+      - **Mid-Level Engineer**: Independent execution of tasks. High competence within assigned user stories. Scope: *Self*.
+      - **Senior Engineer**: Autonomous end-to-end feature ownership, systems design, proactive failure mode mitigation, peer code reviews, and active mentoring of junior talent. Scope: *Team*.
+      - **Staff Engineer**: Cross-team architectural alignment, identifying organization-wide technical bottlenecks, authoring foundational RFCs, setting engineering standards, and de-risking high-uncertainty initiatives. Scope: *Multiple Teams / Department*.
+      - **Principal Engineer**: Company-level technical strategy, aligning technology investments with business strategy over multi-year horizons, and industry-level influence. Scope: *Organization / Company*.
+    - **Calibration Hygiene**:
+      - Evaluate candidates using written impact summaries demonstrating business outcomes and multiplier effects (*"How did this engineer make everyone around them more effective?"*).
+
+??? example "Example"
+    ```text
+    Core Competency Pillars for Calibration:
+    1. Technical Execution & Domain Depth
+    2. Architecture & Systems Design
+    3. Operational Excellence & Reliability
+    4. Multiplier Effect & Team Mentorship
+    ```
 <!-- --8<-- [end:senior] -->
 
 ---
 
 <!-- --8<-- [start:scenarios] -->
-## Real-World Scenarios (22–23)
+## Real-World Scenarios (22–23, 29–30)
 
 ### 22. Production Outage Post-Mortem Under Executive Blame Pressure
 
@@ -680,5 +801,73 @@ How do you intervene as a Senior Engineer to resolve team tension, support the j
                                   ──> [PR 3: REST API (100 lines)] ──Merged in 2h──>
                                   ──> [PR 4: Integration (50 lines)] ──Merged in 30m──>
         Result: 100% test coverage, fast reviews, zero merge conflicts.
+        ```
+
+---
+
+### 29. Leading Cross-Team Crisis Triage During a Black Swan Zero-Day Dependency Outage (e.g. Log4Shell)
+
+**Context:** At 09:00 on a Monday, a critical zero-day remote code execution vulnerability (CVSS 10.0) is published affecting a core dependency used across 45 backend microservices owned by 6 different engineering teams. Executive leadership demands an immediate plan, while teams scramble in chaotic, uncoordinated Slack threads without knowing which services are vulnerable.
+
+How do you step in as a Staff / Senior Engineer to establish incident command, coordinate automated vulnerability discovery across repos, and orchestrate zero-downtime remediation?
+
+??? question "Reveal answer"
+    - **Step 1: Establish Incident Command & Central Communications**:
+      - Declare SEV-1 incident status. Establish a dedicated Incident Commander (IC), Technical Lead (your role), and Scribe.
+      - Consolidate all 6 teams into a single incident Slack channel (`#crisis-zero-day-triage`) and a 24/7 technical bridge. Ban fragmented side-channel discussions.
+    - **Step 2: Automated Fleet-Wide Vulnerability Discovery (SBOM & Dependency Graph)**:
+      - Do not rely on manual developer code inspection across 45 repositories.
+      - Run a centralized GitHub Actions / script querying CI dependency trees or the company's dependency tracking catalog:
+        `./gradlew dependencyInsight --dependency <affected-lib>`.
+      - Categorize all 45 services into three triage tiers:
+        - *Tier 1 (Critical)*: Public-facing ingress services directly processing external user input.
+        - *Tier 2 (High)*: Internal backend services consuming async Kafka queues or internal RPCs.
+        - *Tier 3 (Low)*: Offline batch workers and internal reporting tools.
+    - **Step 3: Coordinated Multi-Pronged Remediation Strategy**:
+      1. **Immediate Edge Mitigation (WAF / Gateway)**: While code is being patched, immediately deploy AWS WAF regex inspection rules to drop malicious payloads at the edge ($< 30\text{ minutes}$).
+      2. **Automated Batch PRs via OpenRewrite / Dependabot**: Generate automated dependency upgrade PRs across all 45 repos simultaneously.
+      3. **Prioritized Deployment Pipeline**: Expedite Tier 1 services through automated CI/CD canary rollouts first, followed by Tier 2 and Tier 3.
+    - **Step 4: Continuous Executive Status Transparency**:
+      - Post hourly status updates to leadership using a structured burn-down dashboard: *32/45 services patched; 13/45 currently in QA; edge WAF protection active for 100% of external traffic.*
+
+    ??? example "Example"
+        ```text
+        Incident Command Dashboard:
+        - Total Services: 45
+        - Remediated & Deployed: 32 (71%)
+        - WAF Edge Mitigations: 100% Active
+        - ETA Fleet Completion: 4 Hours
+        ```
+
+---
+
+### 30. Managing the Deprecation and Sunsetting of a Legacy Internal Platform Used by 20 Downstream Teams
+
+**Context:** An internal shared authentication library built 5 years ago is blocking the company's migration to Spring Boot 3 and Java 21 due to obsolete bytecode reflection and unmaintained dependencies. Two previous deprecation announcements were ignored by product engineering teams, who claimed *"We don't have roadmap capacity to rewrite our auth code."*
+
+How do you, as a Staff / Principal Engineer, lead the sunsetting of this legacy platform, align cross-team roadmap incentives, and achieve 100% migration without business disruption?
+
+??? question "Reveal answer"
+    - **Why Naive Sunsetting Announcements Fail**:
+      - Merely sending Slack announcements or adding `@Deprecated` annotations fails because downstream teams are measured on product feature velocity, not technical cleanliness. Without structural support, deprecations linger for years.
+    - **The 4-Stage Sunsetting Framework**:
+      1. **Phase 1: Make the New Way Easier Than the Old Way (The Golden Path)**:
+         - Build the modern replacement library with superior developer ergonomics: automated configuration, built-in OpenTelemetry tracing, and zero boilerplate.
+         - Author automated **OpenRewrite** recipes that migrate 90% of downstream application code with a single command (`./gradlew rewriteRun`).
+      2. **Phase 2: Executive Alignment & "Brownout" Visibility**:
+         - Partner with Engineering Directors to formally allocate technical debt capacity into each team's quarterly OKRs.
+         - Implement **Brownouts**: In staging environments, intentionally disable the legacy library for 2 hours during scheduled daytime windows. This proactively exposes hidden lingering dependencies in non-production before hard deadlines.
+      3. **Phase 3: The White-Glove Concierge Service**:
+         - For the last 3 resistant or overburdened teams, offer "embedded pairing": spend 2 days pairing directly with their engineers to execute the migration and verify tests.
+      4. **Phase 4: Hard Deprecation & Deletion**:
+         - Archive the repository, remove artifact permissions from Artifactory, celebrate the sunsetting in an all-hands demo, and delete all legacy compatibility layers.
+
+    ??? example "Example"
+        ```text
+        Deprecation Timeline:
+        - M1: Launch modern library + OpenRewrite automated recipe.
+        - M2: Staging brownouts (2h weekly) to expose dependencies.
+        - M3: White-glove concierge pairing for remaining teams.
+        - M4: Permanent library archival & Artifactory removal.
         ```
 <!-- --8<-- [end:scenarios] -->

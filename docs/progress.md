@@ -31,11 +31,11 @@
 | 23 | Performance | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 24 | Docker | doc | ✅ | ✅ (30) | ✅ | ✅ | — | ✅ | ✅ |
 | 25 | AWS | doc | ✅ | ✅ (30) | ✅ | ✅ | — | ✅ | ✅ |
-| 26 | CI/CD | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
-| 27 | System Design | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
-| 28 | Architecture | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 29 | Design Patterns | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 30 | Senior Engineering | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
+| 26 | CI/CD | doc | ✅ | ✅ (30) | ✅ | ✅ | — | ✅ | ✅ |
+| 27 | System Design | doc | ✅ | ✅ (30) | ✅ | ✅ | — | ✅ | ✅ |
+| 28 | Architecture | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 29 | Design Patterns | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 30 | Senior Engineering | doc | ✅ | ✅ (30) | ✅ | ✅ | — | ✅ | ✅ |
 
 ## Canonical Question Expansion (Target: 30 Qs per module)
 
@@ -46,7 +46,7 @@
 | **Batch 3** | 11 Spring Security, 12 Testing, 13 Caching/Redis, 14 Kafka, 15 RabbitMQ | 150 (30 each) | +35 (+7 each) | ✅ Complete (30/30 each) |
 | **Batch 4** | 16 AWS Messaging, 17 Distributed Systems, 18 Resilience, 19 Distributed Data Patterns, 20 Spring Cloud | 150 (30 each) | +35 (+7 each) | ✅ Complete (30/30 each) |
 | **Batch 5** | 21 WebClient/WebFlux, 22 Observability, 23 Performance, 24 Docker, 25 AWS | 150 (30 each) | +35 (+7 each) | ✅ Complete (30/30 each) |
-| **Batch 6** | 26 CI/CD, 27 System Design, 28 Architecture, 29 Design Patterns, 30 Senior Engineering | 150 (30 each) | Pending | ⬜ Not started (23/30 each) |
+| **Batch 6** | 26 CI/CD, 27 System Design, 28 Architecture, 29 Design Patterns, 30 Senior Engineering | 150 (30 each) | +25 (+7, +7, +2, +7, +7) | ✅ Complete (30/30 each) |
 
 ## Track: java25-boot4
 

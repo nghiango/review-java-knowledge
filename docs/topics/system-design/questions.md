@@ -612,12 +612,86 @@ Provide the exact technical mitigation pattern for each failure mode.
 
 ---
 
+### 24. How do Consistent Hashing algorithms (Ketama, Virtual Nodes) prevent catastrophic cache invalidation during node churn?
+
+How do virtual nodes solve partition skew and nonuniform key distribution across cache clusters?
+
+??? question "Reveal answer"
+    - **Naive Modulo Hashing vs Consistent Hashing**:
+      - *Naive Modulo* (`node = hash(key) % N`): Adding or removing a single node from an $N$-node cluster changes the divisor $N$. Nearly $100\%$ of all keys remap to new nodes, causing catastrophic cache misses and database collapse.
+      - *Consistent Hashing*: Maps both nodes and keys to a fixed $360^\circ$ circular ring ($0$ to $2^{32}-1$). A key is assigned to the first node encountered moving clockwise. When a node is added or removed, only $\frac{K}{N}$ keys are remapped on average ($K = \text{total keys}$), preserving $> 80-90\%$ of cached data.
+    - **Virtual Nodes (Vnodes) Mechanism**:
+      - Without virtual nodes, physical servers hash to non-uniform positions on the ring, creating "hotspots" where one server owns a huge arc.
+      - Each physical server is assigned 100–300 **Virtual Nodes** (e.g. `node1#1`, `node1#2`, `node1#3`).
+      - This distributes the physical node's footprint uniformly across the ring, ensuring even memory distribution and balanced load shedding during failures.
+
+??? example "Example"
+    ```java
+    // Consistent Hashing Ring with Virtual Nodes using TreeMap
+    public class ConsistentHashRing<T> {
+        private final NavigableMap<Integer, T> ring = new TreeMap<>();
+        private final int numberOfReplicas;
+
+        public ConsistentHashRing(int numberOfReplicas, List<T> nodes) {
+            this.numberOfReplicas = numberOfReplicas;
+            for (T node : nodes) {
+                addNode(node);
+            }
+        }
+
+        public void addNode(T node) {
+            for (int i = 0; i < numberOfReplicas; i++) {
+                int hash = hashFunction(node.toString() + "#" + i);
+                ring.put(hash, node);
+            }
+        }
+
+        public T get(String key) {
+            if (ring.isEmpty()) return null;
+            int hash = hashFunction(key);
+            Map.Entry<Integer, T> entry = ring.ceilingEntry(hash);
+            return (entry != null) ? entry.getValue() : ring.firstEntry().getValue();
+        }
+    }
+    ```
+
+---
+
+### 25. How do you design an Asynchronous Job Processing System (e.g. video transcode, report generation) with backpressure and dead-letter handling?
+
+Compare polling queues (Amazon SQS / RabbitMQ) with distributed stream processing (Apache Kafka) for long-running worker tasks.
+
+??? question "Reveal answer"
+    - **Queue-Based (SQS / RabbitMQ) vs Stream-Based (Kafka) for Long Jobs**:
+      - *Kafka*: Designed for fast sequential streams. If a single video transcode job takes 20 minutes, consumer threads block, partition lag alarms fire, and subsequent messages in that partition are delayed.
+      - *SQS / RabbitMQ*: Far superior for variable, long-running worker tasks. Each message is leased independently. Worker scale matches queue depth dynamically without partition lock-in.
+    - **Production Architecture Components**:
+      1. **Visibility Timeout & Heartbeat Extension**:
+         - Set initial SQS visibility timeout to 5 minutes.
+         - Running worker threads send heartbeat extensions (`ChangeMessageVisibility`) every 2 minutes while transcode progress continues.
+      2. **Dead-Letter Queue (DLQ) & Bounded Retries**:
+         - Set `maxReceiveCount = 3`. If a video file has corrupted frames crashing the worker, after 3 attempts it routes to the DLQ, unblocking the worker pool.
+      3. **Worker Autoscaling via SQS Backlog**:
+         - Scale worker pool based on `ApproximateNumberOfMessagesVisible / target_latency_seconds`.
+
+??? example "Example"
+    ```yaml
+    # AWS SQS Queue with Redrive Policy (DLQ) for Long-Running Jobs
+    resource "aws_sqs_queue" "job_queue" {
+      name                       = "video-transcode-jobs"
+      visibility_timeout_seconds = 300
+      redrive_policy = jsonencode({
+        deadLetterTargetArn = aws_sqs_queue.job_dlq.arn
+        maxReceiveCount     = 3
+      })
+    }
+    ```
 <!-- --8<-- [end:intermediate] -->
 
 ---
 
 <!-- --8<-- [start:senior] -->
-## Senior Production Architecture (17–21)
+## Senior Production Architecture (17–21, 26–28)
 
 ### 17. Design a High-Concurrency Flash Sale Inventory System capable of selling 10,000 units in 60 seconds with 100,000 requests/second peak traffic.
 
@@ -807,12 +881,101 @@ Explain data replication, Route 53 health check failovers, and Recovery Point Ob
 
 ---
 
+### 26. How do you design a Global Distributed Rate Limiter operating across multi-region microservices?
+
+Compare centralized Redis Token Bucket algorithms with local token batch leases and eventual consistency.
+
+??? question "Reveal answer"
+    - **Centralized Redis vs Local Leases Trade-off**:
+      - *Centralized Multi-Region Redis*: Every HTTP request in `ap-southeast-1` queries a Redis cluster in `us-east-1` to decrement tokens. Cross-ocean latency ($150-200\text{ms}$) destroys API performance.
+      - *Local Batch Leasing Architecture*:
+        1. A centralized token authority grants local regional instances a "batch lease" of tokens (e.g. 5,000 tokens for the next 10 seconds).
+        2. Local gateways decrement tokens locally in in-memory memory buffers (Caffeine / local Redis) with sub-millisecond latency.
+        3. Background asynchronous heartbeats periodically sync consumption back to the central authority and request additional token allotments.
+    - **Token Bucket Algorithm via Redis Lua**:
+      - Evaluates capacity $C$, fill rate $R$, last updated timestamp $T_{\text{last}}$, and current timestamp $T_{\text{now}}$.
+      - Automatically refills tokens: $\text{tokens} = \min(C, \text{tokens} + (T_{\text{now}} - T_{\text{last}}) \times R)$.
+
+??? example "Example"
+    ```lua
+    -- Atomic Token Bucket implementation in Redis Lua
+    local key = KEYS[1]
+    local limit = tonumber(ARGV[1])
+    local current = tonumber(redis.call('get', key) or "0")
+    if current + 1 > limit then
+        return 0 -- Throttled
+    else
+        redis.call("INCRBY", key, 1)
+        if current == 0 then
+            redis.call("EXPIRE", key, 1)
+        end
+        return 1 -- Allowed
+    end
+    ```
+
+---
+
+### 27. How do you design a Real-Time Collaborative Document Editing System (Google Docs / Figma)?
+
+Compare Operational Transformation (OT) with Conflict-free Replicated Data Types (CRDTs).
+
+??? question "Reveal answer"
+    - **Operational Transformation (OT)**:
+      - *Mechanism*: Edits are represented as position-based operations: `Insert(pos, char)`, `Delete(pos)`.
+      - *Architecture*: Relies on a centralized server to order operations and transform concurrent client offsets so all clients converge.
+      - *Pros/Cons*: Used historically by Google Docs; computationally complex transformation matrices ($N \times M$ combinations) that are notoriously hard to prove correct mathematically.
+    - **Conflict-free Replicated Data Types (CRDTs)**:
+      - *Mechanism*: Every character or element is assigned a globally unique, immutable, fractional identifier (e.g. LSEQ or RGA tree structures).
+      - *Architecture*: Decentralized, peer-to-peer friendly. Operations commute naturally: applying edits in any order on any replica produces the exact same document state without a central server.
+      - *Pros/Cons*: Used by Figma and modern collaborative tools; memory overhead for storing unique character IDs and tombstones for deleted characters.
+
+??? example "Example"
+    ```json
+    // CRDT fractional indexing for concurrent text insertions
+    [
+      { "id": "0.1", "char": "H", "author": "user_1" },
+      { "id": "0.15", "char": "i", "author": "user_2" },
+      { "id": "0.2", "char": "!", "author": "user_1" }
+    ]
+    ```
+
+---
+
+### 28. How do you design an Order Matching Engine (Cryptocurrency / Stock Exchange) for sub-millisecond execution?
+
+Explain lock-free ring buffers (LMAX Disruptor), in-memory order books, and deterministic event journaling.
+
+??? question "Reveal answer"
+    - **Why Traditional Web Architectures Fail**:
+      - Relational databases, Spring Boot thread pools, and distributed network hops introduce microsecond-level jitter, lock contention, and Garbage Collection pauses that cause order matching queues to back up.
+    - **High-Performance Matching Engine Blueprint**:
+      1. **LMAX Disruptor Lock-Free Ring Buffer**: Single-writer principle. Orders are placed into a pre-allocated circular ring buffer sequenced by an atomic 64-bit sequence counter. A dedicated CPU-pinned single thread executes matching logic without any mutexes or context switching ($> 6\text{ million operations/sec}$).
+      2. **In-Memory B-Tree / Red-Black Tree Order Books**: Bids (highest first) and Asks (lowest first) are maintained entirely in memory. Matching executes in $O(1)$ to $O(\log N)$ memory accesses.
+      3. **Deterministic Sequential Journaling**: Every incoming order is appended to an append-only sequential disk log (Chronicle Queue / NVMe memory-mapped files) *before* matching. If the engine crashes, state is deterministically rebuilt by replaying the journal from the last snapshot.
+
+??? example "Example"
+    ```java
+    // Pre-allocated order event in LMAX Disruptor ring buffer
+    public class OrderEvent {
+        private long orderId;
+        private long price;
+        private int quantity;
+        private OrderSide side;
+
+        public void setValues(long orderId, long price, int quantity, OrderSide side) {
+            this.orderId = orderId;
+            this.price = price;
+            this.quantity = quantity;
+            this.side = side;
+        }
+    }
+    ```
 <!-- --8<-- [end:senior] -->
 
 ---
 
 <!-- --8<-- [start:scenarios] -->
-## Production Incident Scenarios (22–23)
+## Production Incident Scenarios (22–23, 29–30)
 
 ### 22. Production Incident: During a flash sale event, an e-commerce platform collapses within 30 seconds of launch. The database CPU hits 100%, and all application instances exhaust their HikariCP connection pools. Investigation shows thousands of threads blocked on `SELECT ... FOR UPDATE` on the product inventory row. How do you triage the live incident and redesign the system?
 
@@ -896,4 +1059,79 @@ Explain the idempotency key lifecycle from mobile client through API Gateway dow
     }
     ```
 
+---
+
+### 29. Production Incident: A celebrity user with 10 million followers posts a message, causing a massive write fan-out stampede that exhausts Redis memory and freezes timeline feeds for millions of users. What happened and how do you resolve it?
+
+Explain Write Fan-Out (Push) vs Read Fan-Out (Pull), hybrid timeline generation, and social network caching architectures.
+
+??? question "Reveal answer"
+    - **Incident Walkthrough**:
+      - A social platform used **Write Fan-Out (Push Model)**: when user $A$ posts, a background worker pushes the post ID into the Redis timeline sorted set (`ZADD timeline:<follower_id>`) of *every* follower.
+      - A pop star with 10 million followers posted a concert announcement.
+      - Background workers attempted 10,000,000 Redis write operations simultaneously.
+      - Redis connection queues saturated, memory spiked past max limits, and millions of regular user timeline writes were delayed by $> 30\text{ minutes}$.
+    - **Root Cause Analysis**:
+      - Pure Push (Write Fan-Out) exhibits $O(F)$ write complexity where $F$ is follower count. For high-degree nodes ("celebrities"), $F > 1,000,000$, creating uncontrollable write amplification.
+    - **Permanent Architectural Fix (Hybrid Push-Pull Model)**:
+      1. **Follower Threshold Partitioning**:
+         - Standard users ($< 25,000$ followers): Use **Push Model**. When they post, fan-out workers write to followers' Redis timelines ($O(F)$ is trivial).
+         - Celebrity users ($\ge 25,000$ followers): Use **Pull Model**. When a celebrity posts, their post is written *only once* to their personal celebrity outbox timeline (`celebrity_posts:<user_id>`). Zero fan-out writes are performed!
+      2. **Read-Time Dynamic Timeline Merge**:
+         - When a follower opens their feed, the service reads the follower's personal push timeline from Redis, fetches the recent posts from the 5 celebrities they follow, and executes a $K$-way merge sort in memory ($< 5\text{ms}$).
+
+??? example "Example"
+    ```java
+    // Hybrid timeline feed merger combining local push timeline with celebrity pull outboxes
+    public List<PostDTO> getFeed(Long userId) {
+        List<PostDTO> standardFeed = redisFeedStore.getTimeline(userId, 0, 50);
+        List<Long> followedCelebrities = celebrityFollowStore.getCelebritiesFor(userId);
+        
+        List<PostDTO> celebrityPosts = celebrityPostStore.getRecentPosts(followedCelebrities, 20);
+        
+        // Merge and sort in memory by timestamp
+        return Stream.concat(standardFeed.stream(), celebrityPosts.stream())
+            .sorted(Comparator.comparing(PostDTO::createdAt).reversed())
+            .limit(50)
+            .toList();
+    }
+    ```
+
+---
+
+### 30. Production Incident: A multi-region deployment of a distributed shopping cart cluster experiences cross-region split-brain, causing conflicting item quantities and lost cart updates. What happened and how do you resolve it?
+
+Explain vector clocks, Last-Write-Wins (LWW) clock skew vulnerabilities, and conflict resolution policies.
+
+??? question "Reveal answer"
+    - **Incident Walkthrough**:
+      - A shopping cart service deployed active-active across `us-east-1` and `eu-west-1` using asynchronous multi-master replication with Last-Write-Wins (LWW) conflict resolution based on system timestamps.
+      - A transatlantic fiber cut caused a 4-minute network partition between the regions.
+      - A traveling user updated their cart in Europe (added Item $X$ at 14:00:01 UTC) and immediately switched mobile networks, updating their cart via US servers (added Item $Y$ at 14:00:02 UTC according to US system time).
+      - Due to NTP server clock skew (US clock was lagging by 3 seconds), the US timestamp was recorded as 13:59:59 UTC.
+      - When the network partition healed, the LWW resolver compared timestamps, chose the European update, and completely discarded the US update, causing Item $Y$ to vanish from the user's cart.
+    - **Root Cause Analysis**:
+      - Physical wall-clock timestamps are non-monotonic across distributed servers due to NTP drift, leap seconds, and relativistic clock skew. LWW silently drops valid concurrent updates.
+    - **Permanent Architectural Fix**:
+      1. **Adopt Vector Clocks / Lamport Version Trees**:
+         - Instead of relying on physical clock timestamps, track causal relationships using Vector Clocks: $V = [(\text{Region}_A, c_1), (\text{Region}_B, c_2)]$.
+      2. **Deterministic Conflict Resolution (CRDTs)**:
+         - Model the shopping cart as an Observed-Remove Set (OR-Set) or Positive-Negative Counter (PN-Counter).
+         - When regions reconcile, cart contents are mathematically merged via set union: $\text{Cart}_{\text{final}} = \text{Cart}_{\text{US}} \cup \text{Cart}_{\text{EU}}$, preserving all items added in both regions.
+
+??? example "Example"
+    ```json
+    // Reconciled CRDT Shopping Cart state merging concurrent additions
+    {
+      "cart_id": "cart_888",
+      "items": {
+        "SKU_LAPTOP": { "qty": 1, "added_by": "us-east-1", "epoch": 101 },
+        "SKU_MOUSE": { "qty": 1, "added_by": "eu-west-1", "epoch": 102 }
+      },
+      "vector_clock": {
+        "us-east-1": 4,
+        "eu-west-1": 3
+      }
+    }
+    ```
 <!-- --8<-- [end:scenarios] -->

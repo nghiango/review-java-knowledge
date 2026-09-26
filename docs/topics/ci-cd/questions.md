@@ -551,12 +551,65 @@ How does keyless signing using OpenID Connect (OIDC) eliminate the danger of com
 
 ---
 
+### 24. How does Software Bill of Materials (SBOM) generation (Syft, CycloneDX) secure modern Java CI/CD pipelines?
+
+How do automated vulnerability scanners (Grype, Trivy) evaluate transitive dependency CVEs against generated SBOMs?
+
+??? question "Reveal answer"
+    - **What is an SBOM**:
+      - A Software Bill of Materials (SBOM) is a machine-readable inventory of all software components, dependencies (direct and transitive), licenses, and hashes packaged into a build artifact (JAR or container image).
+      - Standard formats include **CycloneDX** and **SPDX**.
+    - **How SBOM Pipeline Integration Works**:
+      - During the CI build, tools like `syft` or the `cyclonedx-gradle-plugin` inspect Gradle resolution graphs and jar files to produce an `sbom.json`.
+      - Scanners like `grype` evaluate the SBOM against vulnerability databases (NVD, GitHub Security Advisory) without needing access to the live build environment or source code.
+      - The generated SBOM is signed via Cosign and pushed to the container registry alongside the image as an attestation, satisfying enterprise compliance and executive cybersecurity standards (NIST SP 800-218).
+
+??? example "Example"
+    ```bash
+    # Generating CycloneDX SBOM and scanning for vulnerabilities in CI
+    syft packages 123456789012.dkr.ecr.us-east-1.amazonaws.com/order-service:${{ github.sha }} \
+      -o cyclonedx-json > order-service-sbom.json
+
+    grype order-service-sbom.json --fail-on high
+    ```
+
+---
+
+### 25. How do Feature Flags / Toggles (LaunchDarkly, Unleash, OpenFeature) decouple code deployment from feature release?
+
+How do kill switches and percentage-based progressive rollouts protect production reliability?
+
+??? question "Reveal answer"
+    - **Deployment vs Release Decoupling**:
+      - **Deployment**: The operational act of installing and running new code on production servers (ECS tasks, Kubernetes pods).
+      - **Release**: The business act of making new functionality accessible to end users.
+      - With feature flags, code is deployed continuously to production in an inactive (`OFF`) state, eliminating long-lived feature branches and merge hell.
+    - **Progressive Rollout Mechanics**:
+      - Flags evaluate rules based on user attributes: `userId`, `tenantId`, or random hash percentages ($0\% \to 5\% \to 25\% \to 100\%$).
+      - If error rates spike in Grafana during the 5% stage, the flag serves as an instant **Kill Switch**: disabling the flag turns off the buggy code path in sub-seconds without triggering a slow container re-deployment or pipeline rollback.
+
+??? example "Example"
+    ```java
+    // Evaluating a feature flag using OpenFeature API
+    Client openFeatureClient = OpenFeatureAPI.getInstance().getClient();
+    boolean isNewCheckoutEnabled = openFeatureClient.getBooleanValue(
+        "enable-modern-checkout",
+        false,
+        new MutableContext().add("userId", user.id())
+    );
+
+    if (isNewCheckoutEnabled) {
+        return modernCheckoutProcessor.checkout(cart);
+    } else {
+        return legacyCheckoutProcessor.checkout(cart);
+    }
+    ```
 <!-- --8<-- [end:intermediate] -->
 
 ---
 
 <!-- --8<-- [start:senior] -->
-## Senior Production Engineering (17–21)
+## Senior Production Engineering (17–21, 26–28)
 
 ### 17. How does the GitOps deployment paradigm (ArgoCD / Flux) differ from traditional push-based CI/CD pipelines?
 
@@ -743,12 +796,108 @@ Compare static repository secrets with temporary dynamic STS credentials for AWS
 
 ---
 
+### 26. How do you design Ephemeral / Preview Environments on pull requests using Kubernetes namespaces and ArgoCD ApplicationSets?
+
+How do pull request preview environments balance isolation, infrastructure costs, and resource cleanup?
+
+??? question "Reveal answer"
+    - **Architecture of PR Ephemeral Environments**:
+      - When a developer opens a Pull Request, a GitHub Actions workflow triggers the creation of an isolated Kubernetes namespace: `pr-<pr_number>-order-service`.
+      - **ArgoCD ApplicationSet (PR Generator)**: Automatically detects open PRs via GitHub API, renders Helm/Kustomize manifests, and deploys the microservice and its mock dependencies into the ephemeral namespace.
+      - **Dynamic Ingress**: Routes a dedicated hostname (`https://order-service-pr123.preview.company.internal`) via wildcard DNS and Traefik/Ingress-NGINX.
+    - **Cost & Lifecycle Hygiene**:
+      - Lightweight dependencies use Testcontainers / embedded in-memory mocks rather than provisioning dedicated AWS RDS instances.
+      - A TTL controller or GitHub Actions webhook immediately deletes the namespace and all associated PVCs/LoadBalancers when the PR is closed or merged.
+
+??? example "Example"
+    ```yaml
+    # ArgoCD ApplicationSet using Pull Request generator
+    apiVersion: argoproj.io/v1alpha1
+    kind: ApplicationSet
+    metadata:
+      name: preview-environments
+    spec:
+      generators:
+        - pullRequest:
+            github:
+              owner: myorg
+              repo: backend-services
+            requeueAfterSeconds: 60
+      template:
+        metadata:
+          name: 'preview-{{number}}'
+        spec:
+          source:
+            helm:
+              parameters:
+                - name: image.tag
+                  value: 'pr-{{head_sha}}'
+    ```
+
+---
+
+### 27. How does SLSA (Supply-chain Levels for Software Artifacts) Level 3 compliance protect against malicious code injection?
+
+How do hermetic, isolated CI build environments enforce build provenance and cryptographic attestation?
+
+??? question "Reveal answer"
+    - **What is SLSA (Supply-chain Levels for Software Artifacts)**:
+      - A security framework establishing standards for supply chain integrity across four escalating levels (Level 1 to Level 4).
+    - **SLSA Level 3 Requirements**:
+      1. **Source Integrity**: Code must reside in a version-controlled repository with mandatory two-person code reviews.
+      2. **Hermetic & Isolated Build Platform**: Builds must run on dedicated, ephemeral runner infrastructure where the build process cannot access untrusted networks during compilation.
+      3. **Non-Falsifiable Provenance**: The build system itself generates and cryptographically signs a provenance attestation declaring the exact source commit, build workflow, build parameters, and generated artifact digests.
+    - **Why Non-Falsifiable Provenance Matters**:
+      - Prevents compromised developers or unauthorized scripts from injecting malicious compiled bytecode directly into release artifacts, as deployment gates reject any artifact lacking an authentic provenance attestation signed by the trusted CI runner.
+
+??? example "Example"
+    ```bash
+    # Verifying SLSA provenance using slsa-verifier
+    slsa-verifier verify-artifact order-service.jar \
+      --provenance-path order-service.intoto.jsonl \
+      --source-uri github.com/myorg/order-service \
+      --source-tag v2.1.0
+    ```
+
+---
+
+### 28. How does Mutation Testing (PIT / Pitest) measure test suite effectiveness beyond naive line and branch coverage?
+
+How do surviving mutants reveal hidden gaps in assertion quality, and how do you optimize PIT runtimes in large Gradle multi-project builds?
+
+??? question "Reveal answer"
+    - **The Fallacy of Code Coverage**:
+      - Line and branch coverage only measure whether a line of code was *executed*, not whether the test actually verified the correctness of that line. A test that executes 100 lines of code without an `assert` statement reports 100% line coverage.
+    - **How Mutation Testing Works**:
+      - Pitest modifies compiled Java bytecode in memory to introduce deliberate faults ("mutants"):
+        - Inverting condition boundaries ($<$ becomes $\le$).
+        - Replacing return values (`return true` becomes `return false`).
+        - Removing void method calls (e.g. removing `cache.evict()`).
+      - It runs existing test suites against each mutant. If a test fails, the mutant is **killed** (good). If all tests pass, the mutant **survives** (bad, exposing missing assertions).
+    - **Performance Optimization in CI**:
+      - Mutation testing is computationally expensive. Optimize in Gradle using:
+        - `withHistory = true`: Caches results and only tests mutants in code changed since the last git commit.
+        - `threads = Runtime.getRuntime().availableProcessors()`: Parallelize execution across CPU cores.
+        - Restrict to changed classes using `scmMutationCoverage`.
+
+??? example "Example"
+    ```kotlin
+    // Gradle Kotlin DSL Pitest configuration
+    pitest {
+        targetClasses.set(listOf("lab.*.domain..*"))
+        targetTests.set(listOf("lab.*.domain..*Test"))
+        threads.set(4)
+        outputFormats.set(listOf("XML", "HTML"))
+        timestampedReports.set(false)
+        mutationThreshold.set(80)
+    }
+    ```
 <!-- --8<-- [end:senior] -->
 
 ---
 
 <!-- --8<-- [start:scenarios] -->
-## Production Incident Scenarios (22–23)
+## Production Incident Scenarios (22–23, 29–30)
 
 ### 22. Production Incident: A CI/CD deployment pipeline executes `ALTER TABLE orders DROP COLUMN customer_notes` as part of a pre-deployment Flyway migration. Immediately, active production instances throw an avalanche of HTTP 500 errors. What happened and how do you resolve it?
 
@@ -838,4 +987,72 @@ Walk through the diagnostic postmortem and the construction of an automated roll
         exit 1
     ```
 
+---
+
+### 29. Production Incident: A CI build pipeline leaked sensitive AWS production credentials into public build logs due to unmasked shell environment variable expansion. What happened and how do you resolve it?
+
+Explain CI runner environment variable masking limitations, secret injection in bash subshells, and OIDC secretless authentication.
+
+??? question "Reveal answer"
+    - **Incident Walkthrough**:
+      - A developer added `set -x` (debugging trace mode) to a deployment bash script in GitHub Actions to troubleshoot a failing AWS CLI command.
+      - During execution, the bash shell printed expanded variable values to `stdout`: `aws configure set aws_secret_access_key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`.
+      - Because the string was sliced or URL-encoded prior to execution, GitHub Actions' automated secret masker failed to recognize the pattern and published the full plaintext key to the public build logs.
+    - **Root Cause Analysis**:
+      1. **Shell Trace Expansion (`set -x`)**: Printing commands prior to execution exposes interpolated variables in log streams.
+      2. **Static Secret Long-Lived Credentials**: Storing static AWS IAM user access keys in repository secrets poses perpetual exposure risks.
+    - **Remediation**:
+      1. **Immediate Revocation**: Immediately deactivate and delete the exposed IAM access key in the AWS IAM Console.
+      2. **Migrate to OIDC Secretless CI**: Replace static IAM credentials entirely with GitHub Actions OIDC federation (`aws-actions/configure-aws-credentials`). No permanent secret keys exist in the repository; the runner trades a signed ephemeral JWT for 15-minute STS temporary credentials.
+      3. **Enforce Pre-Commit & CI Secret Scanning**: Enable GitHub Secret Scanning with Push Protection to block commits containing key patterns.
+
+??? example "Example"
+    ```yaml
+    # Secretless CI pipeline using OIDC
+    jobs:
+      deploy:
+        permissions:
+          id-token: write
+          contents: read
+        steps:
+          - uses: aws-actions/configure-aws-credentials@v4
+            with:
+              role-to-assume: arn:aws:iam::123456789012:role/ci-deployer
+              aws-region: us-east-1
+          # No secrets or static keys in environment variables
+    ```
+
+---
+
+### 30. Production Incident: A GitOps deployment repository was flooded with 10,000 automated commit loops per hour, freezing ArgoCD and exhausting GitHub API rate limits. What happened and how do you resolve it?
+
+Explain the recursive GitOps commit loop anti-pattern, write-back controllers, and decoupling application code repos from deployment config repos.
+
+??? question "Reveal answer"
+    - **Incident Walkthrough**:
+      - A team configured an automated CI workflow: when a commit merged to `main`, CI built a container image and committed the new image tag (`v1.0.123`) back to the *same* Git repository's `deployment.yaml`.
+      - This commit to the repository immediately triggered the CI pipeline again, which built another image and committed back to git, initiating an infinite recursive CI deployment loop.
+      - Within two hours, 10,000 automated commits flooded the repository, ArgoCD reconciliation queues backed up with 100% CPU usage, and GitHub API rate-limited the entire organization.
+    - **Root Cause Analysis**:
+      1. **Co-located Code and Configuration**: Storing mutable deployment manifests in the same git repository that triggers code builds invites recursive feedback loops.
+      2. **Missing Loop Prevention Guards**: CI workflows lacked path filtering (`paths-ignore: ['k8s/**']`) or commit author checks (`[skip ci]`).
+    - **Remediation**:
+      1. **Separate Code and Config Repositories**:
+         - Store application source code in `order-service` and Kubernetes manifests in `gitops-manifests`. CI only pushes image tags to the config repository, never triggering its own pipeline.
+      2. **Path-Based CI Trigger Filters**:
+         - Add `paths-ignore: ['deploy/**', '*.md']` so config modifications do not trigger application builds.
+      3. **Adopt ArgoCD Image Updater**:
+         - Instead of git commit loops, use **ArgoCD Image Updater** or Helm parameters to track new container images directly from ECR without writing back to git on every micro-commit.
+
+??? example "Example"
+    ```yaml
+    # GitHub Actions workflow with recursion prevention and path filtering
+    on:
+      push:
+        branches: [ main ]
+        paths-ignore:
+          - 'deploy/**'
+          - 'k8s/**'
+          - '*.md'
+    ```
 <!-- --8<-- [end:scenarios] -->

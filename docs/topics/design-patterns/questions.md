@@ -164,6 +164,26 @@ Comprehensive, battle-tested interview questions exploring creational, structura
 
     ??? example "Example"
         --8<-- "modules/29-design-patterns/src/examples/java/lab/designpatterns/questions/Q16MediatorVsEventBrokerExample.java"
+
+### 24. How does the Memento Pattern enable transactional rollback and undo mechanisms without breaking encapsulation?
+
+??? question "Reveal answer"
+    The **Memento Pattern** externalizes an object's internal state into an opaque snapshot (`Memento`) without exposing internal private fields or implementation details.
+    
+    A caretaker (e.g. a transaction manager or undo buffer) stores the memento. When a rollback or undo is triggered, the caretaker passes the memento back to the originator (`originator.restore(memento)`), which restores its internal state cleanly.
+
+    ??? example "Example"
+        --8<-- "modules/29-design-patterns/src/examples/java/lab/designpatterns/questions/Q24MementoStateRollbackExample.java"
+
+### 25. How does the Null Object Pattern eliminate defensive null checks across domain workflows?
+
+??? question "Reveal answer"
+    Instead of returning `null` references and forcing callers to perform repetitive `if (obj != null)` defensive checks, the **Null Object Pattern** provides a concrete class implementing the domain interface with neutral, predictable no-op behavior.
+    
+    This preserves polymorphism, keeps client code clean and readable, and completely eliminates `NullPointerException` risks.
+
+    ??? example "Example"
+        --8<-- "modules/29-design-patterns/src/examples/java/lab/designpatterns/questions/Q25NullObjectPatternExample.java"
 <!-- --8<-- [end:intermediate] -->
 
 ---
@@ -237,6 +257,35 @@ Comprehensive, battle-tested interview questions exploring creational, structura
 
     ??? example "Example"
         --8<-- "modules/29-design-patterns/src/examples/java/lab/designpatterns/questions/Q21IdiomaticJava21PatternsExample.java"
+
+### 26. How does the Pipeline / Intercepting Filter Pattern differ from Chain of Responsibility?
+
+??? question "Reveal answer"
+    - **Chain of Responsibility**: A request travels down a sequence of handlers until **one** handler decides to process it and terminates the chain, or passes it along if it cannot handle it.
+    - **Pipeline / Intercepting Filter**: Every registered filter in the sequence processes the request (or transformed data payload) in order, executing composable pre-processing and post-processing stages (e.g. decompression $\to$ decryption $\to$ authentication $\to$ schema validation).
+
+    ??? example "Example"
+        --8<-- "modules/29-design-patterns/src/examples/java/lab/designpatterns/questions/Q26PipelineInterceptingFilterPatternExample.java"
+
+### 27. How does the Dynamic Registry Pattern eliminate switch statements across polymorphic services?
+
+??? question "Reveal answer"
+    The **Registry Pattern** maintains an internal lookup table of strategy implementations indexed by business discriminator tags.
+    
+    In Spring Boot applications, strategy implementations are annotated as components, and the registry injects `List<Strategy>` via constructor injection, populating an immutable map at startup. Adding a new behavior requires zero edits to existing classes, fully honoring the Open/Closed Principle.
+
+    ??? example "Example"
+        --8<-- "modules/29-design-patterns/src/examples/java/lab/designpatterns/questions/Q27RegistryPatternDynamicDispatchExample.java"
+
+### 28. How does Currying and Partial Application simplify complex configurable strategy patterns in modern Java?
+
+??? question "Reveal answer"
+    **Partial Application** and **Currying** transform a function taking multiple arguments into a sequence of functions taking fewer arguments.
+    
+    In Java, higher-order functions return specialized `@FunctionalInterface` instances with pre-bound configuration parameters (such as tax rates, discount caps, or connection timeouts), eliminating verbose strategy class hierarchies and mutable builder configurations.
+
+    ??? example "Example"
+        --8<-- "modules/29-design-patterns/src/examples/java/lab/designpatterns/questions/Q28PartialApplicationCurryingPatternExample.java"
 <!-- --8<-- [end:senior] -->
 
 ---
@@ -283,6 +332,55 @@ Comprehensive, battle-tested interview questions exploring creational, structura
 
     ??? example "Example"
         --8<-- "modules/29-design-patterns/src/examples/java/lab/designpatterns/questions/Q23ScenarioFixingSecurityBypassInDecoratorCacheExample.java"
+
+### 29. Scenario: An enterprise monitoring service crashes with OutOfMemoryError after 24 hours of uptime due to an unmanaged Observer pattern implementation. Diagnose and remediate the Lapsed Listener defect.
+
+??? question "Reveal answer"
+    **Incident Context**:
+    A high-frequency metrics service allowed short-lived worker components to subscribe to a singleton `EventPublisher`. The workers completed their tasks and went out of scope, but never explicitly called `unsubscribe()`. Because the singleton publisher held strong references to each listener in an internal list, the Garbage Collector could not reclaim the worker objects or their heavy payload buffers. Over 24 hours, millions of stale listener references accumulated, causing an eventual JVM `OutOfMemoryError: Java heap space`.
+
+    **Remediation**:
+    1. **WeakReference Listeners**:
+       - Refactor the publisher to store listeners in a `WeakHashMap` or wrap them in `WeakReference<EventListener>`, allowing GC to collect eligible worker instances automatically.
+    2. **Explicit Lifecycle Management (`AutoCloseable`)**:
+       - Update the `subscribe()` method to return a `Subscription` or `AutoCloseable` token, allowing worker tasks to manage listener lifecycle via try-with-resources blocks.
+    3. **Automated Leak Testing**:
+       - Author unit tests that simulate GC triggering and verify that subscriber counts drop to zero after subscribers lose external references.
+
+    ??? example "Example"
+        --8<-- "modules/29-design-patterns/src/examples/java/lab/designpatterns/questions/Q29IncidentObserverMemoryLeakLapsedListenerExample.java"
+
+### 30. Scenario: A high-throughput multithreaded application experiences intermittent NullPointerExceptions and corrupted state due to a flawed Double-Checked Locking Singleton implementation. Diagnose and resolve.
+
+??? question "Reveal answer"
+    **Incident Context**:
+    A team implemented a lazy singleton with double-checked locking:
+    ```java
+    if (instance == null) {
+        synchronized (Lock.class) {
+            if (instance == null) {
+                instance = new ExpensiveService();
+            }
+        }
+    }
+    ```
+    Under production load with 64 concurrent threads, threads occasionally observed `instance != null` but encountered `NullPointerException` or corrupted data when reading internal fields of the singleton.
+
+    **Root Cause Analysis**:
+    The field was **not declared `volatile`**. In Java, object instantiation involves three steps:
+    1. Allocate memory.
+    2. Execute constructor to initialize fields.
+    3. Assign memory address to reference variable `instance`.
+    The JVM JIT compiler and CPU out-of-order execution are permitted to reorder steps 2 and 3. When reordering occurs, `instance` becomes non-null *before* field initialization completes. A concurrent thread executing the first null check sees `instance != null` and accesses a half-initialized object.
+
+    **Remediation**:
+    1. **Add `volatile` Modifier**:
+       - Declaring `private static volatile ExpensiveService instance;` establishes a Java Memory Model (JMM) happens-before barrier, preventing instruction reordering.
+    2. **Alternative: Bill Pugh Initialization-on-Demand Holder**:
+       - Migrate to a static inner holder class, which guarantees lazy, thread-safe initialization without explicit synchronization.
+
+    ??? example "Example"
+        --8<-- "modules/29-design-patterns/src/examples/java/lab/designpatterns/questions/Q30IncidentDoubleCheckedLockingHalfInitializedExample.java"
 <!-- --8<-- [end:scenarios] -->
 
 ## Related

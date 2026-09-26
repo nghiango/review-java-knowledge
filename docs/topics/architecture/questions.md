@@ -429,6 +429,45 @@ Comprehensive, battle-tested interview questions exploring software architecture
 
     ??? example "Example"
         --8<-- "modules/28-architecture/src/examples/java/lab/architecture/questions/Q28SagaCompensatingTransactionScenarioExample.java"
+
+### 29. Scenario: A high-throughput microservice suffers data inconsistency due to uncoordinated dual writes (PostgreSQL DB write followed by Kafka publish). Redesign the architecture with the Transactional Outbox pattern.
+
+??? question "Reveal answer"
+    **Incident Context**:
+    When an order was placed, the application committed a new order to PostgreSQL, and then attempted to publish `OrderPlacedEvent` to Kafka. During an unexpected Kafka broker restart, the HTTP thread encountered a network timeout while calling `kafkaTemplate.send()`. The database write had already succeeded and committed, but the event was never published to Kafka, causing downstream fulfillment services to drop the order silently.
+
+    **Architectural Redesign**:
+    1. **Single Local Database Transaction**:
+       - Instead of calling Kafka directly inside the web request transaction, write both the `Order` entity and an `Outbox` table record in a **single atomic PostgreSQL ACID transaction**.
+    2. **Guaranteed Delivery via CDC / Log Tailing**:
+       - Deploy Debezium CDC (Change Data Capture) or a dedicated polling publisher daemon.
+       - The CDC connector tails the PostgreSQL write-ahead log (WAL) and publishes the outbox events reliably to Kafka with at-least-once delivery guarantees.
+    3. **Consumer Idempotency**:
+       - Downstream fulfillment consumers implement an idempotent receiver table to deduplicate retried messages based on `eventId` or `orderId`.
+
+    ??? example "Example"
+        --8<-- "modules/28-architecture/src/examples/java/lab/architecture/questions/Q29DualWriteInconsistencyIncidentExample.java"
+
+### 30. Scenario: A growing monolithic Spring Boot application suffers build failures, circular package dependencies, and deployment gridlock. Design an architectural fitness governance strategy using ArchUnit.
+
+??? question "Reveal answer"
+    **Incident Context**:
+    A core engineering team expanded to 40 developers working in a single monolithic repo. Over time, service classes in the `billing` module began importing repositories from the `orders` module, while `orders` classes directly referenced internal utility beans from `billing`, creating cyclic package dependencies. Unit testing in isolation became impossible, and changes to billing broke order dispatch unexpectedly.
+
+    **Architectural Governance Strategy**:
+    1. **Establish Bounded Contexts & Hexagonal Rules**:
+       - Define strict layer and module boundaries: `domain`, `application`, and `infrastructure` for each bounded context.
+       - Declare that `domain` packages must never import infrastructure, Spring framework annotations, or external database classes.
+    2. **Automated Architecture Fitness Functions**:
+       - Introduce **ArchUnit** tests into the CI build pipeline to fail the build whenever an architectural invariant is violated.
+       - Enforce rules:
+         - `noClasses().that().resideInAPackage("..domain..").should().dependOnClassesThat().resideInAPackage("..infrastructure..")`
+         - `slices().matching("lab.architecture.(*)..").should().beFreeOfCycles()`
+    3. **Dependency Inversion via Ports**:
+       - Replace direct inter-module dependencies with driving/driven interfaces (ports) and asynchronous Spring Application Events (`@ApplicationModuleListener` in Spring Modulith).
+
+    ??? example "Example"
+        --8<-- "modules/28-architecture/src/examples/java/lab/architecture/questions/Q30CircularModuleDependencyIncidentExample.java"
 <!-- --8<-- [end:scenarios] -->
 
 ## Related
