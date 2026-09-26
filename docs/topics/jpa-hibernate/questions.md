@@ -163,6 +163,39 @@
         ```java
         --8<-- "modules/08-jpa-hibernate/src/examples/java/lab/jpahibernate/questions/Q14JpqlVsCriteriaVsNative.java"
         ```
+
+### 24. What is the execution sequence of Hibernate ActionQueue during flush and how can it cause constraint violations?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Hibernate flushes statements in strict ActionQueue order: Inserts $\to$ Updates $\to$ Collection removals $\to$ Collection updates $\to$ Collection recreations $\to$ Deletes. Because Inserts run before Deletes, replacing an entity with the same unique key in a single flush causes a Unique Key Constraint violation.
+
+    **Internal Mechanism:** The `ActionQueue` sorts SQL executions by action class to maximize JDBC batching efficiency. If `em.remove(oldRecord)` is called followed by `em.persist(newRecord)` with the same unique business key, Hibernate queues the `InsertAction` before the `DeleteAction`.
+
+    **Common Mistake:** Relying on Java statement order inside `@Transactional` methods and expecting deletes to execute before subsequent inserts without calling `em.flush()`. [Concepts](/topics/jpa-hibernate/concepts.md#6-flushmodetype-semantics)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/08-jpa-hibernate/src/examples/java/lab/jpahibernate/questions/Q24HibernateActionQueueOrderingExample.java"
+        ```
+
+### 25. How are Second-Level Cache regions partitioned and why does the Query Cache invalidate frequently?
+
+??? question "Reveal answer"
+
+    **Short Answer:** The Second-Level Cache partitions into Entity (dehydrated fields), Collection (foreign key arrays), NaturalId, and Query regions. The Query Cache stores query parameter hashes mapping to matching `@Id` lists, but any `INSERT`, `UPDATE`, or `DELETE` on the entity table invalidates all cached queries for that table.
+
+    **Internal Mechanism:** The `UpdateTimestampsCache` records the timestamp of the most recent write to any entity table. When reading from the query cache, Hibernate checks if `cacheTimestamp < tableUpdateTimestamp`; if so, the query cache entry is evicted as stale.
+
+    **Common Mistake:** Enabling Query Cache on frequently updated transactional tables, incurring severe cache thrashing and lock contention without read latency improvements. [Concepts](/topics/jpa-hibernate/concepts.md#1-entity-lifecycle-states)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/08-jpa-hibernate/src/examples/java/lab/jpahibernate/questions/Q25SecondLevelCacheRegionsExample.java"
+        ```
+
 <!-- --8<-- [end:intermediate] -->
 
 <!-- --8<-- [start:senior] -->
@@ -230,6 +263,85 @@
         ```java
         --8<-- "modules/08-jpa-hibernate/src/examples/java/lab/jpahibernate/questions/Q20LargeDatasetProcessing.java"
         ```
+
+### 26. Why does accessing lazy associations fail outside transactions when OSIV is disabled, and how do you design read-only queries with DTO projections or EntityGraphs?
+
+??? question "Reveal answer"
+
+    **Short Answer:** With Open Session in View disabled (`spring.jpa.open-in-view: false`), the `EntityManager` closes when the service transaction commits. Entities become detached; accessing lazy associations in the controller or serialization layer throws `LazyInitializationException`. Adding `@Transactional` only to `service.getOrder()` does not fix it because the transaction ends before the controller accesses the items.
+
+    **Deep Explanation:** In Spring applications with OSIV disabled, persistence context lifetime matches transaction boundary. When an entity is returned from a transactional service method, its session closes and database connection returns to the pool. When `order.getItems()` is accessed afterwards, Hibernate has no open session to execute the lazy SQL query.
+
+    **Internal Mechanism:** Bytecode-enhanced or CGLIB entity proxies check `session.isOpen()`; if null or disconnected, the proxy throws `LazyInitializationException: could not initialize proxy - no Session`.
+
+    **Example:** [OSIV disabled lazy loading](/topics/jpa-hibernate/concepts.md#1-entity-lifecycle-states).
+
+    **Common Mistake:** Enabling OSIV (`spring.jpa.open-in-view: true`) as a quick workaround, which holds database connections hostage during view rendering and causes connection pool starvation.
+
+    **Production Consideration:** For read-only endpoints, perform DTO mapping inside the transactional service boundary using `JOIN FETCH` / `@EntityGraph`, or query constructor DTO expressions directly (`SELECT new com.example.OrderResponse(...)`) to bypass entity state loading completely.
+
+    **Follow-up Questions:**
+    - How does transaction boundary scoping interact with HikariCP connection borrowing? See [Spring Transactions: Proxy Mechanism](/topics/spring-transactions/questions.md#1-how-does-springs-transactional-annotation-work-under-the-hood-and-why-does-self-invocation-bypass-it)
+    - How do DTO projections prevent Mass Assignment and serialization recursion? See [REST API: DTO Validation](/topics/rest-api/questions.md#16-what-is-mass-assignment-vulnerability-cwe-915-and-how-do-dtos-prevent-it)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/08-jpa-hibernate/src/examples/java/lab/jpahibernate/questions/Q26OsivDisabledLazyLoadingExample.java"
+        ```
+
+### 27. Why is combining JOIN FETCH on a to-many association with pagination dangerous, and how do you redesign it using two-phase ID pagination or batch fetching?
+
+??? question "Reveal answer"
+
+    **Short Answer:** A `JOIN FETCH` on `@OneToMany` collection multiplies each root row into multiple SQL join rows. Applying database `LIMIT` and `OFFSET` directly would slice across child items instead of distinct parent entities. Hibernate prevents incorrect results by in-memory pagination with warning `HHH000104`, loading all rows into heap memory and risking `OutOfMemoryError`.
+
+    **Deep Explanation:** If there are 100 orders, each with 10 items, joining produces 1,000 SQL rows. If `Pageable` requests page size 20, database `LIMIT 20` would return only 2 complete orders (20 item rows), completely corrupting pagination counts. Hibernate detects `firstResult`/`maxResults` on a collection fetch, emits `HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!`, and fetches all 1,000 rows into RAM.
+
+    **Internal Mechanism:** SQL row multiplicity prevents mapping SQL limits to entity counts without subqueries.
+
+    **Example:** [Join fetch pagination hazard](/topics/jpa-hibernate/concepts.md#3-association-mappings-and-fetch-defaults).
+
+    **Common Mistake:** Ignoring `HHH000104` warnings in development with small test datasets, only to encounter catastrophic JVM heap exhaustion when table volume grows in production.
+
+    **Production Consideration:** Use **Two-Phase ID Pagination**: first query a page of parent IDs (`SELECT o.id FROM Order o ORDER BY o.id DESC`), then fetch orders and items via `WHERE o.id IN (:ids)`. Alternatively, use `@BatchSize(size = 20)` or `hibernate.default_batch_fetch_size: 20` to eliminate N+1 queries while preserving standard pagination.
+
+    **Follow-up Questions:**
+    - How does Keyset pagination optimize large-scale pagination over OFFSET pagination? See [Database / SQL: Keyset Pagination](/topics/database-sql/questions.md#15-why-does-offset-pagination-fail-at-scale-and-how-does-keyset-pagination-resolve-it)
+    - How does Hibernate batch fetching group collection loads across multiple entities? See [JPA / Hibernate: N+1 Problem](/topics/jpa-hibernate/questions.md#10-what-causes-the-n1-query-problem-and-how-is-it-resolved)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/08-jpa-hibernate/src/examples/java/lab/jpahibernate/questions/Q27JoinFetchPaginationHazardExample.java"
+        ```
+
+### 28. How does Hibernate StatelessSession process large datasets without First-Level Cache overhead or dirty checking?
+
+??? question "Reveal answer"
+
+    **Short Answer:** `StatelessSession` provides a command-oriented API that bypasses the First-Level Cache (persistence context), automatic dirty checking, cascading, and the Second-Level Cache, streaming database rows directly at native JDBC speeds.
+
+    **Deep Explanation:** In standard `Session`, every loaded entity is tracked in the First-Level Cache identity map. For millions of rows, memory consumption explodes unless manually flushed and cleared. `StatelessSession` does not maintain an identity map or snapshot entity state; calling `session.update()` immediately issues raw SQL `UPDATE` without dirty checking.
+
+    **Internal Mechanism:** `StatelessSessionImpl` bypasses the persistence context action queue and manages JDBC statements directly through `ConnectionProvider`.
+
+    **Example:** [StatelessSession batch processing](/topics/jpa-hibernate/concepts.md#1-entity-lifecycle-states).
+
+    **Common Mistake:** Expecting `@OneToMany` cascades or automatic dirty checking to work inside `StatelessSession`; all operations must be invoked explicitly.
+
+    **Production Consideration:** Use `StatelessSession` for batch ETL pipelines, data migrations, and large analytical export jobs where ORM persistence context overhead provides no value.
+
+    **Follow-up Questions:**
+    - How do CTEs and recursive SQL queries process hierarchical datasets directly in the database engine? See [Database / SQL: CTEs and Hierarchical Queries](/topics/database-sql/questions.md#20-when-should-you-use-common-table-expressions-ctes-and-recursive-queries)
+    - What JVM GC tuning and heap sizing strategies prevent memory fragmentation during large batch streaming? See [JVM: Memory Layout and Sizing](/topics/jvm/questions.md#3-how-is-jvm-memory-divided-between-stack-and-heap)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/08-jpa-hibernate/src/examples/java/lab/jpahibernate/questions/Q28StatelessSessionBatchStreamingExample.java"
+        ```
+
 <!-- --8<-- [end:senior] -->
 
 <!-- --8<-- [start:scenarios] -->
@@ -268,4 +380,61 @@
         ```java
         --8<-- "modules/08-jpa-hibernate/src/examples/java/lab/jpahibernate/questions/Q23MultipleBagFetchExceptionMigration.java"
         ```
+
+### 29. Production Incident: Batch processing job crashes with OutOfMemoryError due to un-cleared PersistenceContext
+
+??? question "Reveal answer"
+
+    **Short Answer:** A nighttime batch processing job iterating over 500,000 database records in a single `@Transactional` method caused JVM heap memory exhaustion (`OutOfMemoryError: Java heap space`) because all loaded entities remained permanently managed in the First-Level Cache.
+
+    **Deep Explanation:** In JPA, the `EntityManager` acts as an identity map. Every entity read during a transaction stays in memory until the transaction terminates so Hibernate can perform dirty checking. Reading 500,000 entities retains 500,000 object graphs in RAM simultaneously.
+
+    **Internal Mechanism:** `StatefulPersistenceContext.entitiesByKey` holds strong references to all managed entities and their snapshot hydration arrays.
+
+    **Example:** [PersistenceContext batch memory leak](/topics/jpa-hibernate/code-review.md).
+
+    **Common Mistake:** Sizing JVM heap (`-Xmx`) larger, which merely postpones the OOM crash and increases Stop-The-World garbage collection pause times.
+
+    **Production Consideration:** Implement chunk-based processing with periodic `em.flush()` (sending pending SQL writes to the socket) followed immediately by `em.clear()` (evicting all managed entities from the 1st-level cache), or execute the batch job via `StatelessSession`.
+
+    **Follow-up Questions:**
+    - How do heap dumps and memory profiling tools identify large PersistenceContext object graphs? See [JVM: Memory Error Taxonomy](/topics/jvm/questions.md#8-what-are-the-different-types-and-causes-of-outofmemoryerror)
+    - How does Spring Batch implement chunk-oriented processing with commit intervals? See [Spring Boot: Starters and Batch](/topics/spring-boot/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/08-jpa-hibernate/src/examples/java/lab/jpahibernate/questions/Q29PersistenceContextBatchLeakScenarioExample.java"
+        ```
+
+### 30. Production Incident: Flash sale concurrent orders oversell inventory due to un-synchronized check-then-act queries
+
+??? question "Reveal answer"
+
+    **Short Answer:** During a flash sale with 1 remaining item, two concurrent user checkout requests read `stock = 1` simultaneously using standard `SELECT`; both verified stock availability, and both issued `UPDATE item SET stock = stock - 1`, resulting in `stock = -1` (inventory oversold!).
+
+    **Deep Explanation:** Standard relational queries execute under Read Committed isolation, which does not prevent non-repeatable reads or concurrent phantom updates across transactions without row-level locking. Under high concurrency, reading before updating is an anti-pattern known as "check-then-act race condition".
+
+    **Internal Mechanism:** Without explicit locking, transaction A and transaction B both read the committed row snapshot concurrently; both pass validation and write updates.
+
+    **Example:** [Concurrent inventory reservation](/topics/jpa-hibernate/code-review.md).
+
+    **Common Mistake:** Wrapping the Java method in `synchronized`, which fails across multiple application instances and Kubernetes pods behind a load balancer.
+
+    **Production Consideration:** Use atomic conditional SQL:
+    ```sql
+    UPDATE item SET stock = stock - :qty WHERE id = :id AND stock >= :qty
+    ```
+    If updating entity aggregates, use `@Version` optimistic locking (retrying on `OptimisticLockException`) or `LockModeType.PESSIMISTIC_WRITE` (`SELECT ... FOR UPDATE`).
+
+    **Follow-up Questions:**
+    - What differences exist between `SELECT FOR UPDATE`, `NOWAIT`, and `SKIP LOCKED` in PostgreSQL? See [Database / SQL: Locking Hierarchy](/topics/database-sql/questions.md#13-what-is-the-difference-between-select-for-update-nowait-and-skip-locked)
+    - How do atomic CAS primitives prevent race conditions in in-memory concurrency? See [Concurrency: Atomic Variables and CAS](/topics/concurrency/questions.md#10-how-do-atomic-variables-and-compare-and-swap-cas-work-and-how-is-the-aba-problem-prevented)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/08-jpa-hibernate/src/examples/java/lab/jpahibernate/questions/Q30InventoryOversellingScenarioExample.java"
+        ```
+
 <!-- --8<-- [end:scenarios] -->
