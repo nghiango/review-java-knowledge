@@ -13,20 +13,20 @@ public final class Q28AsyncTimeoutHandlingExample {
         DeferredResult<ResponseEntity<String>> result = new DeferredResult<>(5000L);
 
         // onTimeout callback invoked if the asynchronous thread does not complete before 5000ms:
-        result.onTimeout(() -> {
-            result.setErrorResult(
-                ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT)
-                    .body("{\"error\":\"Request timed out after 5000ms\"}")
-            );
-        });
+        result.onTimeout(
+                () -> {
+                    result.setErrorResult(
+                            ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT)
+                                    .body("{\"error\":\"Request timed out after 5000ms\"}"));
+                });
 
         // onError callback handles uncaught exceptions from worker threads:
-        result.onError((Throwable t) -> {
-            result.setErrorResult(
-                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("{\"error\":\"Internal worker error\"}")
-            );
-        });
+        result.onError(
+                (Throwable t) -> {
+                    result.setErrorResult(
+                            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                    .body("{\"error\":\"Internal worker error\"}"));
+                });
 
         return result;
     }

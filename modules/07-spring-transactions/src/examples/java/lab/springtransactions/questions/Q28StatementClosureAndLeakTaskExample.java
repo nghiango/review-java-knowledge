@@ -27,7 +27,8 @@ public final class Q28StatementClosureAndLeakTaskExample {
         public String evaluateLeak(long heldDurationMs) {
             if (!returned.get() && heldDurationMs > leakThresholdMs) {
                 return "Apparent connection leak detected for connection held longer than "
-                    + leakThresholdMs + "ms! Allocation stack trace captured.";
+                        + leakThresholdMs
+                        + "ms! Allocation stack trace captured.";
             }
             return "OK";
         }

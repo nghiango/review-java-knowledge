@@ -7,6 +7,7 @@ public final class Q26OsivDisabledLazyLoadingExample {
     private Q26OsivDisabledLazyLoadingExample() {}
 
     public record OrderItemDto(String name, int quantity) {}
+
     public record OrderResponse(Long id, List<OrderItemDto> items) {}
 
     // Simulated Entity state
@@ -20,12 +21,16 @@ public final class Q26OsivDisabledLazyLoadingExample {
             this.items = items;
         }
 
-        public Long getId() { return id; }
+        public Long getId() {
+            return id;
+        }
 
         public List<OrderItemDto> getItems() {
             if (!sessionOpen) {
-                // With spring.jpa.open-in-view: false, accessing lazy collection outside transaction throws:
-                throw new RuntimeException("LazyInitializationException: could not initialize proxy - no Session");
+                // With spring.jpa.open-in-view: false, accessing lazy collection outside
+                // transaction throws:
+                throw new RuntimeException(
+                        "LazyInitializationException: could not initialize proxy - no Session");
             }
             return items;
         }
@@ -35,13 +40,15 @@ public final class Q26OsivDisabledLazyLoadingExample {
         }
     }
 
-    // Solution 1: Map entity to DTO INSIDE the transactional service boundary using JOIN FETCH / EntityGraph
+    // Solution 1: Map entity to DTO INSIDE the transactional service boundary using JOIN FETCH /
+    // EntityGraph
     public static class TransactionalOrderService {
         public OrderResponse getOrderAsDto(OrderEntity entity) {
             // Transaction is active; accessing lazy collection initializes it cleanly:
-            List<OrderItemDto> dtos = entity.getItems().stream()
-                .map(item -> new OrderItemDto(item.name(), item.quantity()))
-                .toList();
+            List<OrderItemDto> dtos =
+                    entity.getItems().stream()
+                            .map(item -> new OrderItemDto(item.name(), item.quantity()))
+                            .toList();
 
             // Session closes when transaction commits:
             entity.closeSession();
@@ -56,6 +63,7 @@ public final class Q26OsivDisabledLazyLoadingExample {
         TransactionalOrderService service = new TransactionalOrderService();
 
         OrderResponse response = service.getOrderAsDto(entity);
-        boolean success = response.items().size() == 1; // true (DTO mapping safely completed within tx)
+        boolean success =
+                response.items().size() == 1; // true (DTO mapping safely completed within tx)
     }
 }

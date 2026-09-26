@@ -11,11 +11,11 @@
 | 03 | Concurrency | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 04 | Spring Core | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 05 | Spring Boot | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 06 | Spring MVC | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 07 | Spring Transactions | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 08 | JPA / Hibernate | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 09 | Database / SQL | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 10 | REST API | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 06 | Spring MVC | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 07 | Spring Transactions | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 08 | JPA / Hibernate | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 09 | Database / SQL | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 10 | REST API | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 11 | Spring Security | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 12 | Testing | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 13 | Caching / Redis | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -42,7 +42,7 @@
 | Batch | Modules | Target | Questions Added | Status |
 |---|---|---|---|---|
 | **Batch 1** | 01 Core Java, 02 JVM, 03 Concurrency, 04 Spring Core, 05 Spring Boot | 150 (30 each) | +35 (+7 each) | ✅ Complete (30/30 each) |
-| **Batch 2** | 06 Spring MVC, 07 Spring Transactions, 08 JPA/Hibernate, 09 Database/SQL, 10 REST API | 150 (30 each) | Pending | ⬜ Not started (23/30 each) |
+| **Batch 2** | 06 Spring MVC, 07 Spring Transactions, 08 JPA/Hibernate, 09 Database/SQL, 10 REST API | 150 (30 each) | +35 (+7 each) | ✅ Complete (30/30 each) |
 | **Batch 3** | 11 Spring Security, 12 Testing, 13 Caching/Redis, 14 Kafka, 15 RabbitMQ | 150 (30 each) | Pending | ⬜ Not started (23/30 each) |
 | **Batch 4** | 16 AWS Messaging, 17 Distributed Systems, 18 Resilience, 19 Distributed Data Patterns, 20 Spring Cloud | 150 (30 each) | Pending | ⬜ Not started (23/30 each) |
 | **Batch 5** | 21 WebClient/WebFlux, 22 Observability, 23 Performance, 24 Docker, 25 AWS | 150 (30 each) | Pending | ⬜ Not started (23/30 each) |

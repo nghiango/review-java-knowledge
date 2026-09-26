@@ -1,7 +1,6 @@
 package lab.springtransactions.questions;
 
 import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @SuppressWarnings("unused")
 public final class Q24SynchronizationCallbackPhasesExample {
@@ -12,13 +11,15 @@ public final class Q24SynchronizationCallbackPhasesExample {
 
         @Override
         public void beforeCommit(boolean readOnly) {
-            // Invoked before SQL COMMIT; any exception thrown here causes the transaction to roll back!
+            // Invoked before SQL COMMIT; any exception thrown here causes the transaction to roll
+            // back!
         }
 
         @Override
         public void afterCommit() {
             // Invoked strictly AFTER the underlying database transaction commits successfully.
-            // Ideal for non-transactional side-effects (e.g. sending emails, enqueuing message broker tasks).
+            // Ideal for non-transactional side-effects (e.g. sending emails, enqueuing message
+            // broker tasks).
             this.eventStatus = "COMMITTED";
         }
 

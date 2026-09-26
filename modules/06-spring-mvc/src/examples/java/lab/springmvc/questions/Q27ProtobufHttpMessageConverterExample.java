@@ -1,7 +1,6 @@
 package lab.springmvc.questions;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpOutputMessage;
@@ -28,7 +27,8 @@ public final class Q27ProtobufHttpMessageConverterExample {
 
     // Custom HttpMessageConverter registered in WebMvcConfigurer.extendMessageConverters:
     public static class BinaryPayloadConverter extends AbstractHttpMessageConverter<BinaryPayload> {
-        public static final MediaType APPLICATION_BINARY = new MediaType("application", "x-custom-binary");
+        public static final MediaType APPLICATION_BINARY =
+                new MediaType("application", "x-custom-binary");
 
         public BinaryPayloadConverter() {
             super(APPLICATION_BINARY);
@@ -40,7 +40,8 @@ public final class Q27ProtobufHttpMessageConverterExample {
         }
 
         @Override
-        protected BinaryPayload readInternal(Class<? extends BinaryPayload> clazz, HttpInputMessage inputMessage)
+        protected BinaryPayload readInternal(
+                Class<? extends BinaryPayload> clazz, HttpInputMessage inputMessage)
                 throws IOException, HttpMessageNotReadableException {
             byte[] bytes = inputMessage.getBody().readAllBytes();
             return new BinaryPayload(bytes);
@@ -56,6 +57,7 @@ public final class Q27ProtobufHttpMessageConverterExample {
     public static void main(String[] args) {
         BinaryPayloadConverter converter = new BinaryPayloadConverter();
         List<MediaType> supported = converter.getSupportedMediaTypes();
-        boolean supportsBinary = supported.contains(BinaryPayloadConverter.APPLICATION_BINARY); // true
+        boolean supportsBinary =
+                supported.contains(BinaryPayloadConverter.APPLICATION_BINARY); // true
     }
 }

@@ -15,7 +15,8 @@ public final class Q24HibernateActionQueueOrderingExample {
     // 5. CollectionRecreateAction
     // 6. EntityDeleteAction
     //
-    // Critical pitfall: Because Inserts execute BEFORE Deletes, if you remove an entity with a UNIQUE key
+    // Critical pitfall: Because Inserts execute BEFORE Deletes, if you remove an entity with a
+    // UNIQUE key
     // and insert a new entity with the same UNIQUE key in the same transaction, Hibernate attempts
     // the INSERT before the DELETE, triggering a Unique Constraint Violation in the database!
     public static class ActionQueueOrderSimulator {

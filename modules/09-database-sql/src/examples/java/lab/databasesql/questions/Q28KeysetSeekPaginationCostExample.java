@@ -6,11 +6,14 @@ public final class Q28KeysetSeekPaginationCostExample {
 
     public static class PaginationComparison {
         // Flawed: OFFSET 1000000 LIMIT 20
-        // Reads 1,000,020 rows from disk/index, parses their visibility, and discards 1,000,000 rows!
+        // Reads 1,000,020 rows from disk/index, parses their visibility, and discards 1,000,000
+        // rows!
         // Execution time increases linearly with page depth (seconds to minutes on large tables).
         public static String generateOffsetQuery(int offset, int limit) {
             return "SELECT id, title, created_at FROM articles ORDER BY created_at DESC, id DESC LIMIT "
-                + limit + " OFFSET " + offset;
+                    + limit
+                    + " OFFSET "
+                    + offset;
         }
 
         // Production Keyset Pagination (Seek method):
@@ -32,6 +35,7 @@ public final class Q28KeysetSeekPaginationCostExample {
         boolean hasOffset = offsetSql.contains("OFFSET 100000"); // true (O(N) cost)
 
         String keysetSql = PaginationComparison.generateKeysetQuery(20);
-        boolean isConstantTime = keysetSql.contains("WHERE (created_at, id) <"); // true (O(1) seek cost)
+        boolean isConstantTime =
+                keysetSql.contains("WHERE (created_at, id) <"); // true (O(1) seek cost)
     }
 }

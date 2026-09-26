@@ -14,30 +14,42 @@ public final class Q30JsonCircularReferenceScenarioExample {
     public static class Department {
         private String name;
 
-        @JsonManagedReference
-        private List<Employee> employees = new ArrayList<>();
+        @JsonManagedReference private List<Employee> employees = new ArrayList<>();
 
-        public Department(String name) { this.name = name; }
-        public String getName() { return name; }
-        public List<Employee> getEmployees() { return employees; }
+        public Department(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public List<Employee> getEmployees() {
+            return employees;
+        }
     }
 
     // Child entity with back-reference pointing back to parent:
-    // Without @JsonBackReference, Jackson attempts to serialize department -> employees -> department -> ...
+    // Without @JsonBackReference, Jackson attempts to serialize department -> employees ->
+    // department -> ...
     // resulting in infinite recursion and a 500 Internal Server Error (or StackOverflowError)!
     public static class Employee {
         private String name;
 
-        @JsonBackReference
-        private Department department;
+        @JsonBackReference private Department department;
 
         public Employee(String name, Department department) {
             this.name = name;
             this.department = department;
         }
 
-        public String getName() { return name; }
-        public Department getDepartment() { return department; }
+        public String getName() {
+            return name;
+        }
+
+        public Department getDepartment() {
+            return department;
+        }
     }
 
     public static void main(String[] args) throws Exception {
@@ -48,7 +60,8 @@ public final class Q30JsonCircularReferenceScenarioExample {
         ObjectMapper mapper = new ObjectMapper();
         String json = mapper.writeValueAsString(dept);
 
-        // Circular loop is broken: department contains employee, but employee's department field is omitted:
+        // Circular loop is broken: department contains employee, but employee's department field is
+        // omitted:
         boolean serialized = json.contains("Engineering") && json.contains("Alice"); // true
     }
 }

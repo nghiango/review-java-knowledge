@@ -8,10 +8,13 @@ public final class Q25SecondLevelCacheRegionsExample {
     private Q25SecondLevelCacheRegionsExample() {}
 
     // Hibernate 2nd Level Cache (L2C) partitions into 4 distinct cache regions:
-    // 1. Entity Cache: Stores dehydrated entity state (array of disassembled property values) keyed by @Id
-    // 2. Collection Cache: Stores list of foreign key @Id values for associations, NOT full entities
+    // 1. Entity Cache: Stores dehydrated entity state (array of disassembled property values) keyed
+    // by @Id
+    // 2. Collection Cache: Stores list of foreign key @Id values for associations, NOT full
+    // entities
     // 3. NaturalId Cache: Maps business key / natural ID values to primary keys (@Id)
-    // 4. Query Cache: Stores query parameter hash -> list of matching @Id results (requires Entity cache to rehydrate)
+    // 4. Query Cache: Stores query parameter hash -> list of matching @Id results (requires Entity
+    // cache to rehydrate)
     public static class CacheRegionsSimulator {
         private final Map<Long, Object[]> entityRegion = new HashMap<>();
         private final Map<String, Long[]> queryRegion = new HashMap<>();
@@ -27,7 +30,8 @@ public final class Q25SecondLevelCacheRegionsExample {
         }
 
         public boolean isQueryCacheValid(long cachedTimestamp) {
-            // Any INSERT, UPDATE, or DELETE on the underlying table increments tableModificationTimestamp,
+            // Any INSERT, UPDATE, or DELETE on the underlying table increments
+            // tableModificationTimestamp,
             // immediately invalidating ALL query cache results referencing that entity table!
             return cachedTimestamp >= tableModificationTimestamp;
         }

@@ -18,9 +18,11 @@ public final class Q29PartialCommitSilentFailureScenarioExample {
 
         public void commit() {
             if (rollbackOnly) {
-                // If a participating sub-transaction marked the physical transaction as rollbackOnly,
+                // If a participating sub-transaction marked the physical transaction as
+                // rollbackOnly,
                 // and the outer caller tries to commit, Spring throws UnexpectedRollbackException!
-                throw new RuntimeException("UnexpectedRollbackException: Transaction marked as rollbackOnly");
+                throw new RuntimeException(
+                        "UnexpectedRollbackException: Transaction marked as rollbackOnly");
             }
             this.committed = true;
         }

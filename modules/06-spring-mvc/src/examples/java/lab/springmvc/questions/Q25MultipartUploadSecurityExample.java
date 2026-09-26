@@ -12,14 +12,18 @@ public final class Q25MultipartUploadSecurityExample {
 
     public record UploadValidationResult(boolean valid, String reason) {}
 
-    public static UploadValidationResult validateUploadedFile(String originalFilename, long sizeBytes, String contentType) {
+    public static UploadValidationResult validateUploadedFile(
+            String originalFilename, long sizeBytes, String contentType) {
         if (originalFilename == null || originalFilename.isBlank()) {
             return new UploadValidationResult(false, "Filename cannot be empty");
         }
 
         // 1. Path traversal protection: block filenames containing relative paths
-        if (originalFilename.contains("..") || originalFilename.contains("/") || originalFilename.contains("\\")) {
-            return new UploadValidationResult(false, "Path traversal sequence detected in filename");
+        if (originalFilename.contains("..")
+                || originalFilename.contains("/")
+                || originalFilename.contains("\\")) {
+            return new UploadValidationResult(
+                    false, "Path traversal sequence detected in filename");
         }
 
         // 2. Strict file size bound
@@ -38,10 +42,12 @@ public final class Q25MultipartUploadSecurityExample {
     }
 
     public static void main(String[] args) {
-        UploadValidationResult malicious = validateUploadedFile("../../etc/passwd.jpg", 1024, "image/jpeg");
+        UploadValidationResult malicious =
+                validateUploadedFile("../../etc/passwd.jpg", 1024, "image/jpeg");
         boolean rejected = !malicious.valid(); // true (path traversal detected)
 
-        UploadValidationResult valid = validateUploadedFile("statement.pdf", 2048, "application/pdf");
+        UploadValidationResult valid =
+                validateUploadedFile("statement.pdf", 2048, "application/pdf");
         boolean accepted = valid.valid(); // true
     }
 }

@@ -1,7 +1,5 @@
 package lab.jpahibernate.questions;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 @SuppressWarnings("unused")
 public final class Q30InventoryOversellingScenarioExample {
     private Q30InventoryOversellingScenarioExample() {}
@@ -24,7 +22,8 @@ public final class Q30InventoryOversellingScenarioExample {
         // Solution 2: Optimistic Locking simulation (@Version)
         public synchronized void updateWithVersion(int quantity, int readVersion) {
             if (readVersion != this.version) {
-                throw new RuntimeException("OptimisticLockException: Row was updated or deleted by another transaction");
+                throw new RuntimeException(
+                        "OptimisticLockException: Row was updated or deleted by another transaction");
             }
             if (this.stock < quantity) {
                 throw new IllegalStateException("Insufficient inventory");
@@ -33,7 +32,9 @@ public final class Q30InventoryOversellingScenarioExample {
             this.version++;
         }
 
-        public int getStock() { return stock; }
+        public int getStock() {
+            return stock;
+        }
     }
 
     public static void main(String[] args) {

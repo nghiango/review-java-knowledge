@@ -11,16 +11,23 @@ public final class Q25IetfIdempotencyKeySpecExample {
     // In-memory simulation of IETF Idempotency-Key storage:
     // When a POST request arrives with header "Idempotency-Key":
     // 1. If key not seen: process request, store (status, body, requestHash), and return response.
-    // 2. If key seen with matching requestHash: return cached response immediately without re-executing business logic.
-    // 3. If key seen with DIFFERENT requestHash: reject with HTTP 422 Unprocessable Entity (Idempotency Key Conflict)!
+    // 2. If key seen with matching requestHash: return cached response immediately without
+    // re-executing business logic.
+    // 3. If key seen with DIFFERENT requestHash: reject with HTTP 422 Unprocessable Entity
+    // (Idempotency Key Conflict)!
     public static class IdempotencyManager {
         private final ConcurrentHashMap<String, CachedResponse> store = new ConcurrentHashMap<>();
 
         public CachedResponse handleRequest(String idempotencyKey, String payloadHash) {
-            return store.computeIfAbsent(idempotencyKey, key -> {
-                // Execute business logic:
-                return new CachedResponse(201, "{\"orderId\":\"ord-456\",\"status\":\"CREATED\"}", payloadHash);
-            });
+            return store.computeIfAbsent(
+                    idempotencyKey,
+                    key -> {
+                        // Execute business logic:
+                        return new CachedResponse(
+                                201,
+                                "{\"orderId\":\"ord-456\",\"status\":\"CREATED\"}",
+                                payloadHash);
+                    });
         }
     }
 

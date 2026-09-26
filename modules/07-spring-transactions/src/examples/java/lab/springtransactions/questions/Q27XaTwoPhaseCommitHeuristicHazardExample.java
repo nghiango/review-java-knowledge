@@ -12,7 +12,8 @@ public final class Q27XaTwoPhaseCommitHeuristicHazardExample {
     }
 
     // Heuristic hazard simulation:
-    // In Phase 1 (Prepare), Participant A and Participant B both vote YES and acquire pessimistic locks.
+    // In Phase 1 (Prepare), Participant A and Participant B both vote YES and acquire pessimistic
+    // locks.
     // In Phase 2 (Commit), the Transaction Coordinator commits Participant A, but a network split
     // prevents the commit message from reaching Participant B.
     // Participant B eventually hits a heuristic timeout and unilaterally rolls back, leaving data
@@ -20,7 +21,8 @@ public final class Q27XaTwoPhaseCommitHeuristicHazardExample {
     public static class XaCoordinatorSimulation {
         public XaPhaseOutcome resolveSplitBrain(boolean networkPartition) {
             if (networkPartition) {
-                // Heuristic Hazard: coordinator cannot determine whether participant committed or rolled back!
+                // Heuristic Hazard: coordinator cannot determine whether participant committed or
+                // rolled back!
                 return XaPhaseOutcome.HEURISTIC_HAZARD;
             }
             return XaPhaseOutcome.PREPARED;

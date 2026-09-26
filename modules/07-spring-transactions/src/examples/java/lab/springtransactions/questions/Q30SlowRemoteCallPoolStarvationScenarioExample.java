@@ -23,14 +23,17 @@ public final class Q30SlowRemoteCallPoolStarvationScenarioExample {
             availableConnections.incrementAndGet();
         }
 
-        public int getAvailable() { return availableConnections.get(); }
+        public int getAvailable() {
+            return availableConnections.get();
+        }
     }
 
     // Problematic pattern: remote call executed inside database transaction boundary
     public static void executeFlawedPattern(ConnectionPool pool) {
         boolean borrowed = pool.borrowConnection(); // Connection acquired!
         try {
-            // UNTIMED HTTP CALL: Thread sits idle waiting on external payment gateway response for 5 seconds.
+            // UNTIMED HTTP CALL: Thread sits idle waiting on external payment gateway response for
+            // 5 seconds.
             // The JDBC connection is completely blocked and unusable by any other request!
             simulateExternalCall();
         } finally {

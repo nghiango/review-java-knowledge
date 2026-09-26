@@ -10,10 +10,13 @@ public final class Q27JoinFetchPaginationHazardExample {
     public record OrderSummary(Long id, int itemCount) {}
 
     // Problem Demonstration:
-    // When executing `@Query("SELECT o FROM Order o JOIN FETCH o.items") Page<Order> findAllWithItems(Pageable p)`
+    // When executing `@Query("SELECT o FROM Order o JOIN FETCH o.items") Page<Order>
+    // findAllWithItems(Pageable p)`
     // The SQL join multiplies 100 Orders with 10 items each into 1,000 SQL rows.
-    // Database LIMIT 20 OFFSET 0 would return only 2 Orders (with 10 items each = 20 rows), NOT 20 distinct Orders!
-    // Therefore, Hibernate emits HHH000104 and loads all 1,000 rows into JVM memory to paginate in heap memory.
+    // Database LIMIT 20 OFFSET 0 would return only 2 Orders (with 10 items each = 20 rows), NOT 20
+    // distinct Orders!
+    // Therefore, Hibernate emits HHH000104 and loads all 1,000 rows into JVM memory to paginate in
+    // heap memory.
     public static class PaginationHazardSimulator {
         public static String explainHibernateWarning() {
             return "HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!";
@@ -33,7 +36,9 @@ public final class Q27JoinFetchPaginationHazardExample {
         // Phase 2: Fetch Orders and items using IN clause without pagination:
         public static String buildSecondPhaseQuery(List<Long> ids) {
             // SELECT DISTINCT o FROM Order o JOIN FETCH o.items WHERE o.id IN (:ids)
-            return "SELECT DISTINCT o FROM Order o JOIN FETCH o.items WHERE o.id IN (" + ids.size() + " ids)";
+            return "SELECT DISTINCT o FROM Order o JOIN FETCH o.items WHERE o.id IN ("
+                    + ids.size()
+                    + " ids)";
         }
     }
 

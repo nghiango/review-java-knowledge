@@ -11,7 +11,8 @@ public final class Q24StreamingResponseBodyExample {
     private Q24StreamingResponseBodyExample() {}
 
     // StreamingResponseBody allows writing directly to the client's HTTP response OutputStream
-    // asynchronously on an application task thread, without buffering the entire payload in heap memory.
+    // asynchronously on an application task thread, without buffering the entire payload in heap
+    // memory.
     public static StreamingResponseBody streamReportData() {
         return (OutputStream outputStream) -> {
             for (int i = 1; i <= 3; i++) {

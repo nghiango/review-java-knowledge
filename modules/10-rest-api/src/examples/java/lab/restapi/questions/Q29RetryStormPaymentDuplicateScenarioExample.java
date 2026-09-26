@@ -8,7 +8,8 @@ public final class Q29RetryStormPaymentDuplicateScenarioExample {
     private Q29RetryStormPaymentDuplicateScenarioExample() {}
 
     public static class PaymentGatewaySimulator {
-        private final ConcurrentHashMap<String, String> processedIdempotencyKeys = new ConcurrentHashMap<>();
+        private final ConcurrentHashMap<String, String> processedIdempotencyKeys =
+                new ConcurrentHashMap<>();
         private final AtomicInteger actualBankCharges = new AtomicInteger(0);
 
         // Without Idempotency-Key: every retry charges the customer credit card!
@@ -18,14 +19,19 @@ public final class Q29RetryStormPaymentDuplicateScenarioExample {
         }
 
         // With Idempotency-Key: subsequent retries return the original transaction receipt
-        public String chargeWithIdempotency(String idempotencyKey, String accountId, int amountCents) {
-            return processedIdempotencyKeys.computeIfAbsent(idempotencyKey, key -> {
-                actualBankCharges.incrementAndGet();
-                return "txn-idempotent-" + actualBankCharges.get();
-            });
+        public String chargeWithIdempotency(
+                String idempotencyKey, String accountId, int amountCents) {
+            return processedIdempotencyKeys.computeIfAbsent(
+                    idempotencyKey,
+                    key -> {
+                        actualBankCharges.incrementAndGet();
+                        return "txn-idempotent-" + actualBankCharges.get();
+                    });
         }
 
-        public int getChargeCount() { return actualBankCharges.get(); }
+        public int getChargeCount() {
+            return actualBankCharges.get();
+        }
     }
 
     public static void main(String[] args) {

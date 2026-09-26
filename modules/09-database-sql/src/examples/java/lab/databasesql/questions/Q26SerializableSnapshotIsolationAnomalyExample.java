@@ -16,12 +16,14 @@ public final class Q26SerializableSnapshotIsolationAnomalyExample {
     public static class WriteSkewSimulator {
         public static String explainSsiProtection() {
             return "PostgreSQL Serializable Snapshot Isolation (SSI) tracks rw-antidependencies via SIREAD locks; "
-                + "detects dangerous cycle in dependency graph and aborts one transaction with SQLSTATE 40001.";
+                    + "detects dangerous cycle in dependency graph and aborts one transaction with SQLSTATE 40001.";
         }
     }
 
     public static void main(String[] args) {
         String explanation = WriteSkewSimulator.explainSsiProtection();
-        boolean detectsCycle = explanation.contains("40001"); // true (serialization failure triggers application retry)
+        boolean detectsCycle =
+                explanation.contains(
+                        "40001"); // true (serialization failure triggers application retry)
     }
 }

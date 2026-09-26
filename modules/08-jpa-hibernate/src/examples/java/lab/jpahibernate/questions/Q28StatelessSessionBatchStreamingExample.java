@@ -19,7 +19,8 @@ public final class Q28StatelessSessionBatchStreamingExample {
 
         public void streamBatch(int count) {
             for (long i = 1; i <= count; i++) {
-                // Instantiates and writes directly to database socket buffer without retaining in heap
+                // Instantiates and writes directly to database socket buffer without retaining in
+                // heap
                 AuditLog log = new AuditLog(i, "AUDIT_EVENT");
                 directStream.add(log);
             }

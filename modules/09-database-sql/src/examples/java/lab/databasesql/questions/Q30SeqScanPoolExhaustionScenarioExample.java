@@ -20,7 +20,8 @@ public final class Q30SeqScanPoolExhaustionScenarioExample {
             try {
                 if (!usesIndexedQuery) {
                     // Full sequential table scan on 10,000,000 rows without index:
-                    // Holds connection for 30+ seconds, reads millions of disk blocks, saturates CPU!
+                    // Holds connection for 30+ seconds, reads millions of disk blocks, saturates
+                    // CPU!
                 }
                 return true;
             } finally {
@@ -32,6 +33,7 @@ public final class Q30SeqScanPoolExhaustionScenarioExample {
     public static void main(String[] args) {
         DatabaseServerSimulator server = new DatabaseServerSimulator();
         boolean queryAccepted = server.simulateRequest(false); // true
-        // If 50 concurrent unindexed queries hit the server simultaneously, all 50 connections become pinned!
+        // If 50 concurrent unindexed queries hit the server simultaneously, all 50 connections
+        // become pinned!
     }
 }

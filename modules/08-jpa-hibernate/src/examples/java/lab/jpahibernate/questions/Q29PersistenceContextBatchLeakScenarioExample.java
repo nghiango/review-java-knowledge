@@ -38,7 +38,8 @@ public final class Q29PersistenceContextBatchLeakScenarioExample {
             }
         }
 
-        int finalCacheSize = em.getCacheSize(); // 0 (all entities successfully detached and freed for GC!)
+        int finalCacheSize =
+                em.getCacheSize(); // 0 (all entities successfully detached and freed for GC!)
         boolean memorySafe = (finalCacheSize == 0); // true
     }
 }
