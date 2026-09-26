@@ -161,6 +161,39 @@
         ```java
         --8<-- "modules/09-database-sql/src/examples/java/lab/databasesql/questions/Q14AdvisoryLocks.java"
         ```
+
+### 24. What are the internal differences and trade-offs between PostgreSQL GIN and GiST indexes?
+
+??? question "Reveal answer"
+
+    **Short Answer:** GIN (Generalized Inverted Index) decomposes composite values into individual elements, mapping each element to a posting list of row IDs; ideal for JSONB containment (`@>`), arrays, and full-text search. GiST (Generalized Search Tree) is a balanced tree of lossy bounding boxes; ideal for geometric coordinates, range types, and nearest-neighbor search.
+
+    **Internal Mechanism:** GIN maintains a B-Tree of distinct element keys with posting trees/lists; writes incur write amplification updating multiple posting lists. GiST uses lossy node predicates (`consistent`), checking matches and re-checking heap tuples via lossy index scans.
+
+    **Common Mistake:** Using standard B-Tree indexes on JSONB columns, which can only evaluate exact JSON equality (`=`) and cannot accelerate sub-document key/value lookups (`@>`). [Concepts](/topics/database-sql/concepts.md#3-covering-partial-and-functional-indexes)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/09-database-sql/src/examples/java/lab/databasesql/questions/Q24GinGistIndexInternalsExample.java"
+        ```
+
+### 25. How does the CTE optimization fence (MATERIALIZED vs NOT MATERIALIZED) affect query plans in PostgreSQL 12+?
+
+??? question "Reveal answer"
+
+    **Short Answer:** In PostgreSQL 12+, CTEs (`WITH` clauses) are inlined into the outer query by default (`NOT MATERIALIZED`), allowing the planner to push down WHERE predicates. Adding `AS MATERIALIZED` forces PostgreSQL to evaluate the CTE in isolation once and buffer results, acting as an intentional optimization fence.
+
+    **Internal Mechanism:** When inlined, the planner merges the CTE subquery into the main query tree, enabling joint index selection. When `MATERIALIZED` is specified, the planner creates a `CTE Scan` plan node, isolating the subquery and preventing outer filter pushdown.
+
+    **Common Mistake:** Using CTEs for code readability in complex reporting queries without realizing that `MATERIALIZED` CTEs prevent outer limit and index pushdowns, resulting in full table scans. [Concepts](/topics/database-sql/concepts.md#3-covering-partial-and-functional-indexes)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/09-database-sql/src/examples/java/lab/databasesql/questions/Q25CteMaterializedOptimizationFenceExample.java"
+        ```
+
 <!-- --8<-- [end:intermediate] -->
 
 <!-- --8<-- [start:senior] -->
@@ -229,6 +262,85 @@
         ```java
         --8<-- "modules/09-database-sql/src/examples/java/lab/databasesql/questions/Q20CommonTableExpressions.java"
         ```
+
+### 26. How does Serializable Snapshot Isolation (SSI) detect Write Skew anomalies without pessimistic row locks?
+
+??? question "Reveal answer"
+
+    **Short Answer:** PostgreSQL Serializable Snapshot Isolation (SSI) detects rw-antidependencies using in-memory `SIREAD` predicate locks. When two concurrent transactions read disjoint sets of rows that satisfy a global invariant and subsequently update different rows, SSI detects a dangerous cycle in the dependency graph and aborts one transaction with SQLSTATE `40001`.
+
+    **Deep Explanation:** In Repeatable Read, transactions view an immutable snapshot of committed data. Under the classic "on-call doctor" write skew scenario (invariant: $\ge 1$ doctor must be active), Doctor A and Doctor B both read `COUNT = 2` concurrently. Both withdraw, updating disjoint rows; both commit successfully, leaving 0 doctors. SSI tracks read dependencies without blocking concurrent readers or writers, failing fast with serialization failures on commit conflicts.
+
+    **Internal Mechanism:** The lock manager registers `SIREAD` locks on tuples, pages, and relations. If a cycle of two consecutive rw-antidependency edges forms between concurrent transactions, PostgreSQL marks one transaction as `doomed` to break the cycle.
+
+    **Example:** [Serializable Snapshot Isolation](/topics/database-sql/concepts.md#5-acid-properties-and-isolation-levels).
+
+    **Common Mistake:** Assuming Repeatable Read prevents all concurrency anomalies; Repeatable Read prevents Phantom Reads and Non-Repeatable Reads, but permits Write Skew.
+
+    **Production Consideration:** When running on `SERIALIZABLE` isolation level, the application layer MUST implement automated retry logic (with exponential backoff and jitter) to catch and replay `40001` serialization failure exceptions.
+
+    **Follow-up Questions:**
+    - How does optimistic locking in JPA compare to database-level SSI serialization retries? See [JPA / Hibernate: Optimistic vs Pessimistic Locking](/topics/jpa-hibernate/questions.md#15-how-do-optimistic-locking-and-pessimistic-locking-differ-in-jpa)
+    - What differences exist between data races, race conditions, and isolation anomalies? See [Concurrency: Core Hazards](/topics/concurrency/questions.md#3-what-is-the-difference-between-a-race-condition-a-data-race-and-an-atomicity-violation)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/09-database-sql/src/examples/java/lab/databasesql/questions/Q26SerializableSnapshotIsolationAnomalyExample.java"
+        ```
+
+### 27. How do you execute zero-downtime database schema refactoring using Expand and Contract with dual-writing views?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Refactor schemas in five decoupled phases: (1) Expand by adding the new column/table as nullable, (2) Deploy application version $N+1$ dual-writing to both columns, (3) Backfill historical rows in small batches, (4) Deploy application version $N+2$ reading from the new column, and (5) Contract by dropping the legacy column.
+
+    **Deep Explanation:** Direct schema changes like `ALTER TABLE users RENAME COLUMN email TO contact_email` acquire an `ACCESS EXCLUSIVE` lock and immediately break currently running instances of the application that expect the old column name, forcing system downtime. The Expand and Contract pattern decouples database migration from application code deployment.
+
+    **Internal Mechanism:** Temporary updatable views or database triggers can be used to mirror writes between old and new columns during Phase 2 if multiple microservices share the underlying database.
+
+    **Example:** [Expand and Contract migrations](/topics/database-sql/concepts.md#1-relational-modeling-and-normalization).
+
+    **Common Mistake:** Backfilling all 100 million historical rows in a single monolithic `UPDATE` statement, generating gigabytes of WAL, holding locks, and saturating replication lag.
+
+    **Production Consideration:** Backfill data using keyset-paginated batches with sleep intervals to minimize lock durations, and run schema validations during low-traffic maintenance windows.
+
+    **Follow-up Questions:**
+    - How do CI/CD pipelines automate zero-downtime Blue/Green and Canary database migrations? See [CI/CD: Deployment Strategies](/topics/ci-cd/questions.md)
+    - How does evolutionary architecture guide schema changes in distributed domain boundaries? See [Architecture: Evolutionary Architecture](/topics/architecture/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/09-database-sql/src/examples/java/lab/databasesql/questions/Q27ZeroDowntimeColumnMigrationExample.java"
+        ```
+
+### 28. How does Keyset seek pagination eliminate O(N) index scanning overhead compared to OFFSET pagination?
+
+??? question "Reveal answer"
+
+    **Short Answer:** `OFFSET N` forces the database engine to traverse, check MVCC visibility, and discard $N$ preceding rows ($O(N)$ execution cost), degrading query latency from milliseconds on page 1 to tens of seconds on page 10,000. Keyset pagination uses indexed tuple comparisons (`WHERE (created_at, id) < (:lastDate, :lastId)`), seeking directly to the next B-Tree leaf node in $O(\log N)$ time with $O(1)$ constant query time.
+
+    **Deep Explanation:** In relational engines, `OFFSET` does not skip rows on disk; it evaluates all offset rows and throws them away. Additionally, concurrent inserts/deletes cause "page drift" where users see duplicate or missed records across pages. Keyset pagination relies on a composite index on `(created_at DESC, id DESC)`, enabling direct index range scans.
+
+    **Internal Mechanism:** The query planner transforms tuple comparisons into a B-Tree search on the first index column, using the second column as a tie-breaker, scanning only the exact number of rows requested by `LIMIT`.
+
+    **Example:** [Keyset pagination query planner cost](/topics/database-sql/concepts.md#6-pagination-patterns-offset-vs-keyset).
+
+    **Common Mistake:** Attempting keyset pagination without a unique tie-breaker column (such as `id`), which causes pagination to skip rows when multiple rows share the exact same timestamp.
+
+    **Production Consideration:** Use keyset pagination for infinite scroll mobile feeds and large public APIs; reserve `OFFSET` only for small administrative tables ($< 1,000$ rows) where random page jumps (`page=5`) are strictly required.
+
+    **Follow-up Questions:**
+    - Why does combining JOIN FETCH on collections with Spring Data Pageable trigger in-memory pagination? See [JPA / Hibernate: JOIN FETCH Pagination Hazard](/topics/jpa-hibernate/questions.md#27-why-is-combining-join-fetch-on-a-to-many-association-with-pagination-dangerous-and-how-do-you-redesign-it-using-two-phase-id-pagination-or-batch-fetching)
+    - How should REST APIs format cursor tokens and pagination response metadata? See [REST API: Pagination Design](/topics/rest-api/questions.md#10-what-are-the-trade-offs-between-offset-based-and-keyset-cursor-pagination)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/09-database-sql/src/examples/java/lab/databasesql/questions/Q28KeysetSeekPaginationCostExample.java"
+        ```
+
 <!-- --8<-- [end:senior] -->
 
 <!-- --8<-- [start:scenarios] -->
@@ -278,4 +390,57 @@
         ```java
         --8<-- "modules/09-database-sql/src/examples/java/lab/databasesql/questions/Q23OnlineLargeTableMigration.java"
         ```
+
+### 29. Production Incident: Autovacuum freeze starvation threatens database shutdown due to transaction ID wraparound
+
+??? question "Reveal answer"
+
+    **Short Answer:** PostgreSQL issued urgent alerts (`WARNING: database "mydb" must be vacuumed within 10000000 transactions; shutdown will occur in ... transactions`). Long-running analytics transactions and unmanaged abandoned replication slots blocked Autovacuum from advancing `relfrozenxid`, bringing the cluster close to emergency read-only shutdown.
+
+    **Deep Explanation:** PostgreSQL uses 32-bit transaction IDs (XIDs) with circular modular comparison. If a table reaches $\approx 2.1$ billion transactions without freezing old tuples, old committed transactions would appear to be in the future, destroying ACID visibility. To prevent data corruption, PostgreSQL forcibly halts all write transactions when XID age reaches `autovacuum_freeze_max_age`.
+
+    **Internal Mechanism:** An old transaction or stalled replication slot pins the cluster's global `xmin` horizon, preventing Autovacuum from cleaning dead tuples or freezing XIDs.
+
+    **Example:** [Autovacuum wraparound risk](/topics/database-sql/code-review.md).
+
+    **Common Mistake:** Terminating Autovacuum workers because they consume disk I/O, which only accelerates the timeline toward catastrophic database shutdown.
+
+    **Production Consideration:** Terminate blocking queries via `pg_terminate_backend()`, drop inactive replication slots, run aggressive manual `VACUUM FREEZE ANALYZE`, and configure alerts on `pg_database.age(datfrozenxid) > 150_000_000`.
+
+    **Follow-up Questions:**
+    - How does container volume storage I/O throughput impact database vacuum performance? See [Docker: Storage and Volumes](/topics/docker/questions.md)
+    - What Prometheus and Datadog metrics monitor PostgreSQL transaction age and dead tuple bloat? See [Observability: Database Metrics](/topics/observability/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/09-database-sql/src/examples/java/lab/databasesql/questions/Q29AutovacuumWraparoundScenarioExample.java"
+        ```
+
+### 30. Production Incident: Sudden query pool starvation caused by unindexed sequential scan on a 10-million row table
+
+??? question "Reveal answer"
+
+    **Short Answer:** A new search feature deployed to production lacked an index on a filtered column (`status`). Under peak traffic, 50 concurrent requests executed full table sequential scans on a 10-million row table, pinning database CPU at 100%, causing query duration to jump from 5ms to 45s, and exhausting the HikariCP connection pool across all microservices.
+
+    **Deep Explanation:** In PostgreSQL, a query without a matching index scans every single heap page from disk into buffer cache. When 50 concurrent clients run this scan, disk I/O channels and CPU cores are completely saturated scanning dead and live tuples. Because queries take 45 seconds to finish, connections cannot return to HikariCP, causing connection acquisition timeouts across completely unrelated endpoints.
+
+    **Internal Mechanism:** `EXPLAIN ANALYZE` shows `Seq Scan on orders (cost=0.00..328492.00 rows=100000 width=72) (actual time=45123.120..45230.450 rows=120)`.
+
+    **Example:** [Sequential scan pool exhaustion](/topics/database-sql/code-review.md).
+
+    **Common Mistake:** Sizing HikariCP connection pool larger to absorb the traffic spike; adding connections to a database with 100% CPU only increases lock contention and degrades performance further.
+
+    **Production Consideration:** Terminate long-running sequential scans using `pg_cancel_backend()`, create the missing index online using `CREATE INDEX CONCURRENTLY` (which does not block table writes), and enforce `statement_timeout = '5s'` to prevent rogue queries from exhausting connection pools.
+
+    **Follow-up Questions:**
+    - How does the HikariCP pool sizing formula balance CPU cores against disk spindle concurrency? See [Spring Transactions: HikariCP Pool Sizing](/topics/spring-transactions/questions.md#8-how-should-hikaricp-connection-pools-be-sized-in-production)
+    - How do slow query logs and distributed traces identify database bottlenecks in microservices? See [Performance: Database Query Profiling](/topics/performance/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/09-database-sql/src/examples/java/lab/databasesql/questions/Q30SeqScanPoolExhaustionScenarioExample.java"
+        ```
+
 <!-- --8<-- [end:scenarios] -->
