@@ -164,6 +164,39 @@ Four levels of interview questions covering HTTP protocol semantics, RESTful sta
         ```java
         --8<-- "modules/10-rest-api/src/examples/java/lab/restapi/questions/Q13HateoasHypermedia.java"
         ```
+
+### 24. How does RFC 9457 Problem Details format structured validation errors and custom extension properties?
+
+??? question "Reveal answer"
+
+    **Short Answer:** RFC 9457 specifies standard machine-readable JSON error payloads (`type`, `title`, `status`, `detail`, `instance`). Applications attach custom extension members (e.g. `invalidParams` arrays with field name and reason, `correlationId`, `errorCode`) via `ProblemDetail.setProperty()`.
+
+    **Internal Mechanism:** Jackson serializes `ProblemDetail.getProperties()` as first-class JSON keys at the root of the error object, ensuring standardized client parsing without proprietary envelope wrappers.
+
+    **Common Mistake:** Returning ad-hoc custom error maps or plain text error strings, forcing API consumers to build proprietary exception parsers for every microservice. [Concepts](/topics/rest-api/concepts.md#3-rfc-9457-problem-details-for-http-apis)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/10-rest-api/src/examples/java/lab/restapi/questions/Q24ProblemDetailFieldErrorsExample.java"
+        ```
+
+### 25. What is the IETF Idempotency-Key specification and how does it prevent duplicate mutating operations?
+
+??? question "Reveal answer"
+
+    **Short Answer:** The client generates a unique UUID in the `Idempotency-Key` header for mutating `POST`/`PATCH` requests. The server records the key and request payload hash in a distributed cache; if the client retries after a network timeout, the server replays the original cached response without re-executing the operation.
+
+    **Internal Mechanism:** If a duplicate key arrives with the exact same payload hash, the server returns the cached HTTP response. If the key arrives with a *different* payload hash, the server rejects it with `422 Unprocessable Entity` (Idempotency Key Conflict).
+
+    **Common Mistake:** Relying on client retry logic without server-side idempotency keys for payment or order placement endpoints, causing duplicate financial transactions on network timeouts. [Concepts](/topics/rest-api/concepts.md#4-idempotency-in-mutating-operations)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/10-rest-api/src/examples/java/lab/restapi/questions/Q25IetfIdempotencyKeySpecExample.java"
+        ```
+
 <!-- --8<-- [end:intermediate] -->
 
 <!-- --8<-- [start:senior] -->
@@ -239,6 +272,85 @@ Four levels of interview questions covering HTTP protocol semantics, RESTful sta
         ```java
         --8<-- "modules/10-rest-api/src/examples/java/lab/restapi/questions/Q19ContentNegotiationInternals.java"
         ```
+
+### 26. What are the protocol differences between Strong and Weak ETags and how do they prevent Lost Updates via If-Match?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Strong ETags (`"hash"`) require byte-for-byte exact equality across representations and support byte-range requests. Weak ETags (`W/"hash"`) guarantee semantic equivalence (e.g. gzip-compressed vs uncompressed, or cosmetic JSON whitespace changes). Both prevent Lost Updates when paired with conditional `If-Match` headers.
+
+    **Deep Explanation:** In collaborative editing or resource updates, Client A and Client B read version 1 (`ETag: "v1"`). If Client A sends `PUT` with `If-Match: "v1"`, the server updates the resource to version 2 (`ETag: "v2"`). When Client B later attempts `PUT` with `If-Match: "v1"`, the server rejects it with `412 Precondition Failed`, forcing Client B to fetch the latest state instead of overwriting Client A's changes.
+
+    **Internal Mechanism:** The web server compares the client's `If-Match` header value with the resource's current ETag validator before executing the controller handler method.
+
+    **Example:** [Optimistic concurrency control with ETags](/topics/rest-api/concepts.md#5-http-caching-and-optimistic-concurrency-control).
+
+    **Common Mistake:** Using Weak ETags for byte-range download requests (e.g. video streaming or resume downloads), which is prohibited by RFC 9110.
+
+    **Production Consideration:** Generate Strong ETags using SHA-256 hashes of the canonical database representation or entity `@Version` numbers.
+
+    **Follow-up Questions:**
+    - How do database isolation levels and write skew relate to HTTP conditional updates? See [Database / SQL: Isolation Anomalies](/topics/database-sql/questions.md#9-what-are-the-four-database-isolation-levels-and-their-corresponding-anomalies)
+    - How does Spring MVC support conditional requests with ShallowEtagHeaderFilter? See [Spring MVC: Caching Headers](/topics/spring-mvc/questions.md#16-how-do-http-caching-headers-cache-control-etag-work-in-spring-mvc)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/10-rest-api/src/examples/java/lab/restapi/questions/Q26StrongVsWeakEtagConditionalsExample.java"
+        ```
+
+### 27. When should asynchronous REST APIs use polling status endpoints vs webhook callback delivery?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Polling (`202 Accepted`, `Location: /api/tasks/{id}`, `Retry-After: 30`) is pull-based, client-driven, and works across corporate firewalls without requiring client public IP ingress. Webhooks are push-based, event-driven, and eliminate polling server load, but require client public HTTPS endpoints and HMAC signature verification.
+
+    **Deep Explanation:** For long-running batch jobs (e.g. video transcoding, report generation), returning `202 Accepted` decouples the client from long HTTP connections. If operations take seconds to minutes, polling with exponential backoff is straightforward. For hours-long operations or B2B integrations, Webhooks deliver results immediately upon completion without wasting network bandwidth on thousands of polling requests.
+
+    **Internal Mechanism:** Webhook dispatchers sign payloads with HMAC-SHA256 (`X-Hub-Signature-256`) using a shared secret; the client recalculates the hash to verify authenticity before processing.
+
+    **Example:** [Asynchronous REST operations](/topics/rest-api/questions.md#18-how-do-you-design-asynchronous-long-running-operations-in-rest).
+
+    **Common Mistake:** Implementing webhooks without retry backoff or dead-letter queues, permanently dropping events when client webhooks experience transient downtime.
+
+    **Production Consideration:** Support both: return `202 Accepted` with a polling `Location` URL, while optionally accepting a `callback_url` in the initial request body.
+
+    **Follow-up Questions:**
+    - How does Servlet 3.0+ async processing release container worker threads while long jobs run? See [Spring MVC: Servlet Async Thread Model](/topics/spring-mvc/questions.md#18-how-does-servlet-30-asynchronous-request-processing-decouple-container-worker-threads)
+    - How do circuit breakers protect outgoing webhook delivery services from cascading timeouts? See [Resilience: Fault Tolerance Patterns](/topics/resilience/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/10-rest-api/src/examples/java/lab/restapi/questions/Q27WebhookVsPollingAsyncPatternExample.java"
+        ```
+
+### 28. How does Jackson polymorphic deserialization introduce security vulnerabilities and how do type discriminators fix them?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Using `@JsonTypeInfo(use = Id.CLASS)` or `enableDefaultTyping()` allows JSON payloads to specify arbitrary Java class names (`@class: "org.apache.commons.collections...Gadget"`). Attackers supply malicious gadget classes executed reflectively during deserialization, leading to Remote Code Execution (RCE). Fix by using logical type names (`Id.NAME`) with strict `@JsonSubTypes` whitelists.
+
+    **Deep Explanation:** In polymorphic models (e.g. `Notification` with `EmailNotification` and `SmsNotification`), Jackson needs to know which concrete subclass to instantiate. When configured with class-name typing, Jackson instantiates whatever class the JSON payload specifies. If vulnerable gadget libraries exist on the classpath, deserialization executes arbitrary bytecode.
+
+    **Internal Mechanism:** `Id.NAME` uses logical string tokens (e.g. `"type": "EMAIL"`) mapped to compile-time registered classes in `@JsonSubTypes`, completely rejecting unlisted class names.
+
+    **Example:** [DTO projection and mass assignment](/topics/rest-api/concepts.md#7-security-dto-projection-mass-assignment-prevention).
+
+    **Common Mistake:** Enabling default typing on `ObjectMapper` globally to support generic polymorphic lists in microservices, exposing every endpoint to deserialization gadget attacks.
+
+    **Production Consideration:** Enforce strict type validation using Java records and sealed interface hierarchies with `@JsonTypeInfo(use = Id.NAME)` and `@JsonSubTypes`.
+
+    **Follow-up Questions:**
+    - How do Java serialization filters (`jdk.serialFilter`) defend against legacy RMI gadget chains? See [Core Java: Serialization Security](/topics/core-java/questions.md#6-legacy-java-native-serialization-introduces-remote-code-execution-and-invariant-bypass-risks-how-do-you-safely-eliminate-it)
+    - How does Spring Security authenticate and authorize token payloads before deserialization? See [Spring Security: Authentication](/topics/spring-security/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/10-rest-api/src/examples/java/lab/restapi/questions/Q28PolymorphicDeserializationSecurityExample.java"
+        ```
+
 <!-- --8<-- [end:senior] -->
 
 <!-- --8<-- [start:scenarios] -->
@@ -287,4 +399,57 @@ Four levels of interview questions covering HTTP protocol semantics, RESTful sta
         ```java
         --8<-- "modules/10-rest-api/src/examples/java/lab/restapi/questions/Q23DistributedRateLimitingOutage.java"
         ```
+
+### 29. Production Incident: Payment timeout retry storm causes multi-charge transactions due to missing idempotency keys
+
+??? question "Reveal answer"
+
+    **Short Answer:** A mobile banking client submitted `POST /api/payments/charge`; due to an upstream gateway delay of 3.2 seconds, the client timed out at 3.0 seconds and retried three times. Because the endpoint lacked idempotency controls, all four requests were executed, charging the customer's credit card four times for a single order.
+
+    **Deep Explanation:** In distributed systems, network timeouts are ambiguous: the client does not know whether the request failed before reaching the server, while executing, or while transmitting the response back. Without idempotency enforcement, any retry on a mutating endpoint duplicates the financial transaction.
+
+    **Internal Mechanism:** The payment processing engine executed four separate bank authorization requests because each incoming HTTP request was assigned a new transaction ID.
+
+    **Example:** [Idempotent POST implementation](/topics/rest-api/code-review.md).
+
+    **Common Mistake:** Trusting clients not to retry or attempting deduplication solely by order ID without distributed locking, allowing concurrent retries to execute in parallel.
+
+    **Production Consideration:** Require an `Idempotency-Key` header on all non-safe mutating requests. Store the key in Redis with a short distributed lock (e.g. 10s) and long-lived response cache (e.g. 24 hours). Return the cached response with the original HTTP status on any replay.
+
+    **Follow-up Questions:**
+    - How does the Transactional Outbox Pattern ensure atomic payment state and event publishing? See [Spring Transactions: Transactional Outbox](/topics/spring-transactions/questions.md#26-how-does-the-transactional-outbox-pattern-guarantee-atomic-event-emission-and-what-are-the-trade-offs-of-cdc-vs-polling)
+    - How do distributed Redis locks (`SET NX PX`) prevent race conditions between simultaneous retries? See [Caching / Redis: Distributed Locks](/topics/caching-redis/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/10-rest-api/src/examples/java/lab/restapi/questions/Q29RetryStormPaymentDuplicateScenarioExample.java"
+        ```
+
+### 30. Production Incident: Deeply nested relational API expansion causes JVM heap memory saturation and high GC pauses
+
+??? question "Reveal answer"
+
+    **Short Answer:** A mobile client requested `/api/catalog?expand=categories.products.variants.inventories.warehouses`. Hydrating 5 levels of unpaged entity associations instantiated over 500,000 Java objects in a single HTTP request, causing 4-second GC Stop-The-World pauses and connection resets.
+
+    **Deep Explanation:** In REST and GraphQL APIs, allowing unbounded relation expansion (`?expand=...` or nested GraphQL selection sets) permits clients to trigger Cartesian products and massive object graph allocations. When multiple concurrent clients make nested calls, young generation allocations churn rapidly into Old generation, forcing frequent Full GC pauses.
+
+    **Internal Mechanism:** Unbounded JPA association traversal or recursive DTO mapping instantiates hundreds of thousands of heap objects, consuming gigabytes of memory for a single response.
+
+    **Example:** [Unbounded list OOM incident](/topics/rest-api/code-review.md).
+
+    **Common Mistake:** Supporting nested relation expansions without depth limits, pagination on child collections, or field projection limits.
+
+    **Production Consideration:** Limit expansion depth to a maximum of 2 levels; enforce strict pagination on all child collections (`max_items=20`); and compute payload complexity budgets at the API gateway before executing queries.
+
+    **Follow-up Questions:**
+    - Why does combining JOIN FETCH on collections with Spring Data pagination cause memory leaks? See [JPA / Hibernate: JOIN FETCH Pagination Hazard](/topics/jpa-hibernate/questions.md#27-why-is-combining-join-fetch-on-a-to-many-association-with-pagination-dangerous-and-how-do-you-redesign-it-using-two-phase-id-pagination-or-batch-fetching)
+    - How do JVM garbage collectors (G1 vs ZGC) respond to massive object allocation spikes? See [JVM: Garbage Collection](/topics/jvm/questions.md#3-how-is-jvm-memory-divided-between-stack-and-heap)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/10-rest-api/src/examples/java/lab/restapi/questions/Q30NestedQueryMemorySaturationScenarioExample.java"
+        ```
+
 <!-- --8<-- [end:scenarios] -->
