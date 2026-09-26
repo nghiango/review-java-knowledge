@@ -264,6 +264,50 @@ Analyze event publication priority, ordering guarantees, and command-query separ
     ```java
     --8<-- "modules/19-distributed-data-patterns/src/examples/java/lab/distributeddata/questions/Q16ListenToYourselfPatternExample.java"
     ```
+
+---
+
+### How does CQRS decouple read and write data models, and how is projection lag handled on client queries?
+
+Explain Command Query Responsibility Segregation, asynchronous projection latency, and Read-Your-Own-Writes reconciliation.
+
+??? question "Reveal answer"
+    **Command Query Responsibility Segregation (CQRS)** strictly separates data mutations (Commands) from read operations (Queries).
+    
+    - **Model Specialization**:
+      - **Write Model**: Optimized for transactional integrity, validation rules, and ACID invariants (e.g. relational PostgreSQL schema or Event Sourced aggregate).
+      - **Read Model**: Highly denormalized, materialized query views optimized for sub-millisecond retrieval (e.g. Elasticsearch for search, Redis for caches, document databases for UI dashboards).
+    - **Projection Lag Challenge**:
+      Projections are updated asynchronously via message events. A user modifying their profile may immediately query the read view and see stale data.
+    - **Mitigation Strategies**:
+      1. **Wait-For-LSN / Version Tokens**: Return the commit sequence or event version in the command response; the client sends this token on query, and the query service waits until the projection reaches that offset.
+      2. **Direct Primary Reads**: Route post-mutation edit views directly to the write database for the updating user.
+      3. **Optimistic UI Updates**: The frontend immediately updates local state without waiting for the projection to catch up.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/19-distributed-data-patterns/src/examples/java/lab/distributeddata/questions/Q24CqrsReadModelProjectionLagExample.java"
+    ```
+
+---
+
+### How do Debezium heartbeats and replication slot management prevent PostgreSQL WAL disk exhaustion?
+
+Explain logical replication slot lag, table filtering consequences, and heartbeat table mechanics.
+
+??? question "Reveal answer"
+    When using Debezium for Change Data Capture (CDC) on PostgreSQL:
+    - **The WAL Exhaustion Trap**:
+      PostgreSQL logical replication slots track a `confirmed_flush_lsn`. PostgreSQL will not delete any Write-Ahead Log (WAL) segments newer than the slot's LSN.
+      If Debezium filters out most tables (capturing only `outbox_events`), and the captured table has low traffic while other application tables experience heavy write traffic, Debezium receives no events from the slot. Consequently, Debezium does not commit an updated LSN back to PostgreSQL!
+      PostgreSQL assumes the consumer is lagging, retains all WAL files, and exhausts disk space, causing a catastrophic database crash.
+    - **Debezium Heartbeat Solution (`heartbeat.interval.ms`)**:
+      Debezium is configured to write a heartbeat timestamp to a dedicated PostgreSQL table every few seconds. Because the heartbeat table is written and read continuously, Debezium commits new LSN offsets to the replication slot regularly, allowing PostgreSQL checkpoints to safely prune old WAL segments regardless of application traffic patterns.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/19-distributed-data-patterns/src/examples/java/lab/distributeddata/questions/Q25DebeziumWalSlotGrowthHeartbeatExample.java"
+    ```
 <!-- --8<-- [end:intermediate] -->
 
 ---
@@ -353,6 +397,70 @@ Analyze time-ordering, B-Tree index page splits, random I/O, and coordination re
     ```java
     --8<-- "modules/19-distributed-data-patterns/src/examples/java/lab/distributeddata/questions/Q21DistributedIdGenerationSnowflakeVsUuidV7Example.java"
     ```
+
+---
+
+### How does Spring Modulith automate the Transactional Outbox pattern via EventPublicationRegistry?
+
+Analyze zero-boilerplate outbox tables, completion tracking, and automatic event resubmission.
+
+??? question "Reveal answer"
+    Spring Modulith provides an out-of-the-box, framework-managed implementation of the Transactional Outbox pattern via `EventPublicationRegistry`.
+    
+    - **Automatic Event Interception**:
+      When a service publishes a domain event (`applicationEventPublisher.publishEvent(event)`) inside an active Spring `@Transactional` method, Spring Modulith automatically intercepts the event and serializes it to an internal `EVENT_PUBLICATION` table in the same active JDBC/JPA database transaction.
+    - **Completion Lifecycle**:
+      When asynchronous module listeners (`@ApplicationModuleListener`) or external message publishers complete processing the event, Spring Modulith marks the publication as completed (`completion_date = now()`).
+    - **Crash Recovery**:
+      If the JVM crashes before an event is dispatched to Kafka/RabbitMQ, Spring Modulith's startup initializer queries incomplete publications from the database and automatically resubmits them, achieving at-least-once outbox delivery with zero boilerplate code.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/19-distributed-data-patterns/src/examples/java/lab/distributeddata/questions/Q26SpringModulithOutboxEventPublicationExample.java"
+    ```
+
+---
+
+### How is Saga coordinator state persisted to survive crashes, and how are split-brain zombie coordinators fenced?
+
+Contrast durable state machine logging with epoch fencing tokens in orchestrated Sagas.
+
+??? question "Reveal answer"
+    An orchestrated Saga relies on a central coordinator to issue forward commands (`Reserve`, `Charge`) and compensating actions (`Release`, `Refund`).
+    
+    - **Durable State Machine Logging**:
+      Before emitting any network request to a participant, the coordinator must atomically write its state transition (e.g. `SAGA_STARTED`, `INVENTORY_RESERVED`) to durable storage. If the coordinator host crashes or reboots midway, an active standby coordinator inspects the persistent log and resumes orchestration from the exact last checkpoint without repeating previous steps.
+    - **Zombie Coordinator Fencing**:
+      If Coordinator A experiences a long GC pause, Coordinator B assumes it is dead and takes over orchestration, incrementing the Saga's monotonically increasing `epoch` counter.
+      When Coordinator A resumes, its subsequent commands carry the old epoch. Downstream participants and the Saga state store reject any commands carrying an epoch lower than the current active epoch, preventing split-brain dual orchestrators from emitting conflicting actions.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/19-distributed-data-patterns/src/examples/java/lab/distributeddata/questions/Q27SagaStateMachinePersistenceCoordinatorFencingExample.java"
+    ```
+
+---
+
+### How is zero-downtime data migration executed between distributed datastores using the Strangler Fig and shadow reads?
+
+Detail dual-writing, backfill synchronization, shadow read validation, and read/write traffic cutover.
+
+??? question "Reveal answer"
+    Migrating large live datasets (e.g. from a legacy monolithic database to a new microservice datastore) without downtime requires a staged zero-downtime migration playbook:
+    
+    1. **Dual-Writing via CDC / Outbox**: New incoming mutations are written to both the legacy and the new datastore simultaneously.
+    2. **Historical Backfill**: A background batch worker copies historical records from the legacy store to the new store, using upsert/idempotent writes to avoid overwriting newer dual-written records.
+    3. **Shadow Reads & Reconciliation**:
+       - The application reads from the legacy database as primary.
+       - Asynchronously, it shadow-reads from the new datastore and compares the payloads.
+       - Discrepancies are logged to metrics dashboards without failing client requests.
+    4. **Primary Read Switch**: Once shadow read match rate reaches 100%, read traffic is shifted to the new datastore as primary (with shadow reads directed to legacy).
+    5. **Deprecate**: Terminate dual-writing and decommission the legacy database.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/19-distributed-data-patterns/src/examples/java/lab/distributeddata/questions/Q28ZeroDowntimeDualReadReconciliationMigrationExample.java"
+    ```
 <!-- --8<-- [end:senior] -->
 
 ---
@@ -394,5 +502,51 @@ Analyze message redelivery, missing compensation ledger tables, and idempotent r
 ??? example "Example"
     ```java
     --8<-- "modules/19-distributed-data-patterns/src/examples/java/lab/distributeddata/questions/Q23IncidentSagaCompensationLoopDoubleRefundExample.java"
+    ```
+
+---
+
+### Incident Walkthrough: High-throughput Transactional Outbox stalled database autovacuum, causing transaction ID wraparound emergency
+
+A high-volume polling outbox table accumulated millions of dead tuples, stalling PostgreSQL autovacuum and threatening a catastrophic transaction ID wraparound shutdown. Walk through the root cause and architectural migration.
+
+??? question "Reveal answer"
+    - **Incident Timeline**: A payment outbox publisher polled for events using `SELECT * FROM outbox WHERE status = 'PENDING' FOR UPDATE SKIP LOCKED` at 5,000 queries per second. Once published, records were immediately purged with `DELETE FROM outbox WHERE id = ?`.
+    - **Failure Chain**:
+      1. Rapid insert-and-delete operations generated over 400 million dead tuples per week.
+      2. Multiple concurrent long-running worker transactions continuously held open snapshot horizons, preventing PostgreSQL `autovacuum` from advancing the database transaction ID (`datfrozenxid`).
+      3. Table and index bloat grew from 100MB to 220GB.
+      4. As remaining transaction IDs dropped below 10 million, PostgreSQL issued high-severity warnings and prepared to enter emergency read-only mode to prevent silent transaction wraparound data corruption.
+    - **Remediation**:
+      1. Partitioned the outbox table by hour (`outbox_y2026_m09_d26_h12`). Instead of row-level `DELETE`, the publisher drops expired partition tables using `DROP TABLE`, reclaiming disk space instantly with zero dead tuples and zero autovacuum impact.
+      2. In the long term, transitioned from polling outbox to Debezium CDC, reading changes directly from the PostgreSQL Write-Ahead Log (WAL) without executing polling queries or creating row locks.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/19-distributed-data-patterns/src/examples/java/lab/distributeddata/questions/Q29OutboxSkipLockedVacuumContentionIncidentExample.java"
+    ```
+
+---
+
+### Incident Walkthrough: Concurrent Saga execution and out-of-order compensation drained inventory during network partition
+
+An inventory microservice processed a Saga compensating transaction before the delayed forward reservation request arrived, corrupting warehouse stock levels. Walk through the race condition and tombstone defense.
+
+??? question "Reveal answer"
+    - **Incident Timeline**: A customer placed an order, and the Saga Coordinator emitted `ReserveInventory(orderId=991, qty=5)`. Due to a transient cloud cross-zone network split, the request was delayed in transit for 15 seconds.
+    - **The Race Condition Disaster**:
+      1. The Saga Coordinator timed out waiting for acknowledgment, declared the reservation failed, and initiated compensation: `ReleaseInventory(orderId=991, qty=5)`.
+      2. The compensation event arrived at the Inventory Service *before* the forward reservation request!
+      3. The naive compensation handler credited +5 units back to the stock ledger.
+      4. 5 seconds later, the delayed original `ReserveInventory` arrived and reserved 5 units.
+      5. Customer received cancelled status, but the warehouse ledger permanently recorded duplicate unallocated stock, resulting in severe inventory drift and phantom stockouts.
+    - **Permanent Fix**:
+      1. **Idempotent Saga State Tracking with Tombstones**: Participants maintain a `saga_actions` table tracking `(saga_id, step_name, status)`.
+      2. If a compensation arrives before the forward action, the participant writes a `CANCELLED` tombstone.
+      3. When the delayed forward action arrives later, it detects the `CANCELLED` tombstone and immediately aborts execution without modifying stock.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/19-distributed-data-patterns/src/examples/java/lab/distributeddata/questions/Q30SagaCompensationRaceConditionOverdrawIncidentExample.java"
     ```
 <!-- --8<-- [end:scenarios] -->

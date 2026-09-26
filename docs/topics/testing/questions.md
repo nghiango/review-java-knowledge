@@ -200,6 +200,38 @@ Four levels of interview questions covering the testing pyramid and test levels,
         ```java
         --8<-- "modules/12-testing/src/examples/java/lab/testing/questions/Q16ArchunitRulesAndPackageDependencies.java"
         ```
+
+### 24. How do AssertJ custom assertions and `SoftAssertions` improve failure diagnostic clarity compared to chained multiple assertions?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Standard chained assertions stop executing on the first failure, obscuring whether subsequent fields or invariants were also broken. `SoftAssertions` collects all assertion failures within a block and reports them together when `assertAll()` is called. Custom domain assertions encapsulate complex invariant verification into clear, domain-specific failure messages.
+
+    **Internal Mechanism:** `SoftAssertions` intercepts assertion calls, catches `AssertionError` instances, and appends them to an internal error collector list. When `assertAll()` is called, it formats all collected errors into a structured composite error string, enabling developers to diagnose multifaceted payload mismatches in a single CI run.
+
+    **Common Mistake:** Forgetting to call `softly.assertAll()` at the end of the test method, which causes the test to pass green unconditionally even when every assertion inside the block failed.
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/12-testing/src/examples/java/lab/testing/questions/Q24AssertJCustomAndSoftAssertions.java"
+        ```
+
+### 25. How does `@Transactional` test rollback differ from explicit database cleanup (truncation), and why does `@Transactional` mask production commit and connection leaks?
+
+??? question "Reveal answer"
+
+    **Short Answer:** `@Transactional` rolls back the test transaction at method end without committing to the database. While fast, it never triggers database commit hooks, skips Hibernate dirty-checking flush execution, masks constraint/trigger violations, and fails to test multi-threaded code. Explicit truncation commits real transactions and cleans tables between tests.
+
+    **Internal Mechanism:** `@Transactional` on a test method binds a transaction to the test thread. When the test exits, the TestContext framework issues a SQL `ROLLBACK`. Because Hibernate delays DML flushes until transaction commit, un-flushed entity mutations and SQL foreign key constraint violations are never sent to PostgreSQL, resulting in false-positive test passes.
+
+    **Common Mistake:** Relying on `@Transactional` in integration tests that invoke real HTTP endpoints via `TestRestTemplate` or test asynchronous messaging workers; because the worker runs on a separate thread, it cannot see uncommitted data from the test thread.
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/12-testing/src/examples/java/lab/testing/questions/Q25TransactionalRollbackVsTruncationCleanup.java"
+        ```
 <!-- --8<-- [end:intermediate] -->
 
 <!-- --8<-- [start:senior] -->
@@ -314,6 +346,84 @@ Four levels of interview questions covering the testing pyramid and test levels,
         ```java
         --8<-- "modules/12-testing/src/examples/java/lab/testing/questions/Q21ConsumerDrivenContractsInMicroservices.java"
         ```
+
+### 26. How does Spring TestContext Framework cache `ApplicationContext` across test classes, and why does `@DirtiesContext` destroy CI suite performance?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Spring caches initialized `ApplicationContext` instances in a static context cache keyed by a composite of configuration locations, active profiles, property overrides, and context customizers (`MergedContextConfiguration`). Annotating tests with `@DirtiesContext` evicts the cached context, forcing a cold Spring restart on subsequent test classes that balloons CI execution times by 10x–20x.
+
+    **Deep Explanation:** In a large microservice test suite with 100 test classes, spinning up an `ApplicationContext` takes 3–8 seconds per cold start. With context caching, the context is created once in ~5 seconds and reused across all classes with identical configuration (total suite time ~15 seconds). If a developer marks tests with `@DirtiesContext` or introduces minor ad-hoc `@MockBean` variations, Spring creates a new context for every variant, turning a 1-minute suite into a 15-minute bottleneck.
+
+    **Internal Mechanism:** `DefaultContextCache` maps `MergedContextConfiguration` to `ApplicationContext`. When `@DirtiesContext` is encountered, `DirtiesContextTestExecutionListener` closes and evicts the context from the cache immediately after the test method or class completes.
+
+    **Example:** [Spring context caching mechanics](/topics/testing/internals.md).
+
+    **Common Mistake:** Using `@DirtiesContext` as a blunt hammer to clean up dirty database rows or reset mocks between tests, instead of using transactional rollbacks, database truncation, or `Mockito.reset()`.
+
+    **Production Consideration:** Keep integration test configurations unified. Group test slices with identical base classes or shared meta-annotations, and monitor context cache size via JVM logs (`logging.level.org.springframework.test.context.cache=DEBUG`).
+
+    **Follow-up Questions:**
+    - How does `@MockBean` fragment the Spring TestContext cache? See [Testing: Test Slices](#11-what-does-a-spring-test-slice-contain-and-how-is-that-decided)
+    - How does Spring Boot 3.4+ `@MockitoBean` integrate with context caching? See [Testing: Modern Slices](/tracks/java25-boot4/testing/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/12-testing/src/examples/java/lab/testing/questions/Q26ApplicationContextCachingAndDirtiesContext.java"
+        ```
+
+### 27. How does property-based testing differ from example-based unit testing in discovering edge cases, shrinking failures, and verifying invariants?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Example-based testing checks fixed, hand-crafted inputs ($1+1=2$); property-based testing (e.g. jqwik, QuickCheck) generates hundreds of randomized, adversarial inputs to verify universal invariants (e.g. conservation of money, idempotency, serialization round-trips). When a failure is found, it automatically **shrinks** the counterexample to the minimal reproducible case.
+
+    **Deep Explanation:** Developers suffer from confirmation bias and rarely test bizarre boundary values: negative zeros, empty strings, integer overflows (`Integer.MAX_VALUE`), extreme unicode surrogates, or unnormalized line breaks. Property-based tests state mathematical or domain properties: "For any list $L$, `reverse(reverse(L)) == L`", and let generator engines throw thousands of pseudo-random edge cases at the system.
+
+    **Internal Mechanism:** The engine generates parameterized inputs. Upon identifying an `AssertionError`, it initiates a binary search shrinking phase: systematically simplifying inputs (shortening strings, reducing numbers toward zero) until it isolates the exact minimal boundary input that triggers the defect.
+
+    **Example:** [Invariant-based verification](/topics/testing/concepts.md).
+
+    **Common Mistake:** Asserting exact hardcoded outputs in a property test instead of mathematical or behavioral invariants (e.g. conservation of mass/money, commutativity, round-trip equality).
+
+    **Production Consideration:** Use property-based testing for high-risk core algorithmic domains: financial fee allocations, cryptography, custom protocol parsers, and distributed state machine transitions.
+
+    **Follow-up Questions:**
+    - How do mutation tests (PIT) evaluate whether property-based tests have strong assertion boundaries? See [Testing: Mutation Testing](#20-how-does-mutation-testing-with-pit-expose-weak-assertions)
+    - How do fuzz testing tools integrate with property generators in CI? See [CI/CD: Security Pipelines](/topics/ci-cd/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/12-testing/src/examples/java/lab/testing/questions/Q27PropertyBasedTestingWithInvariants.java"
+        ```
+
+### 28. How do you implement custom ArchUnit rules enforcing domain isolation (hexagonal architecture, zero cyclic dependencies, constructor injection only)?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Define executable architectural fitness functions using ArchUnit's fluent DSL. Import compiled bytecode via `ClassFileImporter`, declare structural invariants (e.g. `classes().that().resideInAPackage("..domain..").should().onlyDependOnClassesThat()...`), and execute them in standard CI test suites to prevent architectural erosion.
+
+    **Deep Explanation:** Architectural rules documented in wiki pages or PR reviews erode over time: a junior engineer accidentally imports a Spring framework class or JPA entity into a pure domain aggregate, or injects a dependency via `@Autowired` field injection. ArchUnit compiles architecture rules into JUnit 5 tests that fail the build immediately upon introducing cyclic dependencies or boundary leaks.
+
+    **Internal Mechanism:** ArchUnit uses ASM to parse compiled `.class` files into a rich metamodel (`JavaClasses`, `JavaPackage`, `JavaField`). Rules traverse the dependency graph, asserting predicate conditions against imports, accessors, annotations, and inheritance hierarchies.
+
+    **Example:** [ArchUnit rules and package dependencies](#16-how-do-archunit-rules-express-package-dependencies).
+
+    **Common Mistake:** Setting package predicates too broadly or freezing architectural violations with `FreezingArchRule` permanently without scheduling technical debt remediation.
+
+    **Production Consideration:** Run ArchUnit as part of standard unit test execution (`./gradlew test`). Because it operates solely on in-memory bytecode, an extensive suite of 30 architectural rules evaluates in under 1.5 seconds.
+
+    **Follow-up Questions:**
+    - How does Spring Modulith verify module boundaries compared to ArchUnit? See [Architecture: Modular Monoliths](/topics/architecture/questions.md)
+    - How do you enforce zero cyclic dependencies between Maven/Gradle modules? See [Build Tools: Multi-Module Architecture](/topics/ci-cd/questions.md)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/12-testing/src/examples/java/lab/testing/questions/Q28ArchUnitFitnessFunctionsInCi.java"
+        ```
 <!-- --8<-- [end:senior] -->
 
 <!-- --8<-- [start:scenarios] -->
@@ -361,6 +471,58 @@ Four levels of interview questions covering the testing pyramid and test levels,
     ??? example "Example"
         ```java
         --8<-- "modules/12-testing/src/examples/java/lab/testing/questions/Q23PostUpgradeProductionFailureIncident.java"
+        ```
+
+### 29. Production Incident: H2 in-memory test database passes, but production fails with PostgreSQL syntax error
+
+??? question "Reveal answer"
+
+    **Short Answer:** A continuous integration suite ran with `spring.datasource.url=jdbc:h2:mem:testdb;MODE=PostgreSQL`. The test suite passed 100% green, but production failed immediately on startup with `org.postgresql.util.PSQLException: ERROR: syntax error at or near "->>"` when executing a repository query that utilized PostgreSQL JSONB operators and `ON CONFLICT` clauses.
+
+    **Deep Explanation:** H2's `MODE=PostgreSQL` is an incomplete emulator that mimics basic SQL syntax but does not implement PostgreSQL's native engine features: JSONB operators (`->`, `->>`, `?|`), recursive CTE semantics, specific locking modes (`FOR UPDATE SKIP LOCKED`), and custom collations. Furthermore, H2 silently ignores certain unsupported constraint types, allowing malformed schema migrations to succeed in CI while failing catastrophically in production.
+
+    **Internal Mechanism:** H2 parses queries with its own SQL parser. When presented with dialect-specific operators or complex constraints, it either falls back to generic text matching or throws syntax errors. In contrast, Testcontainers runs the identical PostgreSQL Docker image and version used in production.
+
+    **Example:** [H2 hiding PostgreSQL behavior](/topics/testing/code-review.md#embedded-substitute-hides-postgres-semantics).
+
+    **Common Mistake:** Relying on in-memory databases like H2 because "Testcontainers is too slow", ignoring that Testcontainers reusable containers and singleton patterns execute in milliseconds after initial startup.
+
+    **Production Consideration:** Banish H2 for database integration testing. Use Testcontainers with `@ServiceConnection` and execute real Flyway migrations against real PostgreSQL instances in CI.
+
+    **Follow-up Questions:**
+    - How does `@ServiceConnection` automatically inject dynamic JDBC URLs into Spring Boot? See [Testing: Testcontainers Lifecycle](#12-how-does-the-testcontainers-lifecycle-work-and-what-does-serviceconnection-do)
+    - How do you optimize Testcontainers startup time in CI using reuse flags? See [Testing: Testcontainers in CI](#19-how-do-you-run-testcontainers-in-ci-at-scale)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/12-testing/src/examples/java/lab/testing/questions/Q29H2DialectMaskingPostgresSyntaxIncident.java"
+        ```
+
+### 30. Production Incident: Concurrent test suite deadlocks due to shared mutable database fixtures
+
+??? question "Reveal answer"
+
+    **Short Answer:** After enabling parallel test execution (`junit.jupiter.execution.parallel.enabled=true`) to speed up CI, the build intermittently hung for 20 minutes before timing out. Thread dumps revealed multiple test threads blocked waiting on PostgreSQL row locks on a shared static customer record (`ID = 42L`).
+
+    **Deep Explanation:** When running tests sequentially, sharing hardcoded fixture records (e.g. `customer_id = 42L`) across multiple test classes works by coincidence. When tests run in parallel across CPU cores, multiple transactions attempt concurrent updates or deletions on the identical database rows, triggering PostgreSQL row-level exclusive locks and circular transaction deadlocks.
+
+    **Internal Mechanism:** Test A executes `UPDATE customers SET balance = 100 WHERE id = 42` inside a transaction; concurrently, Test B executes `SELECT ... FOR UPDATE WHERE id = 42`. Test B blocks on Test A's lock. If Test A subsequently attempts to modify a row held by Test B, PostgreSQL detects a deadlock or waits indefinitely until the connection timeout expires.
+
+    **Example:** [Shared mutable fixtures in tests](/topics/testing/code-review.md).
+
+    **Common Mistake:** Disabling JUnit parallel test execution instead of fixing the root cause: shared mutable test data.
+
+    **Production Consideration:** Enforce strict fixture isolation: each test must generate unique entities with random UUIDs or distinct sequences using Test Data Builders. Avoid static IDs in test fixtures, and isolate concurrent tests using randomized tenant schemas or table truncation.
+
+    **Follow-up Questions:**
+    - How do Test Data Builders generate realistic, isolated domain entities? See [Testing: Test Data Builders](#15-how-do-test-data-builders-keep-fixtures-isolated)
+    - How do you configure JUnit 5 resource locks (`@ResourceLock`) for tests that must share physical state? See [Testing: JUnit 5 Extensions](#10-how-do-junit-5-extensions-and-parameterized-tests-work)
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/12-testing/src/examples/java/lab/testing/questions/Q30ParallelTestDeadlockSharedFixturesIncident.java"
         ```
 <!-- --8<-- [end:scenarios] -->
 

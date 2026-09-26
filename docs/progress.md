@@ -16,21 +16,21 @@
 | 08 | JPA / Hibernate | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 09 | Database / SQL | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 10 | REST API | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 11 | Spring Security | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 12 | Testing | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 13 | Caching / Redis | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 14 | Kafka | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 15 | RabbitMQ | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 16 | AWS Messaging | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
-| 17 | Distributed Systems | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
-| 18 | Resilience | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 19 | Distributed Data Patterns | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 20 | Spring Cloud | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
-| 21 | WebClient / WebFlux | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 22 | Observability | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 23 | Performance | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 24 | Docker | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
-| 25 | AWS | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
+| 11 | Spring Security | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 12 | Testing | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 13 | Caching / Redis | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 14 | Kafka | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 15 | RabbitMQ | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 16 | AWS Messaging | doc | ✅ | ✅ (30) | ✅ | ✅ | — | ✅ | ✅ |
+| 17 | Distributed Systems | doc | ✅ | ✅ (30) | ✅ | ✅ | — | ✅ | ✅ |
+| 18 | Resilience | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 19 | Distributed Data Patterns | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 20 | Spring Cloud | doc | ✅ | ✅ (30) | ✅ | ✅ | — | ✅ | ✅ |
+| 21 | WebClient / WebFlux | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 22 | Observability | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 23 | Performance | code | ✅ | ✅ (30) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 24 | Docker | doc | ✅ | ✅ (30) | ✅ | ✅ | — | ✅ | ✅ |
+| 25 | AWS | doc | ✅ | ✅ (30) | ✅ | ✅ | — | ✅ | ✅ |
 | 26 | CI/CD | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
 | 27 | System Design | doc | ✅ | ✅ | ✅ | ✅ | — | ✅ | ✅ |
 | 28 | Architecture | code | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -43,9 +43,9 @@
 |---|---|---|---|---|
 | **Batch 1** | 01 Core Java, 02 JVM, 03 Concurrency, 04 Spring Core, 05 Spring Boot | 150 (30 each) | +35 (+7 each) | ✅ Complete (30/30 each) |
 | **Batch 2** | 06 Spring MVC, 07 Spring Transactions, 08 JPA/Hibernate, 09 Database/SQL, 10 REST API | 150 (30 each) | +35 (+7 each) | ✅ Complete (30/30 each) |
-| **Batch 3** | 11 Spring Security, 12 Testing, 13 Caching/Redis, 14 Kafka, 15 RabbitMQ | 150 (30 each) | Pending | ⬜ Not started (23/30 each) |
-| **Batch 4** | 16 AWS Messaging, 17 Distributed Systems, 18 Resilience, 19 Distributed Data Patterns, 20 Spring Cloud | 150 (30 each) | Pending | ⬜ Not started (23/30 each) |
-| **Batch 5** | 21 WebClient/WebFlux, 22 Observability, 23 Performance, 24 Docker, 25 AWS | 150 (30 each) | Pending | ⬜ Not started (23/30 each) |
+| **Batch 3** | 11 Spring Security, 12 Testing, 13 Caching/Redis, 14 Kafka, 15 RabbitMQ | 150 (30 each) | +35 (+7 each) | ✅ Complete (30/30 each) |
+| **Batch 4** | 16 AWS Messaging, 17 Distributed Systems, 18 Resilience, 19 Distributed Data Patterns, 20 Spring Cloud | 150 (30 each) | +35 (+7 each) | ✅ Complete (30/30 each) |
+| **Batch 5** | 21 WebClient/WebFlux, 22 Observability, 23 Performance, 24 Docker, 25 AWS | 150 (30 each) | +35 (+7 each) | ✅ Complete (30/30 each) |
 | **Batch 6** | 26 CI/CD, 27 System Design, 28 Architecture, 29 Design Patterns, 30 Senior Engineering | 150 (30 each) | Pending | ⬜ Not started (23/30 each) |
 
 ## Track: java25-boot4

@@ -283,6 +283,49 @@ Explain connection pooling, Channel CacheMode, channelCacheSize, and thread sync
     ```java
     --8<-- "modules/15-rabbitmq/src/examples/java/lab/rabbitmq/questions/Q16ConnectionAndChannelManagement.java"
     ```
+
+---
+
+### How does the Alternate Exchange (AE) pattern capture unroutable messages and prevent silent message drops?
+
+Contrast broker-side Alternate Exchange routing with client-side mandatory flag handling.
+
+??? question "Reveal answer"
+    In AMQP 0-9-1, if a publisher emits a message to an exchange whose routing key matches no bound queues, RabbitMQ silently discards the message by default without notifying the producer.
+    
+    - **Alternate Exchange (AE) Mechanism**:
+      An exchange can be declared with the optional argument `"alternate-exchange": "<ae-name>"`.
+      1. When a message published to the primary exchange cannot be routed to any existing queue, RabbitMQ automatically re-routes the message to the configured Alternate Exchange with its original body, headers, and routing key intact.
+      2. The Alternate Exchange (typically a Fanout exchange) routes the message to an unrouted messages queue for alerting, audit logging, or manual intervention.
+    - **AE vs `mandatory=true`**:
+      - `mandatory=true`: Requires the producer to establish a return listener (`basic.return`) on every channel, creating asynchronous client-side error handling complexity and extra TCP round-trips.
+      - Alternate Exchange: Encapsulates unroutable message handling entirely within the broker topology, requiring zero client-side routing logic.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/15-rabbitmq/src/examples/java/lab/rabbitmq/questions/Q24AlternateExchangeRouting.java"
+    ```
+
+---
+
+### What are RabbitMQ Stream queues, and how do they differ from AMQP Quorum and Classic queues?
+
+Compare non-destructive offset-based consumption with destructive FIFO queues.
+
+??? question "Reveal answer"
+    RabbitMQ 3.9+ introduced **Streams**, an append-only, immutable commit log modeled after Apache Kafka, running natively within RabbitMQ brokers.
+    
+    - **Destructive FIFO vs Non-Destructive Log**:
+      - **Classic & Quorum Queues**: Destructive consumption. Once a consumer processes a message and issues `basic.ack`, the message is permanently deleted from the queue.
+      - **Stream Queues**: Non-destructive. Messages are appended to an on-disk commit log and retained according to size or age retention policies. Consumers maintain their own offset pointer and can replay historical events from the beginning or any arbitrary timestamp.
+    - **Throughput & Fan-Out Scalability**:
+      - Stream queues bypass AMQP 0-9-1's channel-per-thread model and use a dedicated binary stream protocol (`rabbitmq-stream`), delivering 10x higher throughput (hundreds of thousands of messages/sec).
+      - Multiple independent consumer groups can read from a single stream queue concurrently without creating duplicate queue copies.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/15-rabbitmq/src/examples/java/lab/rabbitmq/questions/Q25RabbitMqStreamsVsQuorumQueues.java"
+    ```
 <!-- --8<-- [end:intermediate] -->
 
 ---
@@ -366,6 +409,72 @@ Detail protocol synchronization overhead and throughput differences.
     ```java
     --8<-- "modules/15-rabbitmq/src/examples/java/lab/rabbitmq/questions/Q21TransactionalPublishingVsConfirms.java"
     ```
+
+---
+
+### How does Raft consensus operate in RabbitMQ Quorum Queues to guarantee data safety during leader failure?
+
+Detail the consensus write quorum, leader election, and comparison with classic mirrored queues.
+
+??? question "Reveal answer"
+    RabbitMQ **Quorum Queues** (`x-queue-type: quorum`) replace legacy Classic Mirrored Queues (`ha-mode`), using the **Raft consensus algorithm** to ensure strict linearizability and data safety across cluster nodes.
+    
+    - **Majority Write Quorum**:
+      A quorum queue consists of a leader replica and multiple follower replicas across cluster nodes (e.g. 3 or 5 members). A write is confirmed to the publisher only after a majority of members ($N/2 + 1$, e.g. 2 of 3) have appended the record to their local write-ahead logs on disk.
+    - **Deterministic Leader Election**:
+      If the leader node crashes or partitions, follower nodes trigger an election. The Raft protocol guarantees that only a follower possessing all committed log entries can be elected as the new leader, eliminating the message loss and desynchronization bugs inherent in classic mirroring.
+    - **Poison Message Quarantine**:
+      Quorum queues natively support `x-delivery-limit`. When a message redelivers more than the configured threshold (e.g. due to recurring consumer crashes), RabbitMQ automatically drops or routes the message to the DLX.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/15-rabbitmq/src/examples/java/lab/rabbitmq/questions/Q26QuorumQueuesRaftConsensus.java"
+    ```
+
+---
+
+### How does RabbitMQ flow control trigger publisher blocking when memory or disk alarms fire?
+
+Analyze `vm_memory_high_watermark`, `disk_free_limit`, and socket backpressure mechanisms.
+
+??? question "Reveal answer"
+    To protect broker nodes from catastrophic out-of-memory crashes or unrecoverable disk saturation, RabbitMQ implements cluster-wide alarm thresholds and credit-based flow control.
+    
+    - **Memory Alarm (`vm_memory_high_watermark`)**:
+      Defaults to 0.40 (40% of installed system RAM). When Erlang memory usage exceeds this limit, the broker raises a memory alarm.
+    - **Disk Free Alarm (`disk_free_limit`)**:
+      Fires when available disk space drops below the threshold (default 50MB; typically configured to 5–10GB in production).
+    - **Flow Control Impact**:
+      - When an alarm trips, RabbitMQ **immediately halts reading from all publisher TCP sockets** and emits a `connection.blocked` frame.
+      - Publisher threads block on socket writes once OS TCP socket buffers fill up.
+      - **Crucial Asymmetry**: **Consumers are never blocked!** Consumers continue receiving and acknowledging messages, draining queue memory until RAM usage falls below the watermark, at which point RabbitMQ unblocks publisher sockets.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/15-rabbitmq/src/examples/java/lab/rabbitmq/questions/Q27MemoryAndDiskAlarmFlowControl.java"
+    ```
+
+---
+
+### Why is the RabbitMQ Delayed Message Exchange plugin preferred over dead-letter TTL queue chaining for scheduled delivery?
+
+Explain Head-of-Line (HoL) blocking in TTL queues and Mnesia timer dispatch in the delayed exchange plugin.
+
+??? question "Reveal answer"
+    Developers often attempt to implement delayed delivery using standard RabbitMQ primitives by publishing messages with per-message expiration to an unconsumed "wait queue" bound to a Dead Letter Exchange.
+    
+    - **Head-of-Line (HoL) Blocking Flaw**:
+      RabbitMQ queues are strict FIFO. Per-message TTL expiration is checked **only when a message reaches the head of the queue**.
+      - If Message A (60s TTL) is published ahead of Message B (5s TTL), Message B **cannot expire or route to the DLX until Message A expires after 60s**, completely breaking scheduled delivery timings for variable delays.
+    - **Delayed Message Exchange (`x-delayed-message`)**:
+      - Stores scheduled messages in an embedded Mnesia database table instead of standard FIFO queue buffers.
+      - Uses internal timers to hold messages until their specific delay (`x-delay` header in milliseconds) elapses, then routes them directly to bound destination queues.
+      - Completely eliminates Head-of-Line blocking, allowing arbitrary, out-of-order delay intervals per message.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/15-rabbitmq/src/examples/java/lab/rabbitmq/questions/Q28DelayedExchangeVsTtlChaining.java"
+    ```
 <!-- --8<-- [end:senior] -->
 
 ---
@@ -407,5 +516,50 @@ Diagnose push-based message distribution hazards, heap exhaustion, and cascading
 ??? example "Example"
     ```java
     --8<-- "modules/15-rabbitmq/src/examples/java/lab/rabbitmq/questions/Q23UnboundedPrefetchOomIncident.java"
+    ```
+
+---
+
+### Incident Walkthrough: High-throughput ingestion frozen as RabbitMQ blocked all TCP publisher sockets under memory alarm
+
+An order ingestion pipeline suffered an outage during a traffic spike when all publisher microservices hung during message publishing. Walk through the alarm triggers and connection blocking behavior.
+
+??? question "Reveal answer"
+    - **Incident Timeline**: During a major flash sale, upstream order ingestion microservices began experiencing thread starvation. Hundreds of Tomcat request threads hung indefinitely in `rabbitTemplate.convertAndSend()`. API gateway timeouts led to widespread HTTP 504 errors across the entire checkout funnel.
+    - **Failure Chain**:
+      1. Downstream fulfillment workers encountered database lock contention, causing message acknowledgments to lag.
+      2. Hundreds of thousands of unacknowledged messages accumulated in RabbitMQ RAM, pushing Erlang memory consumption past the `vm_memory_high_watermark` (40% of host RAM).
+      3. RabbitMQ's flow control subsystem tripped the cluster-wide memory alarm, **suspending reads on all incoming publisher TCP sockets** and sending AMQP `connection.blocked` frames.
+      4. Producer threads blocked on socket write buffers, exhausting Tomcat worker threads.
+    - **Remediation**:
+      1. Registered a `BlockedListener` on Spring AMQP's `ConnectionFactory` to detect `connection.blocked` notifications and fail fast with circuit breakers instead of hanging HTTP threads.
+      2. Enforced strict `basic.qos` prefetch limits on consumers to prevent unacknowledged message buildup in RAM.
+      3. Migrated queues to Quorum Queues, which automatically stream cold message payloads to disk rather than retaining them in Erlang heap memory.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/15-rabbitmq/src/examples/java/lab/rabbitmq/questions/Q29PublisherBlockedMemoryAlarmIncident.java"
+    ```
+
+---
+
+### Incident Walkthrough: Dual master split-brain state and divergent queue history caused by cluster network partition
+
+A network switch failure between RabbitMQ cluster nodes produced dual masters and permanent data loss upon reconnection. Walk through the failure mechanism and configuration fixes.
+
+??? question "Reveal answer"
+    - **Incident Timeline**: A transient network switch partition split a 3-node RabbitMQ cluster into two partitions: Node A on one side, and Nodes B and C on the other. The cluster was configured with legacy Classic Mirrored Queues and the default partition handling setting: `cluster_partition_handling = ignore`.
+    - **Split-Brain Disaster**:
+      1. Because `ignore` mode does not intervene during network partitions, Node A believed Nodes B and C had crashed, and promoted itself to queue master for all mirrored queues.
+      2. Nodes B and C believed Node A had crashed, and promoted Node B to queue master for the same queues.
+      3. Both partitions independently accepted writes from local microservices, generating divergent message logs and duplicate sequence tags.
+      4. When the network partition healed, the cluster detected divergent states. RabbitMQ forced a node restart to heal the partition, permanently discarding all messages written to the minority node during the split!
+    - **Permanent Fix**:
+      1. Configured `cluster_partition_handling = pause_minority`. When a network split occurs, Node A detects that it cannot contact a majority of cluster nodes ($\le 3/2$), and immediately pauses its Erlang process, terminating client connections and rejecting writes before split-brain corruption can occur.
+      2. Migrated from Classic Mirrored Queues to Quorum Queues, which utilize Raft majority consensus and are mathematically immune to dual-master split-brain data loss.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/15-rabbitmq/src/examples/java/lab/rabbitmq/questions/Q30SplitBrainNetworkPartitionIncident.java"
     ```
 <!-- --8<-- [end:scenarios] -->

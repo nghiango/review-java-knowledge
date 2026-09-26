@@ -276,6 +276,49 @@ Contrast microservice event handling with stateful stream processing.
     ```java
     --8<-- "modules/14-kafka/src/examples/java/lab/kafka/questions/Q16KafkaStreamsVsStandardConsumer.java"
     ```
+
+---
+
+### How does KRaft (Kafka Raft metadata mode) eliminate Apache ZooKeeper dependency and accelerate partition failover?
+
+Contrast ZooKeeper metadata synchronization with KRaft event-driven log consensus and controller failover times.
+
+??? question "Reveal answer"
+    Prior to Kafka 3.x, Apache Kafka clusters depended on an external Apache ZooKeeper ensemble to manage cluster state, broker registration, topic partitions, and dynamic configuration.
+    
+    - **ZooKeeper Limitations**:
+      - Metadata was stored externally in ZooKeeper ZNodes. The active Kafka controller had to synchronize state across network boundaries via ZK watches.
+      - During controller failover, the newly elected controller had to perform a full reload of the entire cluster's metadata from ZooKeeper, causing cluster-wide operations to freeze for minutes on clusters with >100,000 partitions.
+    - **KRaft Architecture (KIP-500)**:
+      - Replaces ZooKeeper with an internal Raft quorum of dedicated Controller nodes.
+      - Cluster metadata is stored as an internal, replicated Kafka topic named `@metadata`.
+      - All controller nodes maintain in-memory metadata caches updated continuously via the Raft log. Controller election occurs in milliseconds without state reloading.
+      - Eliminates external operational dependencies and scales Kafka clusters to millions of active partitions.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/14-kafka/src/examples/java/lab/kafka/questions/Q24KRaftConsensusVsZooKeeper.java"
+    ```
+
+---
+
+### How is consumer backpressure managed in Kafka using pause() and resume() without exceeding max.poll.interval.ms?
+
+Explain how consumer threads prevent group ejection and rebalance loops when downstream database sinks experience bottlenecks.
+
+??? question "Reveal answer"
+    When a consumer listener forwards records to a slow downstream service (e.g. database batch insert), processing time per poll batch can exceed `max.poll.interval.ms` (default 5 minutes). If the poll loop does not invoke `poll()` within that interval, the broker Coordinator marks the consumer dead and triggers a group rebalance.
+    
+    - **Programmatic Backpressure with `pause()` and `resume()`**:
+      1. When local thread queues or downstream sinks hit high-water marks, call `consumer.pause(consumer.assignment())`.
+      2. Keep invoking `consumer.poll(Duration.ZERO)` in the foreground loop. While paused, `poll()` immediately returns 0 records, but continues executing underlying broker heartbeats and metadata refreshes, informing the Coordinator that the instance remains alive.
+      3. Once downstream capacity recovers and internal buffers drop below low-water marks, call `consumer.resume(consumer.assignment())` to resume fetching new records.
+    - In Spring Kafka, container listeners achieve this by calling `MessageListenerContainer.pause()` and `resume()`.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/14-kafka/src/examples/java/lab/kafka/questions/Q25ConsumerBackpressurePauseResume.java"
+    ```
 <!-- --8<-- [end:intermediate] -->
 
 ---
@@ -358,6 +401,70 @@ Compare consistency, throughput, and operational complexity across deduplication
     ```java
     --8<-- "modules/14-kafka/src/examples/java/lab/kafka/questions/Q21MessageDeduplicationStoreDesigns.java"
     ```
+
+---
+
+### How does Static Group Membership (group.instance.id) prevent rebalance storms during Kubernetes rolling restarts?
+
+Contrast ephemeral member IDs with static instance identifiers and examine partition preservation during pod lifecycle updates.
+
+??? question "Reveal answer"
+    In containerized cloud environments (e.g. Kubernetes StatefulSets or Deployments), rolling restarts terminate and recreate pods sequentially.
+    
+    - **Dynamic Membership Problem**: By default, each consumer is assigned a random ephemeral member ID on startup (`consumer-<UUID>`). When a pod is killed, the coordinator triggers a rebalance. When the pod restarts with a new UUID, it triggers a second rebalance. In a 20-pod deployment, a rolling restart triggers 40 consecutive rebalances, completely stalling consumer processing for the entire duration.
+    - **Static Group Membership (KIP-345)**:
+      Configuring `group.instance.id` (e.g. mapped from Kubernetes pod hostname `orders-worker-${POD_INDEX}`):
+      - When a pod stops, the consumer does not send a `LeaveGroupRequest`.
+      - The coordinator retains the consumer's partition assignments until `session.timeout.ms` expires (e.g. 45–60 seconds).
+      - When the new container pod starts and joins with the same `group.instance.id`, the coordinator recognizes the static member and immediately restores its previous partition assignments without triggering a cluster-wide rebalance.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/14-kafka/src/examples/java/lab/kafka/questions/Q26StaticGroupMembershipKubernetesDeployments.java"
+    ```
+
+---
+
+### How does Kafka Tiered Storage (Remote Storage Manager) decouple log retention from local broker NVMe storage?
+
+Explain the dual-tier log architecture, local active segment retention, and offloading to cloud object stores.
+
+??? question "Reveal answer"
+    Traditional Kafka architectures require sizing broker local NVMe SSD disks to hold all historical data across retention windows (e.g. weeks or months). This makes broker storage cost-prohibitive and turns broker scaling/recovery into an expensive process of copying terabytes over the network.
+    
+    - **Tiered Storage Architecture (KIP-405)**:
+      Decouples storage capacity from compute broker nodes by dividing topic logs into two distinct tiers:
+      - **Local Tier (Hot NVMe Storage)**: Keeps active, open log segments (e.g. the last 2–4 hours of writes). 99% of real-time consumers read from this tier directly via Linux OS page cache.
+      - **Remote Tier (Object Storage - AWS S3, GCS, Azure Blob)**: When log segments are rolled and closed, the `RemoteLogManager` (RLM) asynchronously copies segment files to object storage. Once uploaded, segments can be safely pruned from local broker disks.
+    - **Key Benefits**:
+      - Enables virtually infinite message retention at cloud object storage prices.
+      - Drastically speeds up broker rebalancing and partition leader failover because historical data is read directly from object storage rather than copied between brokers.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/14-kafka/src/examples/java/lab/kafka/questions/Q27TieredStorageRemoteLogManager.java"
+    ```
+
+---
+
+### How does MirrorMaker 2 coordinate multi-datacenter replication, offset translation, and cyclic loop prevention?
+
+Analyze the Kafka Connect architecture of MM2, topic renaming conventions, and checkpoint-driven consumer offset migration.
+
+??? question "Reveal answer"
+    MirrorMaker 2 (MM2) is Kafka's built-in multi-cluster replication engine built on the Kafka Connect framework.
+    
+    - **Cyclic Loop Prevention**:
+      To prevent message looping in active-active topologies (where Cluster A replicates to Cluster B, and Cluster B replicates back to Cluster A), MM2 automatically prefixes replicated topic names with the source cluster alias (e.g. replicating topic `orders` from `us-east` creates `us-east.orders` in `eu-west`). MM2 ignores topics matching its own downstream cluster alias.
+    - **Offset Translation via Checkpoints**:
+      Offsets are not identical across clusters because source and target logs are compacted or written at different rates. The `MirrorCheckpointConnector` tracks consumer group commits in the source cluster, translates them to corresponding target cluster offsets using internal mapping logs (`mm2-offsets.<source>.internal`), and commits them to `__consumer_offsets` in the target cluster.
+    - **Consumer Failover**:
+      Allows downstream consumers failing over to the backup cluster to resume reading at the translated offset without restarting from offset 0 or missing unprocessed messages.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/14-kafka/src/examples/java/lab/kafka/questions/Q28MirrorMaker2ActiveActiveReplication.java"
+    ```
 <!-- --8<-- [end:senior] -->
 
 ---
@@ -399,5 +506,50 @@ Diagnose poison pill behavior, partition starvation, and Spring Kafka resilience
 ??? example "Example"
     ```java
     --8<-- "modules/14-kafka/src/examples/java/lab/kafka/questions/Q23PoisonPillInfiniteLoopIncident.java"
+    ```
+
+---
+
+### Incident Walkthrough: JVM OOM crash caused by Kafka producer buffer pool exhaustion during network partition
+
+A high-throughput payment API crashed with OutOfMemoryError after a broker network partition caused producer threads to block. Walk through the failure sequence and configuration hardening.
+
+??? question "Reveal answer"
+    - **Incident Timeline**: A sudden network partition isolated the broker hosting partition 0 of `payments-event`. The Java producer was configured with default settings (`buffer.memory=32MB`, `max.block.ms=60000ms`).
+    - **Failure Chain**:
+      1. In-flight `send()` calls could not flush to the partitioned leader, causing the 32MB `RecordAccumulator` buffer to saturate within 400 milliseconds.
+      2. Once the buffer filled, incoming calls to `producer.send()` blocked the Tomcat worker threads for up to 60 seconds awaiting buffer release.
+      3. All 200 Tomcat worker threads quickly became blocked in `RecordAccumulator.allocate()`.
+      4. Incoming HTTP requests queued up in JVM memory, exhausting heap headroom and causing a fatal `java.lang.OutOfMemoryError` that crashed the entire container pod.
+    - **Remediation**:
+      1. Slashed `max.block.ms` from 60,000ms down to 1,500ms so `send()` fails fast with `TimeoutException` instead of blocking server threads.
+      2. Wrapped the producer call in a Resilience4j CircuitBreaker: consecutive timeouts immediately trip the breaker, rejecting requests with HTTP 503 before exhausting thread pools.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/14-kafka/src/examples/java/lab/kafka/questions/Q29ProducerMemoryExhaustionMetadataTimeoutIncident.java"
+    ```
+
+---
+
+### Incident Walkthrough: Financial ledger out-of-order corruption caused by retries with in-flight requests greater than 1
+
+A banking settlement ledger processed a withdrawal before a deposit, resulting in a false overdraft fee and customer account suspension. Walk through the out-of-order retry race condition and fix.
+
+??? question "Reveal answer"
+    - **Incident Timeline**: A banking microservice emitted consecutive financial events for an account: Event 1 (Deposit $100) followed by Event 2 (Withdraw $50). In production, the consumer processed Event 2 first, causing the balance to drop below zero, triggering a false overdraft penalty.
+    - **Root Cause**:
+      The producer was configured with:
+      - `retries = 3`
+      - `max.in.flight.requests.per.connection = 5`
+      - `enable.idempotence = false` (legacy client configuration)
+      When Event 1 and Event 2 were dispatched concurrently across the socket connection, Event 1 experienced a transient TCP socket error. Event 2 succeeded and was committed to the partition at offset 10. The producer retried Event 1; the retry succeeded and was committed at offset 11. The causal ordering was silently inverted on disk.
+    - **Permanent Fix**:
+      1. Enabled idempotent production: `enable.idempotence = true`. The broker tracks Producer IDs (PID) and sequence numbers per partition, rejecting out-of-sequence records even when up to 5 requests are in-flight.
+      2. Alternatively, without idempotence, set `max.in.flight.requests.per.connection = 1` to prevent pipelined requests from bypassing failed batches.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/14-kafka/src/examples/java/lab/kafka/questions/Q30OutOfOrderDeliveryInFlightRequestsIncident.java"
     ```
 <!-- --8<-- [end:scenarios] -->

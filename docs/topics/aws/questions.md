@@ -534,12 +534,76 @@ What are the performance and payload constraints of the `kms:Encrypt` API?
     byte[] encryptedKey = dataKey.ciphertextBlob().asByteArray();
     // Encrypt payload locally using plaintextKey with AES-GCM...
     ```
+
+---
+
+### 24. How does AWS EKS Pod Identity simplify IAM authentication compared to legacy IRSA (IAM Roles for Service Accounts)?
+
+How does the EKS Pod Identity agent avoid OIDC trust policy overhead and STS role assumption latency?
+
+??? question "Reveal answer"
+    - **Legacy IRSA vs EKS Pod Identity**:
+      - *Legacy IRSA*: Required an OIDC identity provider configured per cluster, complex trust policies matching exact OIDC URLs and service account names, mutating webhooks to inject token files, and explicit STS `AssumeRoleWithWebIdentity` calls.
+      - *EKS Pod Identity*: Eliminates OIDC setup entirely. The EKS Pod Identity agent daemonset runs on each node. The AWS SDK connects to local metadata endpoints provided by the agent. Permissions are bound directly via AWS CLI / Terraform (`aws eks create-pod-identity-association`), allowing IAM roles to be reused seamlessly across clusters without editing IAM trust policies.
+    - **Operational Benefits**:
+      - Centralized IAM association management without modifying pod manifests or complex OIDC strings.
+      - Built-in credential caching and automatic token refresh handled by the local node daemon.
+      - Support for cross-account and multi-cluster deployments without duplicate IAM role trust definitions.
+
+??? example "Example"
+    ```hcl
+    # Associating IAM role with EKS ServiceAccount using EKS Pod Identity
+    resource "aws_eks_pod_identity_association" "order_service" {
+      cluster_name    = "production-eks-cluster"
+      namespace       = "payments"
+      service_account = "order-service-sa"
+      role_arn        = "arn:aws:iam::123456789012:role/OrderServiceExecutionRole"
+    }
+    ```
+
+---
+
+### 25. How does AWS Lambda SnapStart eliminate Java cold starts, and what are its operational constraints?
+
+How does Firecracker VM snapshot restoration interact with cryptographic randomness and network sockets?
+
+??? question "Reveal answer"
+    - **How SnapStart Operates**:
+      - During deployment / publication of a Lambda function version, Lambda initializes the execution environment: runs the JVM, loads classes, initializes Spring Boot context, and executes pre-runtime initialization hooks.
+      - Once initialized, Lambda pauses the Firecracker microVM, takes a memory and disk snapshot, and encrypts/caches the snapshot in a multi-tier cache.
+      - When an invocation request arrives, Lambda restores the microVM execution environment from the cached snapshot in $\approx 200\text{ms}$ (slashing 10-second JVM cold starts by 90%+).
+    - **Operational Constraints & Gotchas**:
+      - *Snapshot Uniqueness (Randomness)*: Random seeds (`java.security.SecureRandom`) initialized prior to snapshotting will produce identical sequences across all restored VM copies unless refreshed via `CRaC` (`org.crac.Resource`) lifecycle hooks (`beforeCheckpoint` / `afterRestore`).
+      - *Network Sockets*: TCP connections opened during startup (e.g. to databases or HTTP caches) are dead upon restoration and must be re-established after restore.
+      - *Ephemeral State*: Any unique node IDs or machine UUIDs generated during init must be reset.
+
+??? example "Example"
+    ```java
+    import org.crac.Core;
+    import org.crac.Resource;
+
+    public class SnapStartWarmupHandler implements Resource {
+        public SnapStartWarmupHandler() {
+            Core.getGlobalContext().register(this);
+        }
+
+        @Override
+        public void beforeCheckpoint(org.crac.Context<? extends Resource> context) {
+            // Close active database sockets before snapshot
+        }
+
+        @Override
+        public void afterRestore(org.crac.Context<? extends Resource> context) {
+            // Re-seed SecureRandom and reconnect connection pool
+        }
+    }
+    ```
 <!-- --8<-- [end:intermediate] -->
 
 ---
 
 <!-- --8<-- [start:senior] -->
-## Senior Production Engineering (17–21)
+## Senior Production Engineering (17–21, 26–28)
 
 ### 17. How does IAM Roles for Service Accounts (IRSA) work internally on Amazon EKS, and how does it prevent pod-to-node privilege escalation?
 
@@ -738,8 +802,94 @@ Why should production and non-production environments never share the same AWS a
 
 ---
 
+### 26. How do you implement AWS KMS Data Key Caching in high-throughput Spring Boot microservices to prevent KMS rate limit throttling?
+
+What are the security trade-offs of caching plaintext data keys in JVM memory?
+
+??? question "Reveal answer"
+    - **Why Data Key Caching Is Required**:
+      - Microservices encrypting millions of items (e.g. credit card tokens or user PII) quickly exceed AWS KMS account request quotas (e.g. 10,000–50,000 req/sec) and generate significant API costs (\$0.03 per 10,000 requests).
+      - Data key caching (via the AWS Encryption SDK `CachingCryptoMaterialsManager`) reuses a cryptographic data key across multiple encryption operations for a bounded time or number of messages.
+    - **Security Constraints & Bounds**:
+      - *Max Age*: Data keys expire after a short duration (e.g. 5–15 minutes).
+      - *Max Bytes Encrypted*: Keys are retired after encrypting a maximum payload size (e.g. 100MB).
+      - *Max Messages*: Keys are retired after encrypting a fixed count of records (e.g. 1,000 records).
+      - *Compromise Window*: If JVM memory is dumped during this window, the cached key exposes only the messages encrypted with that ephemeral key, not the master CMK.
+
+??? example "Example"
+    ```java
+    // AWS Encryption SDK Data Key Caching
+    CryptoMaterialsManager cm = new DefaultCryptoMaterialsManager(keyring);
+    CryptoMaterialsManager cachingCm = CachingCryptoMaterialsManager.newBuilder()
+        .withKeyring(keyring)
+        .withCache(new LocalCryptoMaterialsCache(100))
+        .withMaxAge(10, TimeUnit.MINUTES)
+        .withMessageUseLimit(1000)
+        .build();
+    ```
+
+---
+
+### 27. How does AWS Transit Gateway compare with direct Multi-AZ / Multi-Region VPC Peering for enterprise microservice architectures?
+
+Compare routing topologies, network throughput limits, latency overhead, and cross-AZ data transfer costs.
+
+??? question "Reveal answer"
+    - **VPC Peering**:
+      - *Topology*: Full mesh point-to-point connections. Connecting $N$ VPCs requires $\frac{N(N-1)}{2}$ peering connections.
+      - *Throughput & Latency*: Zero bottleneck; uses AWS global network backbone with no single point of failure and zero added latency hop.
+      - *Cost*: No hourly connection fee; only standard cross-AZ/cross-region data transfer fees.
+      - *Constraint*: No transitive routing ($A \leftrightarrow B$ and $B \leftrightarrow C$ does NOT permit $A \leftrightarrow C$).
+    - **AWS Transit Gateway (TGW)**:
+      - *Topology*: Hub-and-spoke centralized router connecting hundreds of VPCs and on-premises VPN/Direct Connect.
+      - *Transitive Routing*: Supported via custom TGW route tables and network segmentation (e.g. Prod, Staging, Shared Services).
+      - *Throughput & Latency*: Scales up to 50 Gbps per VPC attachment; introduces an additional network hop (~sub-millisecond latency).
+      - *Cost*: Charged per attachment-hour plus \$0.02 per GB of data processed through TGW.
+
+??? example "Example"
+    ```hcl
+    # Transit Gateway Hub Attachment
+    resource "aws_ec2_transit_gateway_vpc_attachment" "payment_vpc" {
+      transit_gateway_id = aws_ec2_transit_gateway.main.id
+      vpc_id             = aws_vpc.payment_vpc.id
+      subnet_ids         = aws_subnet.tgw_subnets[*].id
+    }
+    ```
+
+---
+
+### 28. How do you design an Amazon DynamoDB Single-Table schema for high-throughput transactional order workflows?
+
+How do Global Secondary Index (GSI) overloading and partition key hashing prevent hot partitions?
+
+??? question "Reveal answer"
+    - **Single-Table Design Fundamentals**:
+      - Instead of creating multiple relational-style tables (Customers, Orders, OrderItems), all entity types reside in one DynamoDB table using generic partition keys (`PK`) and sort keys (`SK`).
+      - Example Key Patterns:
+        - Customer: `PK = USER#123`, `SK = PROFILE`
+        - Order: `PK = USER#123`, `SK = ORDER#2026-001`
+        - Order Items: `PK = ORDER#2026-001`, `SK = ITEM#SKU456`
+      - Allows fetching a customer and all their recent orders in a single low-latency `Query` request ($O(1)$ network round-trip).
+    - **GSI Overloading & Hot Partition Prevention**:
+      - Generic index keys (`GSI1PK`, `GSI1SK`) are populated with different entity attributes depending on access patterns (e.g. `GSI1PK = STATUS#PENDING`, `GSI1SK = TIMESTAMP`).
+      - *Hot Partition Avoidance*: To prevent throttling on high-volume keys (e.g. 100,000 orders created per minute with `STATUS#PENDING`), append a deterministic or random suffix to the partition key: `STATUS#PENDING_0` to `STATUS#PENDING_9` (Write Sharding), querying across all 10 shards in parallel.
+
+??? example "Example"
+    ```json
+    {
+      "PK": { "S": "USER#u-987" },
+      "SK": { "S": "ORDER#o-54321" },
+      "GSI1PK": { "S": "ORDER_STATUS#PROCESSING_3" },
+      "GSI1SK": { "S": "2026-09-26T12:00:00Z" },
+      "Amount": { "N": "149.99" }
+    }
+    ```
+<!-- --8<-- [end:senior] -->
+
+---
+
 <!-- --8<-- [start:scenarios] -->
-## Production Incident Scenarios (22–23)
+## Production Incident Scenarios (22–23, 29–30)
 
 ### 22. Production Incident: A rolling deployment of a new Spring Boot service revision triggers a 3-minute burst of HTTP 502 Bad Gateway errors on the Application Load Balancer. The ECS tasks are green and passing health checks. What happened and how do you resolve it?
 
@@ -823,5 +973,83 @@ Explain the failure mode involving JVM DNS resolution, HikariCP connection valid
     spring.datasource.hikari.max-lifetime=900000
     # Enforce DNS cache TTL via JVM options in Dockerfile:
     # ENTRYPOINT ["java", "-Dsun.net.inetaddr.ttl=5", "-jar", "app.jar"]
+    ```
+
+---
+
+### 29. Production Incident: EKS Spring Boot pods suffer 5-second HTTP request latency spikes due to CoreDNS UDP connection throttling and conntrack table exhaustion. What happened and how do you resolve it?
+
+Explain the Linux glibc DNS resolver 5-second timeout, UDP packet drop under high conntrack load, and NodeLocal DNSCache remediation.
+
+??? question "Reveal answer"
+    - **Incident Walkthrough**:
+      - Under heavy microservice traffic (20,000 req/sec), p99 latency spiked from 15ms to exactly 5015ms across all EKS pods making external HTTP or AWS API calls.
+      - CoreDNS pods were running with healthy CPU and memory metrics.
+    - **Root Cause Analysis**:
+      1. **glibc Concurrent DNS Query Race**: The Linux C library `glibc` issues `A` and `AAAA` (IPv4 and IPv6) DNS queries concurrently over UDP using the same source port.
+      2. **Linux netfilter conntrack Race**: When both UDP packets arrive at Linux netfilter NAT simultaneously, they match the same conntrack tuple, triggering a race condition where one of the packets is silently dropped (`nf_conntrack: table full, dropping packet` or race collision).
+      3. **5-Second UDP Retransmission Timeout**: When glibc drops a UDP packet, its hardcoded retransmission timeout is exactly **5.0 seconds**, creating a 5,000ms latency cliff on downstream requests.
+    - **Remediation Plan**:
+      1. **Deploy NodeLocal DNSCache DaemonSet**:
+         Runs a DNS caching agent on every Kubernetes worker node as a DaemonSet. Pods query `169.254.20.10` via TCP over the loopback interface, eliminating UDP drops and cross-node conntrack race conditions entirely.
+      2. **Enable TCP DNS Transport**:
+         Add `options use-vc` to pod `/etc/resolv.conf` via `dnsConfig` in the Kubernetes pod spec to force TCP transport.
+      3. **Scale CoreDNS Auto-Scaler**:
+         Deploy cluster-proportional-autoscaler to size CoreDNS pods based on node and core counts.
+
+??? example "Example"
+    ```yaml
+    # Kubernetes Pod dnsConfig forcing TCP and single-request query mode
+    spec:
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+          - "169.254.20.10" # NodeLocal DNSCache IP
+        searches:
+          - default.svc.cluster.local
+          - svc.cluster.local
+          - cluster.local
+        options:
+          - name: ndots
+            value: "2"
+          - name: single-request-reopen
+    ```
+
+---
+
+### 30. Production Incident: Amazon RDS PostgreSQL storage fills to 100% and triggers database read-only freeze due to an abandoned logical replication slot. What happened and how do you resolve it?
+
+Explain Write-Ahead Logging (WAL) retention mechanics, CDC consumers (Debezium), and automated CloudWatch alarms.
+
+??? question "Reveal answer"
+    - **Incident Walkthrough**:
+      - Over the weekend, a production RDS PostgreSQL database disk utilization surged from 30% to 100%.
+      - The database switched to `storage-full` state, halting all INSERT/UPDATE/DELETE queries across the company.
+      - Automated storage autoscaling failed because it reached the configured maximum storage threshold (2TB).
+    - **Root Cause Analysis**:
+      1. **Abandoned Logical Replication Slot**: A change data capture (CDC) consumer (such as Debezium or an ETL pipeline) created a PostgreSQL logical replication slot (`pg_create_logical_replication_slot('cdc_orders', 'pgoutput')`).
+      2. **Consumer Disconnection & WAL Accumulation**: The CDC worker crashed and remained offline. PostgreSQL retains all Write-Ahead Logs (WAL) generated since the consumer's `confirmed_flush_lsn`. Because the consumer never reconnected to acknowledge WAL positions, PostgreSQL was strictly forbidden from recycling or truncating WAL segments.
+      3. **Disk Exhaustion**: Hundreds of gigabytes of WAL files accumulated in `pg_wal` until disk space was completely consumed.
+    - **Remediation Plan**:
+      1. **Emergency WAL Purge**:
+         Connect to RDS with administrative privileges and drop the inactive replication slot:
+         `SELECT pg_drop_replication_slot('cdc_orders');`
+         PostgreSQL immediately purges accumulated WAL files, restoring free disk space within minutes.
+      2. **Enforce WAL Size Ceilings (`max_slot_wal_keep_size`)**:
+         Configure the RDS DB Parameter Group:
+         Set `max_slot_wal_keep_size = 51200` (50GB). If an inactive slot causes WAL to exceed 50GB, PostgreSQL invalidates the slot rather than crashing the primary database.
+      3. **Telemetry & Alarms**:
+         Create CloudWatch alarms on RDS metric `OldestReplicationSlotLag` and alert when lag exceeds 10GB.
+
+??? example "Example"
+    ```sql
+    -- Diagnostic query to identify lagging replication slots in PostgreSQL
+    SELECT slot_name, plugin, active,
+           pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn)) AS replication_lag
+    FROM pg_replication_slots
+    WHERE active = false;
+
+    -- Drop offending slot to instantly reclaim disk space:
+    SELECT pg_drop_replication_slot('abandoned_cdc_slot');
     ```
 <!-- --8<-- [end:scenarios] -->

@@ -273,12 +273,53 @@
         ```java
         --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q16LogbackMaskingPatternExample.java"
         ```
+
+---
+
+### Q24: How does Micrometer's `ObservationFilter` customize and sanitize key-values, and when should it be used?
+
+??? question "Reveal answer"
+    **Short Answer:**
+    `ObservationFilter` intercepts every `Observation.Context` before telemetry signals (meters, spans, logs) are exported, allowing engineers to append global metadata (such as environment, deployment region, or cloud availability zone) or strip high-cardinality/PII values dynamically.
+
+    **Internal Mechanism:**
+    When registered with `ObservationRegistry.observationConfig().observationFilter(...)`, all observations pass through `ObservationFilter.map(context)`. The mutated context determines the final low-cardinality key-values exported to Prometheus metrics and high-cardinality key-values attached as span tags.
+
+    **Common Mistake:**
+    Mutating context state inside an observation filter in a non-thread-safe manner or re-adding high-cardinality tags that cause Prometheus series explosion.
+
+    ??? example "Example"
+        ```java
+        --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q24ObservationFilterKeyValuesCustomizationExample.java"
+        ```
+
+---
+
+### Q25: How do OpenTelemetry Collector pipelines organize Receivers, Processors, and Exporters for resilient telemetry delivery?
+
+??? question "Reveal answer"
+    **Short Answer:**
+    An OpenTelemetry Collector pipeline processes telemetry data (traces, metrics, logs) through a directed graph of components:
+    1. **Receivers**: Ingest data over protocols like OTLP (gRPC/HTTP), Jaeger, Zipkin, or Prometheus scrape.
+    2. **Processors**: Transform data in-memory: `memory_limiter` (drops/backpressures when host memory exceeds threshold), `batch` (buffers signals for network efficiency), and `filter`/`attributes` (strips PII or unwanted tags).
+    3. **Exporters**: Push batched telemetry to downstream backends (Tempo, Prometheus, Loki, Datadog) with retry and queued buffer support.
+
+    **Internal Mechanism:**
+    Processors execute sequentially in the exact order declared under `service.pipelines.<signal>.processors`. Placing `memory_limiter` first is critical so the collector drops or throttles incoming data before allocating memory in downstream batch buffers.
+
+    **Common Mistake:**
+    Placing the `batch` processor before `memory_limiter`, causing the collector to crash with OOM under load spikes before the memory limiter can enforce dropping.
+
+    ??? example "Example"
+        ```java
+        --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q25OtelCollectorPipelinesConfigExample.java"
+        ```
 <!-- --8<-- [end:intermediate] -->
 
 ---
 
 <!-- --8<-- [start:senior] -->
-## Senior Questions (5)
+## Senior Questions (8)
 
 ### Q17: How do you architect a multi-window multi-burn-rate alerting strategy based on Service Level Objectives (SLOs) and Error Budgets?
 
@@ -297,10 +338,10 @@
     Prometheus evaluates PromQL expressions computing error ratios over duration ranges:
     `rate(http_requests_total{status=~"5.."}[1h]) / rate(http_requests_total[1h]) > (14.4 * 0.001)`.
 
-    **Example:**
-    ```java
-    --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q17SloErrorBudgetMultiBurnRateExample.java"
-    ```
+    ??? example "Example"
+        ```java
+        --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q17SloErrorBudgetMultiBurnRateExample.java"
+        ```
 
     **Common Mistake:**
     Setting alerts on static error counts (e.g. `errors > 10`), which causes alert fatigue during peak traffic and completely misses outages during low-traffic night hours.
@@ -326,10 +367,10 @@
     **Internal Mechanism:**
     The OpenTelemetry Collector `tail_sampling` processor buffers spans in an LRU trace cache keyed by `traceId`. Rules evaluate span attributes (`error=true`, `http.status_code >= 500`, `duration > 1500ms`) to decide whether to forward the batch to Jaeger/Tempo or discard it.
 
-    **Example:**
-    ```java
-    --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q18HeadVsTailSamplingStrategiesExample.java"
-    ```
+    ??? example "Example"
+        ```java
+        --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q18HeadVsTailSamplingStrategiesExample.java"
+        ```
 
     **Common Mistake:**
     Attempting to perform tail-based sampling inside application JVM processes, which consumes vast heap memory and risks garbage collection pauses under traffic spikes.
@@ -359,10 +400,10 @@
     **Internal Mechanism:**
     `ThreadMXBean.dumpAllThreads(true, true)` invokes JVM native safepoint mechanics to capture thread execution frames, monitor locks (`ObjectMonitor`), and owned synchronizers (`ReentrantLock`).
 
-    **Example:**
-    ```java
-    --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q19ThreadDumpDiagnosticsStarvationExample.java"
-    ```
+    ??? example "Example"
+        ```java
+        --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q19ThreadDumpDiagnosticsStarvationExample.java"
+        ```
 
     **Common Mistake:**
     Increasing thread pool maximum size when starvation occurs, which worsens database connection contention and increases OS context switching overhead.
@@ -391,10 +432,10 @@
     **Internal Mechanism:**
     Audit log events are serialized to JSON with encrypted payload segments using AES-256-GCM. Log shipping agents stream events directly to an immutable S3 bucket protected with Object Lock in Compliance Mode.
 
-    **Example:**
-    ```java
-    --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q20CompliantAuditLoggingArchitectureExample.java"
-    ```
+    ??? example "Example"
+        ```java
+        --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q20CompliantAuditLoggingArchitectureExample.java"
+        ```
 
     **Common Mistake:**
     Writing audit records synchronously to the primary relational database inside business transactions, multiplying database lock durations and risking audit record loss during transaction rollbacks.
@@ -423,10 +464,10 @@
     **Internal Mechanism:**
     `LongAdder` maintains a table of cell variables updated using `Unsafe.compareAndSwapLong()`. Threads hash to different cells, completely eliminating CPU cache-line bouncing and lock contention.
 
-    **Example:**
-    ```java
-    --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q21ZeroOverheadTelemetryMemoryExample.java"
-    ```
+    ??? example "Example"
+        ```java
+        --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q21ZeroOverheadTelemetryMemoryExample.java"
+        ```
 
     **Common Mistake:**
     Using Java `String.format()` or string concatenation inside high-frequency trading loops, allocating millions of ephemeral strings per second.
@@ -437,12 +478,69 @@
     **Follow-up Questions:**
     1. What is Java Flight Recorder (JFR) event recording overhead compared to user-space logging?
     2. How does `Striped64` minimize cache false sharing?
+
+---
+
+### Q26: How do Exemplars in Prometheus and OpenTelemetry bridge metrics and distributed traces, and how are they scraped?
+
+??? question "Reveal answer"
+    **Short Answer:**
+    An **Exemplar** is a reference to data outside the MetricSet—specifically attaching a `trace_id` and `span_id` to a specific metric measurement (such as a latency histogram bucket). In Grafana, clicking on a high-latency spike in a Prometheus chart directly opens the corresponding distributed trace in Tempo/Jaeger without searching through billions of spans.
+
+    **Internal Mechanism:**
+    OpenMetrics format defines exemplars using comments appended to metric values: `http_server_requests_seconds_bucket{le="0.5"} 1.0 # {trace_id="4bf92f..."} 1600000000`. When Prometheus scrapes `/actuator/prometheus` with `Accept: application/openmetrics-text`, it parses and stores exemplars in a dedicated TSDB in-memory ring buffer with configurable retention.
+
+    **Common Mistake:**
+    Scraping using standard Prometheus text format instead of OpenMetrics (`application/openmetrics-text; version=1.0.0`), which silently strips exemplar comments.
+
+    ??? example "Example"
+        ```java
+        --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q26PrometheusExemplarTraceCorrelationExample.java"
+        ```
+
+---
+
+### Q27: How do Exponential Buckets (OpenTelemetry / Prometheus Native Histograms) improve memory efficiency over classic explicit bucket histograms?
+
+??? question "Reveal answer"
+    **Short Answer:**
+    Classic explicit bucket histograms define static boundary thresholds (e.g. 10–25 buckets). Each bucket creates an independent time series in Prometheus TSDB, multiplying cardinality ($N \text{ series} \times \text{tag combinations}$). Exponential (native) histograms use a dynamic exponential scale formula ($2^{2^{-\text{scale}}}$) stored as a single sparse, compact array, reducing TSDB storage footprint by up to 80% while providing dynamic, high-resolution quantile approximations across wide latency ranges.
+
+    **Internal Mechanism:**
+    The bucket index is determined logarithmically: $\text{index} = \lfloor \log_2(\text{value}) \cdot 2^{\text{scale}} \rfloor$. Instead of serializing 20 distinct lines of text per scrape, native histograms serialize zero-count buckets, positive buckets, and negative buckets into a single protobuf payload with run-length encoding.
+
+    **Common Mistake:**
+    Setting exponential histogram `scale` too high (e.g. scale > 8), creating hundreds of fine-grained buckets that exceed network scrape bandwidth under burst traffic.
+
+    ??? example "Example"
+        ```java
+        --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q27ExponentialHistogramMemoryEfficiencyExample.java"
+        ```
+
+---
+
+### Q28: How does the W3C Baggage API propagate business context across distributed microservices, and how do you protect against security/PII leaks?
+
+??? question "Reveal answer"
+    **Short Answer:**
+    The W3C Baggage specification (`baggage` HTTP header) propagates user-defined key-value pairs (e.g. `tenant_id`, `client_version`, `feature_flags`) across distributed service hops alongside trace context (`traceparent`). Unlike span attributes (which remain local to one span), baggage travels downstream across every RPC/HTTP hop. Security protection requires an outbound gateway filter or baggage sanitizer that whitelists permitted metadata keys and strips PII, authentication tokens, and oversized headers.
+
+    **Internal Mechanism:**
+    Baggage is stored in OpenTelemetry / Micrometer `BaggageManager` context. When an HTTP client issues a request, the `BaggagePropagator` serializes entries into comma-separated `key=value;property=val` pairs according to RFC 7230. A sanitizing interceptor evaluates entries against a strict allowlist before serialization.
+
+    **Common Mistake:**
+    Putting sensitive tokens (e.g. bearer JWTs, SSNs, credit card numbers) or high-cardinality unbounded strings into baggage, leaking credentials to third-party downstream APIs and blowing up HTTP header limits (431 Request Header Fields Too Large).
+
+    ??? example "Example"
+        ```java
+        --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q28BaggagePropagationSecuritySanitizationExample.java"
+        ```
 <!-- --8<-- [end:senior] -->
 
 ---
 
 <!-- --8<-- [start:scenarios] -->
-## Scenario Questions (2)
+## Scenario Questions (4)
 
 ### Q22: Incident: Prometheus scraper crashes with OutOfMemoryError and Grafana alerts go dark during high-traffic flash sale. How do you triage and resolve?
 
@@ -456,10 +554,10 @@
     **Internal Mechanism:**
     Heap dumps show `MeterRegistry`'s `ConcurrentHashMap` holding millions of `Meter.Id` and `Tag` objects in Tenured Space.
 
-    **Example:**
-    ```java
-    --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q22IncidentPrometheusCardinalityOomExample.java"
-    ```
+    ??? example "Example"
+        ```java
+        --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q22IncidentPrometheusCardinalityOomExample.java"
+        ```
 
     **Common Mistake:**
     Restarting pods without configuration changes, which temporarily alleviates heap pressure but crashes again within 10 minutes as customers continue purchasing.
@@ -485,10 +583,10 @@
     **Internal Mechanism:**
     Because MDC was not propagated to the worker threads, log lines lacked `correlationId` and were disconnected from the original user checkout requests in Kibana.
 
-    **Example:**
-    ```java
-    --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q23IncidentSilentFailureMdcLossExample.java"
-    ```
+    ??? example "Example"
+        ```java
+        --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q23IncidentSilentFailureMdcLossExample.java"
+        ```
 
     **Common Mistake:**
     Assuming that because error rate dashboards are green, the business process is operating successfully.
@@ -499,6 +597,64 @@
     **Follow-up Questions:**
     1. How does Micrometer Observation handle exception recording automatically?
     2. Why must failure metrics record the exception class name as a tag?
+
+---
+
+### Q29: Incident: High cardinality metrics (raw URL paths with dynamic path variables) crashed Prometheus with OutOfMemoryError. How do you identify the offending meter and remediate?
+
+??? question "Reveal answer"
+    **Short Answer:**
+    The root cause is instrumenting HTTP endpoints with unparameterized, raw request URIs (e.g. `/api/v1/orders/a1b2-c3d4-e5f6` instead of `/api/v1/orders/{orderId}`) as a metric tag. Every unique order ID created a distinct time series, exploding Prometheus TSDB memory and JVM heap. Immediate remediation: register a `MeterFilter` that replaces raw path values with parameterized templates or applies `MeterFilter.maximumAllowableTags()`, followed by fixing Spring MVC route instrumentation.
+
+    **Deep Explanation:**
+    Prometheus TSDB allocates inverted index postings and memory chunks per unique label combination. When an application processes 2 million orders per day with raw URI tags, 2 million unique series are retained in memory. During scrapes, serializing millions of lines of text causes heap exhaustion on both the Spring Boot app and the Prometheus server.
+
+    **Internal Mechanism:**
+    Under the hood, `MeterFilter.replaceTagValues("uri", patternReplacer)` mutates meter tags at creation time. If the tag already exists, the counter lookup returns the shared existing meter instance, consolidating millions of ephemeral paths into a single static series.
+
+    ??? example "Example"
+        ```java
+        --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q29IncidentMetricCardinalityCrashExample.java"
+        ```
+
+    **Common Mistake:**
+    Attempting to restart Prometheus or scale up RAM without filtering the metric at the application source; cardinality immediately re-accumulates and crashes the server again.
+
+    **Production Consideration:**
+    Enforce architectural linting or CI tests verifying that all custom metrics use low-cardinality enum values or parameterized route patterns.
+
+    **Follow-up Questions:**
+    1. How does `MeterFilter.maximumAllowableTags()` protect registries against sudden rogue tags?
+    2. How does Prometheus `metric_relabel_configs` drop high-cardinality labels at scrape time?
+
+---
+
+### Q30: Incident: Asynchronous tasks submitted via thread pools dropped MDC logging and distributed trace spans, breaking trace continuity across microservice calls. How do you diagnose and fix thread context loss?
+
+??? question "Reveal answer"
+    **Short Answer:**
+    Distributed tracing and SLF4J MDC rely on `ThreadLocal` storage. When tasks are offloaded to an asynchronous executor (`@Async`, `CompletableFuture`, or `ExecutorService`), worker threads execute in a separate thread context where `ThreadLocal` values are unset (`null`). Logs show empty trace/span IDs, and downstream HTTP calls send blank `traceparent` headers. Remediate by decorating thread pool executors with Spring's `TaskDecorator` or Micrometer's `ContextExecutorService` to capture, snapshot, and restore context.
+
+    **Deep Explanation:**
+    Modern tracing frameworks snapshot the active `TraceContext` or `ObservationThreadLocalAccessor` when a task is submitted to an executor. The wrapper copies the snapshot to the target worker thread right before `Runnable.run()` executes, and clears the context in a `finally` block to prevent thread contamination in pooled threads.
+
+    **Internal Mechanism:**
+    Spring Boot provides `ThreadPoolTaskExecutor.setTaskDecorator(new ContextPropagatingTaskDecorator())`. During task dispatch, `ContextRegistry.getInstance().snapshot()` captures all registered thread locals (SecurityContext, Tracing, MDC) and mounts them on the worker thread for the duration of the task.
+
+    ??? example "Example"
+        ```java
+        --8<-- "modules/22-observability/src/examples/java/lab/observability/questions/Q30IncidentAsyncContextLossTraceDropExample.java"
+        ```
+
+    **Common Mistake:**
+    Using `InheritableThreadLocal` as a naive workaround; `InheritableThreadLocal` copies state only when a *new thread is spawned*, not when tasks are reused across worker threads in a pre-warmed thread pool.
+
+    **Production Consideration:**
+    Enable automatic context propagation via `Hooks.enableAutomaticContextPropagation()` for reactive pipelines and set global task decorators for all Spring task executors.
+
+    **Follow-up Questions:**
+    1. Why does `InheritableThreadLocal` cause memory leaks and stale data in pooled thread environments?
+    2. How does Java 21+ Scoped Values (`java.lang.ScopedValue`) address thread-local propagation across structured virtual threads?
 <!-- --8<-- [end:scenarios] -->
 
 ---

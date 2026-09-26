@@ -260,6 +260,47 @@ Analyze Little's Law, queueing delay detection, and dynamic Vegas algorithms.
     ```java
     --8<-- "modules/18-resilience/src/examples/java/lab/resilience/questions/Q16AdaptiveConcurrencyLimitsNetflixConcurrencyLimitsExample.java"
     ```
+
+---
+
+### How does Resilience4j's IntervalFunction implement exponential backoff with full and randomized jitter?
+
+Analyze retry timing formulas, thundering herd mitigation, and configuration options.
+
+??? question "Reveal answer"
+    Retrying failed operations with fixed delays (e.g. 500ms) causes all concurrent failing clients to synchronize, hammering the downstream service in coordinated waves (Thundering Herd).
+    
+    - **Exponential Backoff Formula**:
+      $$\text{interval} = \text{initialInterval} \times (\text{multiplier})^{\text{attempt} - 1}$$
+    - **Randomized Jitter (`IntervalFunction.ofExponentialRandomBackoff`)**:
+      Applies a randomization factor (e.g. 0.5) to distribute sleep intervals uniformly within:
+      $$[\text{interval} \times (1 - \text{randomizationFactor}),\; \text{interval} \times (1 + \text{randomizationFactor})]$$
+    - **Production Benefit**: Spreads retry traffic smoothly across time, allowing the recovering downstream service to process queued requests without hitting secondary saturation cliffs.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/18-resilience/src/examples/java/lab/resilience/questions/Q24RetryIntervalFunctionExponentialJitterExample.java"
+    ```
+
+---
+
+### What is the role of automaticTransitionFromOpenToHalfOpenEnabled in Resilience4j, and how does it prevent silent circuit stalling?
+
+Contrast lazy request-driven state transitions with background timer evaluation.
+
+??? question "Reveal answer"
+    By default, Resilience4j evaluates state transitions **lazily**:
+    - When `waitDurationInOpenState` (e.g. 10s) expires, the circuit breaker remains in the `OPEN` state internally until a new client request arrives. Only then does the incoming request trigger the transition to `HALF_OPEN`.
+    
+    - **The Stalling Problem**:
+      In low-traffic endpoints, asynchronous consumer queues, or when upstream callers circuit-break elsewhere, zero requests arrive. Prometheus monitoring continues scraping `state = OPEN` for hours or days, triggering false on-call alerts even though the downstream dependency has fully recovered.
+    - **`automaticTransitionFromOpenToHalfOpenEnabled = true`**:
+      Resilience4j creates a background scheduled task that automatically transitions the circuit breaker from `OPEN` to `HALF_OPEN` the exact millisecond `waitDurationInOpenState` elapses. This emits an immediate state transition event, updating Prometheus metrics and allowing pre-warming health probes to verify dependency recovery without waiting for user traffic.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/18-resilience/src/examples/java/lab/resilience/questions/Q25CircuitBreakerAutomaticHalfOpenTransitionExample.java"
+    ```
 <!-- --8<-- [end:intermediate] -->
 
 ---
@@ -347,6 +388,65 @@ Evaluate latency overhead, cluster-wide quota fairness, race conditions, and sin
     ```java
     --8<-- "modules/18-resilience/src/examples/java/lab/resilience/questions/Q21DistributedRateLimitingRedisVsResilience4jExample.java"
     ```
+
+---
+
+### How do Project Loom Virtual Threads change the trade-offs between ThreadPoolBulkhead and SemaphoreBulkhead?
+
+Contrast platform thread pooling costs with virtual thread semaphore isolation and carrier thread unmounting.
+
+??? question "Reveal answer"
+    Under standard Java platform threads (pre-Java 21), thread isolation required `ThreadPoolBulkhead` to provide bounded queues and asynchronous execution, despite consuming 1MB of stack per OS thread and incurring high context-switching overhead.
+    
+    - **ThreadPoolBulkhead on Virtual Threads (Anti-Pattern)**:
+      Virtual threads are designed to be short-lived and plentiful ("threads are cheap, never pool them"). Wrapping tasks in a bounded thread pool destroys virtual thread benefits, introduces queueing lock contention, and can cause deadlocks if tasks spawn sub-tasks.
+    - **SemaphoreBulkhead on Virtual Threads (Recommended)**:
+      A `SemaphoreBulkhead` limits concurrency using `java.util.concurrent.Semaphore`. When a virtual thread blocks on a semaphore, it unmounts cleanly from its OS carrier thread without pinning, consuming virtually zero memory while waiting. Concurrency is strictly bounded without allocating dedicated thread pools.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/18-resilience/src/examples/java/lab/resilience/questions/Q26ThreadPoolVsSemaphoreBulkheadVirtualThreadsExample.java"
+    ```
+
+---
+
+### How does Service Mesh Outlier Detection complement application-level Resilience4j Circuit Breakers?
+
+Analyze L4/L7 network proxy instance eviction versus in-JVM domain-aware resilience.
+
+??? question "Reveal answer"
+    A resilient microservice architecture uses a layered defense:
+    
+    - **Service Mesh Outlier Detection (Envoy / Istio)**:
+      Operates at the infrastructure proxy layer. Monitors raw HTTP status codes (5xx) and connection errors across upstream endpoint IPs. If an individual pod instance fails repeatedly (e.g. bad deployment or corrupted hardware), Envoy temporarily ejects that specific pod IP from the load balancing pool (e.g. for 30s), routing traffic to surviving healthy pods.
+    - **Application-Level Circuit Breakers (Resilience4j)**:
+      Operates within the Java application domain. Distinguishes between fatal infrastructure failures (e.g. 503 Service Unavailable) and valid business errors (e.g. 404 Not Found, 422 Invalid Card). Can execute complex fallback logic (reading from local cache, dispatching to an asynchronous Transactional Outbox, or returning degraded UI models) that a generic proxy cannot perform.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/18-resilience/src/examples/java/lab/resilience/questions/Q27ServiceMeshOutlierDetectionVsAppCircuitBreakerExample.java"
+    ```
+
+---
+
+### How is speculative request hedging implemented to cut P99 tail latency without multiplying downstream system load?
+
+Explain hedged requests, P95 delay thresholds, and cancellation mechanics.
+
+??? question "Reveal answer"
+    In distributed systems, individual slow requests (P99 tail latency) are often caused by transient GC pauses, network packet retransmissions, or momentary queueing delays rather than total service failures.
+    
+    - **Speculative Request Hedging (Dean & Barroso - The Tail at Scale)**:
+      1. Client sends primary request to Replica A.
+      2. Client starts a timer for the expected P95 latency threshold (e.g. 50ms).
+      3. If no response arrives after 50ms, the client dispatches a second "hedged" request to Replica B.
+      4. Whichever replica responds first is returned to the caller; the other in-flight request is immediately canceled via HTTP/2 or gRPC cancellation headers.
+    - **Load Trade-off**: Because only 5% of requests ever exceed the P95 threshold, total downstream cluster load increases by at most 5%, while cutting P99.9 latency down by 70–80%.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/18-resilience/src/examples/java/lab/resilience/questions/Q28SpeculativeRequestHedgingP99Example.java"
+    ```
 <!-- --8<-- [end:senior] -->
 
 ---
@@ -388,5 +488,49 @@ Examine permittedNumberOfCallsInHalfOpenState, minimumNumberOfCalls, and health 
 ??? example "Example"
     ```java
     --8<-- "modules/18-resilience/src/examples/java/lab/resilience/questions/Q23IncidentCircuitBreakerStuckOpenStateExample.java"
+    ```
+
+---
+
+### Incident Walkthrough: JVM OutOfMemoryError and CPU lockup caused by dynamic unbounded RateLimiter registry keys
+
+An API gateway using Resilience4j RateLimiter crashed with OutOfMemoryError after a bot crawl flooded the service with randomized client IDs. Walk through the memory leak and architectural fix.
+
+??? question "Reveal answer"
+    - **Incident Timeline**: An API gateway developer configured per-user rate limiting using `rateLimiterRegistry.rateLimiter(clientId, config)`. During an automated scraping attack, attackers generated over 2 million distinct, randomized UUIDs as client identifiers.
+    - **Failure Chain**:
+      1. Resilience4j's `RateLimiterRegistry` stores limiter instances in an internal `ConcurrentHashMap` that never evicts entries.
+      2. Each `AtomicRateLimiter` instance allocates memory for atomic state, nanos-based refill timers, and Micrometer metric registration hooks.
+      3. 2 million active instances consumed 8GB of heap, triggering constant Full GC pauses, carrier thread lockups, and eventual `java.lang.OutOfMemoryError` across all gateway replicas.
+    - **Remediation**:
+      1. Reserved Resilience4j RateLimiters strictly for coarse-grained static tiers (e.g. `anonymous`, `tier-standard`, `tier-premium`).
+      2. Offloaded high-cardinality, per-user/per-IP rate limiting to an external Redis Token Bucket using Lua scripts, where keys automatically expire via Redis TTLs without consuming JVM heap memory.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/18-resilience/src/examples/java/lab/resilience/questions/Q29DynamicRateLimiterMemoryLeakIncidentExample.java"
+    ```
+
+---
+
+### Incident Walkthrough: Silent fallback method masked complete downstream database failure while poisoning read caches
+
+A production e-commerce store returned empty search results for 4 hours while reporting 100% HTTP 200 success rates after a database outage. Walk through the fallback trap and caching safeguards.
+
+??? question "Reveal answer"
+    - **Incident Timeline**: A product search microservice wrapped its database catalog query with a Resilience4j CircuitBreaker fallback: `public List<Product> fallback(Throwable t) { return Collections.emptyList(); }`.
+    - **The Failure Trap**:
+      1. The catalog database crashed under maintenance. The circuit breaker tripped to `OPEN` and executed the fallback, returning an empty list.
+      2. Upstream caching annotations (`@Cacheable(value = "products")`) intercepted the empty list and saved it in the Redis cache with a 24-hour TTL.
+      3. Web clients received HTTP 200 OK with empty product arrays. Customers saw "0 products found" across all store categories.
+      4. Because the service returned HTTP 200 without throwing exceptions, zero alerting thresholds (HTTP 5xx rate) were triggered.
+    - **Remediation**:
+      1. Guarded cache population using SpEL `unless`: `@Cacheable(value = "products", unless = "#result == null || #result.isEmpty()")` to ensure empty fallback responses are never written to the cache.
+      2. Instrumented fallback execution with dedicated Micrometer metric counters (`resilience.fallback.invocations`) to trigger PagerDuty alerts whenever fallbacks fire continuously.
+      3. Evaluated fail-fast principles: for critical catalog queries, returning HTTP 503 is preferable to returning misleading empty data.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/18-resilience/src/examples/java/lab/resilience/questions/Q30SilentFallbackCacheCorruptionIncidentExample.java"
     ```
 <!-- --8<-- [end:scenarios] -->

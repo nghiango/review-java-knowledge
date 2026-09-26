@@ -274,6 +274,68 @@ Core interview questions covering Spring Cloud Gateway, OpenFeign, Config Server
               name: orderCircuitBreaker
               fallbackUri: forward:/fallback/orders
         ```
+
+---
+
+### How does Spring Cloud Contract implement Consumer-Driven Contract (CDC) testing across microservices?
+
+??? question "Reveal answer"
+    **Short Answer:** In a distributed microservice architecture, integration testing between independently deployed services using end-to-end environments is fragile, slow, and expensive. **Spring Cloud Contract** enables **Consumer-Driven Contract (CDC)** testing by formalizing API agreements (contracts) in Groovy, YAML, or Java DSL.
+
+    **Workflow:**
+    1. **Contract Definition:** Consumer and producer teams co-author a contract specifying expected request headers, paths, query params, and corresponding HTTP response bodies and status codes.
+    2. **Producer Verification:** Spring Cloud Contract generates automated JUnit tests in the producer's build pipeline. The build fails if the producer's implementation deviates from the agreed contract.
+    3. **Stub Generation for Consumer:** Successful producer builds publish a Maven/Gradle stub artifact containing WireMock mappings. The consumer tests its HTTP client against this verified WireMock stub in fast unit tests without booting the actual producer microservice.
+
+    ??? example "Example"
+        ```yaml
+        # contract: shouldReturnOrderDetails.yml
+        request:
+          method: GET
+          url: /api/v1/orders/1001
+        response:
+          status: 200
+          headers:
+            Content-Type: application/json
+          body:
+            id: 1001
+            status: "CONFIRMED"
+            totalAmount: 149.99
+        ```
+
+---
+
+### How do GlobalFilter and GatewayFilterChain execute Pre and Post logic in Spring Cloud Gateway?
+
+??? question "Reveal answer"
+    **Short Answer:** A `GlobalFilter` applies across all routes without explicit YAML configuration. It receives the `ServerWebExchange` and `GatewayFilterChain`.
+    
+    - **Pre-Filtering:** Code written directly before `chain.filter(exchange)` executes before the request is routed downstream.
+    - **Post-Filtering:** Code chained inside `.then(Mono.fromRunnable(...))` executes reactively after the downstream response returns up the filter chain.
+    - **Filter Ordering:** Filters implement `org.springframework.core.Ordered`. A lower order value (e.g. `-100`) executes *earlier* during the Pre-phase and *later* during the Post-phase.
+
+    ??? example "Example"
+        ```java
+        @Component
+        public class CustomTracingGlobalFilter implements GlobalFilter, Ordered {
+            @Override
+            public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+                // Pre-filter: inject correlation ID into downstream request
+                exchange.getRequest().mutate()
+                    .header("X-Correlation-Id", UUID.randomUUID().toString())
+                    .build();
+
+                return chain.filter(exchange).then(Mono.fromRunnable(() -> {
+                    // Post-filter: log response status after downstream returns
+                    HttpStatus status = exchange.getResponse().getStatusCode();
+                    log.info("Gateway response completed with status: {}", status);
+                }));
+            }
+
+            @Override
+            public int getOrder() { return -1; }
+        }
+        ```
 <!-- --8<-- [end:intermediate] -->
 
 <!-- --8<-- [start:senior] -->
@@ -379,6 +441,74 @@ Core interview questions covering Spring Cloud Gateway, OpenFeign, Config Server
           return factory.createClient(OrderClient.class);
         }
         ```
+
+---
+
+### How does Micrometer Tracing propagate W3C Trace Context and B3 headers across reactive Spring Cloud Gateway boundaries?
+
+??? question "Reveal answer"
+    **Short Answer:** In traditional Servlet applications, tracing context is stored in `ThreadLocal`. Because Spring Cloud Gateway executes asynchronously on Netty event loops where a single request spans multiple threads, `ThreadLocal` storage loses context between reactive operators.
+
+    **Mechanisms in Spring Boot 3+ / Spring Cloud:**
+    - **Reactor Context Propagation:** Spring Boot 3.5 utilizes Project Reactor's automatic context propagation (`Hooks.enableAutomaticContextPropagation()`), transferring trace context between Reactor `Subscriber` contexts and `ThreadLocal` during operator transitions.
+    - **W3C Traceparent Header:** Downstream HTTP requests automatically inherit the standard `traceparent: 00-{traceId}-{spanId}-{sampled}` header.
+    - **Header Mutation:** When the gateway creates a child span or injects baggage, it mutates the request headers via `ServerHttpRequest.mutate()` before delegating to `chain.filter(exchange)`.
+
+    ??? example "Example"
+        ```java
+        // Enabling Reactor Context Propagation for reactive tracing
+        @Configuration(proxyBeanMethods = false)
+        public class ReactiveTracingConfig {
+            @PostConstruct
+            public void init() {
+                Hooks.enableAutomaticContextPropagation();
+            }
+        }
+        ```
+
+---
+
+### How do dynamic route definitions operate in Spring Cloud Gateway via Actuator endpoints and Redis RouteDefinitionRepository?
+
+??? question "Reveal answer"
+    **Short Answer:** By default, Spring Cloud Gateway reads routes statically from YAML configuration. To update routing rules at runtime without redeploying or restarting gateway containers, developers implement **Dynamic Routing**.
+
+    **Architecture:**
+    - **`RouteDefinitionRepository`:** Implements a persistent storage abstraction (e.g. `RedisRouteDefinitionRepository` or JDBC) to store route definitions outside the JVM.
+    - **Actuator API:** Exposes endpoints `/actuator/gateway/routes/{id}` supporting `POST`, `PUT`, and `DELETE` with JSON route payloads.
+    - **`RefreshRoutesEvent`:** When a route definition is updated in Redis, an application event or message bus trigger emits a `RefreshRoutesEvent`. The gateway's `RouteLocator` rebuilds its internal compiled route table in memory without dropping in-flight connections.
+
+    ??? example "Example"
+        ```http
+        # Add dynamic route at runtime via Actuator
+        POST /actuator/gateway/routes/dynamic-promo-route HTTP/1.1
+        Content-Type: application/json
+
+        {
+          "predicates": [{ "name": "Path", "args": { "_genkey_0": "/promo/**" } }],
+          "filters": [{ "name": "StripPrefix", "args": { "_genkey_0": "1" } }],
+          "uri": "lb://promo-service"
+        }
+        ```
+
+---
+
+### Why is client-side load balancing (Spring Cloud LoadBalancer) increasingly displaced by Service Mesh (Envoy/Istio) sidecars?
+
+??? question "Reveal answer"
+    **Short Answer:** Client-side load balancing (Spring Cloud LoadBalancer / legacy Ribbon) embeds service discovery algorithms, circuit breakers, and network retry logic directly inside the Java application JVM.
+
+    **Advantages of Service Mesh (Envoy / Istio) Sidecars:**
+    1. **Polyglot Consistency:** A single traffic policy (retries, timeouts, canary traffic splitting) applies identically across Java, Go, Node.js, and Python microservices without rewriting client libraries in each language.
+    2. **Zero JVM Memory & Thread Overhead:** Traffic management moves to high-performance C++ Envoy proxies or eBPF kernel bypasses, freeing JVM heap and garbage collection from handling raw network pooling.
+    3. **Transparent Security (mTLS):** Sidecars handle mutual TLS encryption, automatic certificate rotation, and SPIFFE cryptographic identities transparently without configuring Java Keystores.
+
+    ??? example "Example"
+        ```text
+        Architecture Shift:
+        Client-Side (Spring Cloud): App JVM (Business Logic + LoadBalancer + Keystore mTLS) -> Network
+        Service Mesh:               App JVM (Pure Business Logic) -> localhost -> Envoy Sidecar (mTLS, Retries, LoadBalancing) -> Network
+        ```
 <!-- --8<-- [end:senior] -->
 
 <!-- --8<-- [start:scenarios] -->
@@ -430,5 +560,60 @@ Core interview questions covering Spring Cloud Gateway, OpenFeign, Config Server
         public Retryer feignRetryer() {
           return Retryer.NEVER_RETRY; // Disable blind retries; use Resilience4j with backoff & jitter
         }
+        ```
+
+---
+
+### Incident: Spring Cloud Config Server Git backend timeout caused cascading startup failure across 50 microservices
+
+A cloud region restart caused 50 microservice instances to boot concurrently. All instances hung and crashed during startup because the centralized Config Server failed to respond. Walk through the bootstrap failure and local resilience configuration.
+
+??? question "Reveal answer"
+    **Short Answer:** By default, microservices configured with Spring Cloud Config Client block their startup sequence during the bootstrap phase until properties are fetched from the centralized Config Server. When the Git server hosting the configuration repository experienced a rate-limit freeze, the Config Server threads hung. All 50 microservices exceeded their Kubernetes liveness probe initial delays, triggering a cluster-wide `CrashLoopBackOff` restart loop.
+
+    **Remediation:**
+    1. **Local Clones on Config Server:** Configure `spring.cloud.config.server.git.clone-on-start: true` and local disk caching so Config Server never performs blocking Git clones on client requests.
+    2. **Graceful Client Fallback:** Set `spring.cloud.config.fail-fast: false` so that if Config Server is unreachable, applications log a warning and boot using packaged default property profiles (`application.yml`) embedded in their container images.
+    3. **Modern Migration:** Migrate environment-specific configuration from centralized Spring Cloud Config Server to native Kubernetes ConfigMaps and HashiCorp Vault / AWS Secrets Manager CSI drivers.
+
+    ??? example "Example"
+        ```yaml
+        # Config Client resilience settings
+        spring:
+          cloud:
+            config:
+              fail-fast: false # Do not crash JVM on Config Server timeout
+              retry:
+                max-attempts: 3
+                initial-interval: 1000
+                max-interval: 3000
+                multiplier: 1.5
+        ```
+
+---
+
+### Incident: Redis RateLimiter Lua script timeout in Spring Cloud Gateway dropped thousands of legitimate transactions
+
+A sudden flash sale caused Redis CPU to spike to 100%, causing Spring Cloud Gateway's Redis RateLimiter to throw connection timeouts and fail closed with HTTP 500 errors. Walk through the failure mode and fail-open configuration.
+
+??? question "Reveal answer"
+    **Short Answer:** Spring Cloud Gateway uses a Redis Lua script to execute the Token Bucket rate-limiting algorithm (`RequestRateLimiterGatewayFilterFactory`). During a massive flash sale, Redis CPU hit 100% on its single-threaded event loop. Lua script execution latency spiked from 1ms to 2,500ms. The Gateway's reactive Netty event loops encountered `RedisCommandTimeoutException`. By default, unhandled filter exceptions propagate to clients as HTTP 500 Internal Server Error, dropping thousands of high-value checkout transactions.
+
+    **Remediation:**
+    1. **Fail-Open Strategy:** Wrap the rate-limiting filter with an `onErrorResume` handler so that if Redis times out or becomes unavailable, the request is allowed to proceed downstream ("fail open") rather than dropping legitimate customer traffic.
+    2. **Sharded Redis Cluster:** Migrate rate-limiting keys to a dedicated, sharded Redis cluster isolated from application cache keys to prevent noisy neighbors from exhausting rate-limiter CPU.
+    3. **Layered In-Memory Pre-Limiting:** Place an in-memory local token bucket ahead of Redis to absorb bot scrapers before they generate Redis socket commands.
+
+    ??? example "Example"
+        ```yaml
+        # Spring Cloud Gateway Fail-Open Rate Limiter Configuration
+        spring:
+          cloud:
+            gateway:
+              filter:
+                request-rate-limiter:
+                  deny-empty-key: false # Do not reject on missing key
+              redis-rate-limiter:
+                include-headers: false # Reduce network payload size
         ```
 <!-- --8<-- [end:scenarios] -->

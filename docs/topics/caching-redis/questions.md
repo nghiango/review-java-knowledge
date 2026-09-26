@@ -312,6 +312,45 @@ Explain how transactional dirty writes and phantom cache state occur when evicti
     ```java
     --8<-- "modules/13-caching-redis/src/examples/java/lab/cachingredis/questions/Q16TransactionalCacheSynchronization.java"
     ```
+
+---
+
+### How does Redis Client-Side Caching (RESP3 tracking & invalidation messages) work?
+
+Explain how server-assisted client-side caching delivers in-memory read speeds while maintaining cache consistency.
+
+??? question "Reveal answer"
+    Redis 6+ RESP3 introduced **Server-Assisted Client-Side Caching**, allowing application nodes to store cache entries directly in local JVM memory while delegating invalidation tracking to the Redis cluster.
+    
+    - **Default (Stateful) Mode**: The Redis server records the keys requested by each client connection in an internal tracking table. When any client modifies a tracked key (`SET`, `DEL`), the server pushes an out-of-band invalidation message to all clients holding that key, prompting them to evict their local entry.
+    - **Broadcasting (BCAST) Mode**: Clients register key prefixes (e.g. `user:`, `catalog:`). The server tracks only prefixes rather than individual keys, drastically reducing server memory overhead. Whenever a key matching the prefix is modified, invalidation notices are broadcast to subscribed clients.
+    - **Benefits**: Delivers sub-microsecond local in-memory read latency while eliminating the polling overhead or stale-read windows of independent local caches.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/13-caching-redis/src/examples/java/lab/cachingredis/questions/Q24ClientSideCachingResp3.java"
+    ```
+
+---
+
+### How do Redis Keyspace Notifications work for expired events, and what are their production limitations?
+
+Explain configuration of `notify-keyspace-events` and analyze why expired event notifications cannot be relied on for distributed cron scheduling.
+
+??? question "Reveal answer"
+    Redis can publish Pub/Sub events when keys are modified or expired.
+    
+    - **Configuration**: Enabling requires `notify-keyspace-events "Ex"` in `redis.conf` (`E` for keyevent events, `x` for expired events). Clients subscribe to channel `__keyevent@<db>__:expired`.
+    - **Production Hazards & Limitations**:
+      1. **Not Real-Time**: Redis does not maintain an exact timer per key. It fires the expired notification only when a key is accessed lazily or swept by the background active expiration random-sampling loop. A key with a 10s TTL may fire minutes late if the keyspace is cold.
+      2. **At-Most-Once Delivery**: Redis Pub/Sub does not persist messages. If the consuming application instance restarts or experiences a network partition, expired events are permanently lost.
+      3. **Missing Payload**: The event payload contains only the expired key string, not the deleted value.
+    - **Conclusion**: Redis expired notifications should never be used as a reliable distributed task scheduler; use Redis Streams or dedicated message brokers (Kafka/RabbitMQ) instead.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/13-caching-redis/src/examples/java/lab/cachingredis/questions/Q25KeyspaceNotificationsExpiredEvents.java"
+    ```
 <!-- --8<-- [end:intermediate] -->
 
 ---
@@ -409,6 +448,71 @@ Analyze thread pinning, connection pooling, and socket multiplexing under high v
     ```java
     --8<-- "modules/13-caching-redis/src/examples/java/lab/cachingredis/questions/Q21RedisVirtualThreadsReentrancy.java"
     ```
+
+---
+
+### How does the XFetch probabilistic early expiration algorithm prevent cache stampedes without locking?
+
+Detail the mathematical foundation of XFetch and contrast its performance with distributed mutex locks.
+
+??? question "Reveal answer"
+    Under intense read load, distributed locks force thousands of threads into lock acquisition loops or blocking waits. The **XFetch algorithm** prevents cache stampedes without any locking by computing a probabilistic early refresh:
+    
+    - **Formula**: A worker recomputes the cache entry if:
+      $$\Delta - \beta \times \delta \times \ln(\text{random}()) \le 0$$
+      Where $\Delta$ is remaining TTL, $\delta$ is the time required to recompute the value, $\beta > 0$ is an aggressiveness factor (default 1.0), and $\text{random}() \in (0, 1]$.
+    - **Dynamic Behavior**: As remaining TTL approaches zero, $-\ln(\text{random}())$ scales up, increasing the likelihood that one of the incoming read requests voluntarily computes the new value and updates Redis before the key ever expires.
+    - **Advantage**: Higher read traffic increases the probability that the cache is pre-warmed early. Zero threads block; no deadlocks or distributed lock timeouts can occur.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/13-caching-redis/src/examples/java/lab/cachingredis/questions/Q26XFetchProbabilisticEarlyExpiration.java"
+    ```
+
+---
+
+### How is memory fragmentation ratio diagnosed in Redis, and how does active defragmentation operate?
+
+Analyze `INFO MEMORY` fragmentation metrics and explain online memory defragmentation tuning.
+
+??? question "Reveal answer"
+    Redis relies on jemalloc for memory allocation. Memory fragmentation occurs when memory freed by expired keys leaves small uncontiguous memory gaps that jemalloc cannot reuse.
+    
+    - **Diagnosis (`INFO MEMORY`)**:
+      $$\text{mem\_fragmentation\_ratio} = \frac{\text{used\_memory\_rss}}{\text{used\_memory}}$$
+      - **$\text{ratio} > 1.5$**: High fragmentation; $>50\%$ of physical RAM consumed by Redis is wasted allocation overhead.
+      - **$1.0 \le \text{ratio} \le 1.5$**: Healthy normal operating range.
+      - **$\text{ratio} < 1.0$**: Critical hazard; physical RAM is exhausted and the operating system is swapping Redis memory to disk, causing severe latency spikes.
+    - **Active Defragmentation (Redis 4.0+)**:
+      Configured via `activedefrag yes`. In background cycles, Redis scans the keyspace, allocates new contiguous memory for fragmented values, copies the data, updates pointer references, and releases old fragmented pages back to the OS—all without restarting the server.
+      - Tunables: `active-defrag-ignore-bytes 100mb`, `active-defrag-threshold-lower 10` (begins defrag at 10% fragmentation), `active-defrag-cycle-max 75` (caps defrag CPU usage).
+
+??? example "Example"
+    ```java
+    --8<-- "modules/13-caching-redis/src/examples/java/lab/cachingredis/questions/Q27MemoryFragmentationRatioActiveDefrag.java"
+    ```
+
+---
+
+### How is Multi-Region Active-Active Redis replication designed, and how are write conflicts resolved?
+
+Compare cross-region active-active architectures, CRDT conflict resolution, and Last-Write-Wins caveats.
+
+??? question "Reveal answer"
+    Standard Redis Sentinel or Cluster configurations operate in **Active-Passive** mode across regions: writes must route over high-latency WAN links to the primary region. **Active-Active Redis** allows local low-latency read and write operations in every region simultaneously.
+    
+    - **Conflict-Free Replicated Data Types (CRDTs)**:
+      State-based or operation-based data structures that mathematically guarantee deterministic convergence across regions without centralized locking:
+      - **PN-Counters**: Track positive increments and negative decrements independently per region; global value is the sum of all regional deltas.
+      - **OR-Set (Observed-Removed Set)**: Uses unique element-tag IDs to ensure concurrent `add` and `remove` operations resolve deterministically (e.g. Add-Wins semantics).
+    - **Last-Write-Wins (LWW) via Clocks**:
+      Simpler scalar registers use timestamps for conflict resolution.
+      - *Caveat*: Susceptible to clock drift across cloud regions. A server with NTP skew can overwrite newer valid data or silently drop incoming concurrent updates.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/13-caching-redis/src/examples/java/lab/cachingredis/questions/Q28MultiRegionActiveActiveCrdt.java"
+    ```
 <!-- --8<-- [end:senior] -->
 
 ---
@@ -445,6 +549,45 @@ A financial wallet transfer failed and rolled back in PostgreSQL, but customer a
 ??? example "Example"
     ```java
     --8<-- "modules/13-caching-redis/src/examples/java/lab/cachingredis/questions/Q23DualWriteRollbackDirtyCacheIncident.java"
+    ```
+
+---
+
+### Incident Walkthrough: Production Redis frozen and cascading timeouts caused by KEYS wildcard scan
+
+A live production incident occurred when an internal support tool ran a pattern query to delete stale user session records. Walk through the root cause and mitigation.
+
+??? question "Reveal answer"
+    - **Incident Timeline**: A customer support engineer triggered an admin maintenance endpoint that invoked `redisTemplate.keys("session:user:*")` on a production Redis instance containing 25 million keys. Redis CPU spiked to 100% on a single core, and all client traffic froze for 6.5 seconds. Microservices across the platform hit 2-second Redis command timeouts, and HikariCP connection pools backed up, producing hundreds of HTTP 504 errors. Redis Sentinel assumed the primary was dead and initiated an uncoordinated failover.
+    - **Root Cause**: Redis is fundamentally single-threaded for command execution. The `KEYS` command runs in $O(N)$ time by scanning the entire internal dictionary sequentially. While executing `KEYS`, Redis cannot process any other commands (`GET`, `SET`, `PING`).
+    - **Immediate Mitigation**: Terminated the blocking admin process, restarted the application connections, and removed the administrative endpoint.
+    - **Permanent Fix**:
+      1. Disabled the `KEYS` command entirely in `redis.conf`: `rename-command KEYS ""`.
+      2. Replaced key-pattern searching with non-blocking cursor-based scanning (`SCAN cursor MATCH pattern COUNT 1000`), which yields execution between batches, ensuring the event loop remains responsive.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/13-caching-redis/src/examples/java/lab/cachingredis/questions/Q29KeysWildcardPatternScanOomIncident.java"
+    ```
+
+---
+
+### Incident Walkthrough: Silent data corruption during Redis Sentinel failover due to split-brain asynchronous replication lag
+
+During a network partition, Redis Sentinel promoted a new primary while the isolated old primary continued accepting writes, resulting in permanent data loss upon rejoin. Walk through the failure mode and preventative configuration.
+
+??? question "Reveal answer"
+    - **Incident Timeline**: A network switch partition isolated the primary Redis instance (Node A) alongside a minority of application instances and one Sentinel. The majority partition containing two Sentinels detected Node A as unreachable and promoted Replica B to be the new primary. Node A continued receiving writes from local clients for 30 seconds. When the network healed, Sentinel demoted Node A to a replica of Node B. Node A reconnected via `PSYNC` and flushed its entire memory to replicate Node B's state, permanently wiping all 30 seconds of client writes.
+    - **Root Cause**: By default, Redis replication is completely asynchronous. A master node continues accepting writes even when completely severed from all replicas, creating split-brain vulnerabilities during network partitions.
+    - **Permanent Fix**:
+      Configured Redis safety guardrails in `redis.conf`:
+      - `min-replicas-to-write 1`: Directs the primary to reject write operations with an error if it cannot reach at least 1 healthy replica.
+      - `min-replicas-max-lag 10`: Directs the primary to halt write operations if replica acknowledgment lag exceeds 10 seconds.
+      With these settings, an isolated master immediately halts mutating commands, preventing split-brain data loss.
+
+??? example "Example"
+    ```java
+    --8<-- "modules/13-caching-redis/src/examples/java/lab/cachingredis/questions/Q30SentinelSplitBrainReplicationLagIncident.java"
     ```
 <!-- --8<-- [end:scenarios] -->
 

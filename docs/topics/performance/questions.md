@@ -277,6 +277,42 @@
         ```
 
     [Internals](/topics/performance/internals.md#locks-and-striped-counters) · [Review exercise](/topics/performance/code-review.md#lock-contention) · [Solution](/topics/performance/solutions.md#contention-friendly-accumulation)
+
+### Q: How does JFR (Java Flight Recorder) continuous event streaming work in production environments?
+
+??? question "Reveal answer"
+
+    **Short Answer:** JDK 14+ JFR Event Streaming (`jdk.jfr.consumer.RecordingStream`) enables applications to consume flight recording events asynchronously in-flight without writing recordings to disk or triggering manual snapshot dumps.
+
+    **Internal Mechanism:** JVM threads write events into thread-local ring buffers that flush to disk chunks. `RecordingStream` attaches a parser directly to in-flight chunks, notifying registered event listeners (`onEvent("jdk.CPULoad", ...)`) in real time with sub-1% CPU overhead.
+
+    **Common Mistake:** Running heavy disk-dump commands (`jcmd JFR.dump`) under high load, causing I/O pauses instead of streaming lightweight targeted events.
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/23-performance/src/examples/java/lab/performance/questions/Q24JfrEventStreamingProductionProfilingExample.java"
+        ```
+
+    [Internals](/topics/performance/internals.md#jmh-and-profiling) · [Production](/topics/performance/production.md#jfr-recipes) · [Solutions](/topics/performance/solutions.md)
+
+### Q: How do you size HikariCP database connection pools using hardware spindle and core formulas?
+
+??? question "Reveal answer"
+
+    **Short Answer:** The PostgreSQL / HikariCP pool sizing formula is $\text{connections} = ((\text{CPU cores} \times 2) + \text{effective spindles})$. For modern multi-tenant cloud databases backed by fast NVMe SSDs, a small pool (e.g. 10–20 connections per pod) outperforms large pools by eliminating disk head thrashing and OS context switching.
+
+    **Internal Mechanism:** Relational databases execute queries synchronously on disk blocks and OS pages. When connection count exceeds CPU core capacity, database worker processes spend more time context switching and fighting over cache lines than executing query plans.
+
+    **Common Mistake:** Sizing connection pools to match web thread counts (e.g. 200 connections for 200 Tomcat threads), which overwhelms database CPU and causes lock contention.
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/23-performance/src/examples/java/lab/performance/questions/Q25HikariPoolSizingFormulaHardwareLimitsExample.java"
+        ```
+
+    [Concept](/topics/performance/concepts.md#resource-budgets) · [Review exercise](/topics/performance/code-review.md#hikari-exhaustion) · [Solutions](/topics/performance/solutions.md#connection-pool-budget-and-short-resource-scopes)
 <!-- --8<-- [end:intermediate] -->
 
 <!-- --8<-- [start:senior] -->
@@ -407,6 +443,60 @@
         ```
 
     [Internals](/topics/performance/internals.md#allocation-and-gc) · [Review exercise](/topics/performance/code-review.md#excessive-allocation) · [Allocation solution](/topics/performance/solutions.md#allocation-conscious-encoding)
+
+### Q: What is the 32GB Compressed OOPs cliff and how does it impact JVM heap sizing decisions?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Under 32GB heap size, HotSpot enables Compressed Ordinary Object Pointers (`-XX:+UseCompressedOops`), encoding 64-bit object references in 32 bits via an 8-byte alignment shift. At 32GB or higher, pointer compression fails, and all references expand from 4 bytes to 8 bytes, causing a 32GB heap to hold *less* live data than a 31GB heap.
+
+    **Internal Mechanism:** 32-bit addresses can reference $2^{32} = 4\text{ GB}$. Because Java objects align on 8-byte boundaries, HotSpot shifts the 32-bit address left by 3 bits ($\times 8$), covering up to $4\text{ GB} \times 8 = 32\text{ GB}$. Exceeding 32GB requires full 64-bit pointers, increasing reference footprint by 50–100% and saturating CPU L1/L2/L3 caches.
+
+    **Common Mistake:** Sizing heaps to 32GB or 34GB to "add a little extra memory", which actually reduces usable memory by ~20% due to reference expansion. A heap should either stay below 31GB (e.g. `-Xmx31g`) or jump straight to $\ge 48\text{GB}$.
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/23-performance/src/examples/java/lab/performance/questions/Q26CompressedOopsThirtyTwoGigabyteCliffExample.java"
+        ```
+
+    [Internals](/topics/performance/internals.md#allocation-and-gc) · [Concepts](/topics/performance/concepts.md#resource-budgets) · [Solutions](/topics/performance/solutions.md)
+
+### Q: How do you interpret Async-Profiler allocation flame graphs (`-e alloc`) to eliminate garbage collection pauses?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Async-Profiler allocation profiling hooks into HotSpot TLAB (Thread-Local Allocation Buffer) refills and out-of-TLAB allocations. Flame graphs visualize call stacks weighted by total bytes allocated (MB/s) rather than CPU cycles, isolating the exact methods responsible for Young Gen exhaustion and frequent GC pause spikes.
+
+    **Internal Mechanism:** Profiling via bytecode instrumentation or standard JVMTI introduces severe safe-point bias and observer overhead. Async-Profiler intercepts HotSpot internal C++ runtime allocation stubs via `AsyncGetCallTrace`, capturing realistic allocation stacks without safe-point skew.
+
+    **Common Mistake:** Focus only on CPU flame graphs (`-e cpu`) when diagnosing high p99 latency caused by GC pauses; CPU flame graphs show GC threads executing work, but do not show *which application methods* generated the allocated garbage.
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/23-performance/src/examples/java/lab/performance/questions/Q27AsyncProfilerFlameGraphAllocationProfilingExample.java"
+        ```
+
+    [Internals](/topics/performance/internals.md#jmh-and-profiling) · [Review exercise](/topics/performance/code-review.md#excessive-allocation) · [Solutions](/topics/performance/solutions.md#allocation-conscious-encoding)
+
+### Q: How does Linux cgroups v2 CFS quota CPU throttling degrade Java latency in containerized Kubernetes pods?
+
+??? question "Reveal answer"
+
+    **Short Answer:** In Linux cgroups v2, CPU limits are enforced via Completely Fair Scheduler (CFS) quotas (`cpu.cfs_quota_us` and `cpu.cfs_period_us`). When multi-threaded JVM applications spike all CPU cores simultaneously, their millisecond quota is consumed in the first fraction of the 100ms period. The Linux kernel suspends all container threads for the remainder of the period, causing massive tail latency spikes (50–100ms freezes) without reporting high 1-minute CPU averages.
+
+    **Internal Mechanism:** A container with a limit of 2.0 CPUs has a 200ms quota per 100ms period. If 8 parallel worker threads execute simultaneously, 200ms of CPU time is consumed in just $200\text{ms} / 8 = 25\text{ms}$. For the remaining 75ms of the period, the container's threads are frozen in an OS wait state (`nr_throttled` counter increments).
+
+    **Common Mistake:** Looking at 1-minute average CPU utilization in Grafana (e.g. showing 40% CPU) and concluding the pod is not CPU-starved, unaware of micro-throttling occurring at 100ms intervals.
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/23-performance/src/examples/java/lab/performance/questions/Q28LinuxCgroupsV2CfsQuotaCpuThrottlingExample.java"
+        ```
+
+    [Concept](/topics/performance/concepts.md#resource-budgets) · [Production](/topics/performance/production.md) · [Solutions](/topics/performance/solutions.md)
 <!-- --8<-- [end:senior] -->
 
 <!-- --8<-- [start:scenarios] -->
@@ -463,6 +553,50 @@
         ```
 
     [Internals](/topics/performance/internals.md#allocation-and-gc) · [Review exercise](/topics/performance/code-review.md#excessive-allocation) · [Solution](/topics/performance/solutions.md#allocation-conscious-encoding)
+
+### Q: Incident: A production microservice crashes with `OutOfMemoryError: Metaspace` after 48 hours of uptime. How do you triage and fix classloader leaks?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Metaspace leaks are caused by continuous dynamic bytecode generation (e.g. CGLIB proxies, Groovy script evaluation, un-cached reflection proxies, or XML parsers) creating anonymous `ClassLoader` instances that cannot be garbage collected because references are held in static fields or thread-local maps. Remediate by capturing a Metaspace heap dump (`jcmd <pid> GC.class_stats` or `-XX:+HeapDumpOnOutOfMemoryError`), identifying the leaking `ClassLoader`, and caching generated proxy classes or setting `-XX:MaxMetaspaceSize`.
+
+    **Deep Explanation:** Unlike JVM heap memory, Metaspace resides in off-heap native memory allocated by OS `mmap()`. Classes can only be unloaded when their defining `ClassLoader` itself becomes unreachable and unreferenced. If an application generates dynamic proxies per-request rather than caching them statically, thousands of distinct `ClassLoader` objects are pinned in memory.
+
+    **Internal Mechanism:** HotSpot allocates metadata chunks for each `ClassLoader`. When the total allocated chunks reach `-XX:MaxMetaspaceSize`, the JVM triggers a full GC. If classloaders remain strongly referenced, the collector cannot reclaim space and throws `java.lang.OutOfMemoryError: Metaspace`.
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/23-performance/src/examples/java/lab/performance/questions/Q29IncidentMetaspaceLeakProxyGenerationExample.java"
+        ```
+
+    **Common Mistake:** Arbitrarily doubling `-XX:MaxMetaspaceSize` from 256MB to 1GB without investigating the leak; this only delays the crash by a few days while bloating native process memory.
+
+    **Production Consideration:** Monitor `jvm.memory.used{area="nonheap",id="Metaspace"}` in Prometheus and alert on steady upward trends that do not drop after full garbage collection.
+
+    [Internals](/topics/performance/internals.md#allocation-and-gc) · [Review exercise](/topics/performance/code-review.md) · [Solutions](/topics/performance/solutions.md)
+
+### Q: Incident: A service freezes under load with 0% CPU utilization and all threads blocked. How do you identify thread pool starvation deadlocks?
+
+??? question "Reveal answer"
+
+    **Short Answer:** Thread pool starvation deadlock occurs when parent tasks submitted to a bounded thread pool spawn child sub-tasks to the *same* pool and block waiting for child completion (`childFuture.get()`). Under load, all worker threads become occupied by parent tasks waiting for child tasks that sit indefinitely in the executor queue, causing a complete system deadlock with zero CPU usage. Remediate by separating thread pools (never share worker pools between parent and child tasks) or migrating to non-blocking async composition or Java 21+ Virtual Threads.
+
+    **Deep Explanation:** If a thread pool has 8 threads, and 8 concurrent requests arrive, all 8 worker threads pick up parent tasks. Each parent task submits 2 child tasks to the queue and calls `.get()`. Because the pool has 0 idle threads, the 16 child tasks sit in the queue forever. The parent threads cannot finish until child tasks execute, creating a cyclic dependency on pool capacity.
+
+    **Internal Mechanism:** Thread dumps reveal all worker threads in `WAITING` state on `CompletableFuture.reportGet()` or `CountDownLatch.await()`, while queue metrics (`executor.queued`) show non-zero waiting tasks and CPU utilization drops to zero.
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/23-performance/src/examples/java/lab/performance/questions/Q30IncidentParentChildTaskThreadPoolDeadlockExample.java"
+        ```
+
+    **Common Mistake:** Sizing thread pools larger to "fix" the problem; increasing the pool to 32 threads merely raises the deadlock threshold from 8 concurrent requests to 32 concurrent requests.
+
+    **Production Consideration:** Enforce separate, isolated `ThreadPoolExecutor` instances for child tasks, or use `Executors.newVirtualThreadPerTaskExecutor()` where tasks do not hoard platform threads while waiting.
+
+    [Concept](/topics/performance/concepts.md#resource-budgets) · [Review exercise](/topics/performance/code-review.md#lock-contention) · [Solutions](/topics/performance/solutions.md)
 <!-- --8<-- [end:scenarios] -->
 
 ## Related

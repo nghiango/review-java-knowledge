@@ -242,6 +242,49 @@ Core interview questions covering distributed systems theory, consistency models
             return;
         }
         ```
+
+---
+
+### What is the Gossip Protocol, and how does it achieve decentralized cluster membership and failure detection?
+
+??? question "Reveal answer"
+    **Short Answer:** The **Gossip Protocol** (epidemic algorithm) is a decentralized communication protocol where nodes periodically exchange state and membership information with randomly selected peers, propagating updates exponentially across the cluster ($O(\log N)$ rounds) without requiring a central coordinator or shared registry.
+
+    **Key Mechanisms:**
+    - **Failure Detection (SWIM Protocol):** Node A sends an indirect ping to Node B via Node C. If Node B does not respond, it is marked `SUSPECT`. If it remains unresponsive for a grace period, it is declared `DEAD` and purged.
+    - **Anti-Entropy vs Rumor Mongering:** Rumor mongering floods updates quickly across nodes; anti-entropy periodically reconciles complete datasets between pairs of nodes to resolve missed messages.
+    - **Applications:** Used in Apache Cassandra, Amazon Dynamo, Consul, and HashiCorp Serf for cluster health and node membership.
+
+    ??? example "Example"
+        ```text
+        Gossip Round Progression:
+        Round 1: Node 1 gossips to Node 4
+        Round 2: Nodes 1 & 4 gossip to Nodes 2 & 5 (4 nodes infected)
+        Round 3: All 4 nodes gossip to remaining nodes (Cluster converges in O(log N) time)
+        ```
+
+---
+
+### What is Consistent Hashing with virtual nodes (vnodes), and how does it prevent hot spots during cluster rebalancing?
+
+??? question "Reveal answer"
+    **Short Answer:** In traditional modulo hashing (`hash(key) % N`), adding or removing a single node forces almost all keys to relocate ($N/(N+1)$ fraction reshuffled). **Consistent Hashing** maps both node identifiers and data keys onto a continuous $2^{32}-1$ integer ring. Keys are assigned to the first node encountered clockwise. When a node joins or leaves, only $1/N$ of keys are moved to/from adjacent neighbors.
+
+    **Role of Virtual Nodes (Vnodes):**
+    - **Non-Uniform Distribution Problem:** With few physical nodes, random ring placement creates large ring gaps, overloading specific nodes.
+    - **Vnode Solution:** Each physical server is assigned multiple virtual tokens (e.g. 128 or 256 vnodes) spread across the ring. This balances data uniformly across physical servers and allows rebalancing load to be shared across all surviving nodes simultaneously instead of dumping 100% of the lost node's load onto a single immediate neighbor.
+
+    ??? example "Example"
+        ```mermaid
+        flowchart TD
+            Ring(("Consistent Hash Ring 0 to 2^32-1"))
+            NodeA1["Node A (Vnode 1)"]
+            NodeB1["Node B (Vnode 1)"]
+            NodeA2["Node A (Vnode 2)"]
+            NodeB2["Node B (Vnode 2)"]
+            Key1["Key: user:1001"] --> NodeB1
+            Key2["Key: user:1002"] --> NodeA2
+        ```
 <!-- --8<-- [end:intermediate] -->
 
 <!-- --8<-- [start:senior] -->
@@ -343,6 +386,71 @@ Core interview questions covering distributed systems theory, consistency models
             T3 -.->|Compensate| C2["C2: Release Inventory<br/>(Compensating Action)"]
             C2 -.->|Compensate| C1["C1: Cancel Order<br/>(Compensating Action)"]
         ```
+
+---
+
+### What is the Byzantine Fault Tolerance (BFT) problem, and how does it differ from Crash-Fault Tolerance (CFT)?
+
+??? question "Reveal answer"
+    **Short Answer:** **Crash-Fault Tolerance (CFT)** assumes nodes either operate correctly or crash silently (stop-fail model), where nodes never lie or forge messages. **Byzantine Fault Tolerance (BFT)** assumes nodes can fail arbitrarily: they may crash, lie, forge signatures, delay packets, or send contradictory messages to different peers (malicious or corrupted state).
+
+    **Quorum Comparison:**
+    - **CFT (Raft, Paxos):** Requires $2f + 1$ total nodes to tolerate $f$ crashed nodes (e.g. 3 nodes tolerate 1 crash; 5 nodes tolerate 2 crashes).
+    - **BFT (PBFT, Tendermint):** Requires $3f + 1$ total nodes to tolerate $f$ Byzantine nodes (e.g. 4 nodes tolerate 1 traitor; 7 nodes tolerate 2 traitors) because the honest majority must out-vote both the faulty nodes and their deceptive messages.
+
+    ??? example "Example"
+        ```text
+        Consensus Quorum Comparison:
+        Fault Type            Algorithm Examples        Minimum Nodes for f Failures
+        Crash-Fault (CFT)     Raft, Paxos, ZooKeeper    2f + 1 (5 nodes tolerate 2 crashes)
+        Byzantine (BFT)       PBFT, Tendermint, Raft-BFT 3f + 1 (7 nodes tolerate 2 traitors)
+        ```
+
+---
+
+### How do Hybrid Logical Clocks (HLC) combine physical NTP time with Lamport logical clocks to order distributed transactions?
+
+??? question "Reveal answer"
+    **Short Answer:** Pure physical clocks (NTP) suffer from non-deterministic clock skew and backwards jumps, causing causality inversions. Pure Lamport logical clocks preserve causal ordering ($A \to B \implies L(A) < L(B)$) but have zero relation to wall-clock physical time, making time-range queries impossible. **Hybrid Logical Clocks (HLC)** track a composite coordinate $(l.e, c.e)$: a physical component $l$ bounded by physical NTP time, and a logical increment counter $c$ that advances when physical clock drift stalls or jumps backwards.
+
+    **Properties:**
+    - **Causal Consistency:** If event $e$ caused $e'$, then $HLC(e) < HLC(e')$.
+    - **Bounded Physical Drift:** $|l.e - \text{pt}.e| \le \epsilon$, where $\epsilon$ is maximum NTP clock error.
+    - **Adoption:** Used in modern distributed SQL databases like CockroachDB, YugabyteDB, and MongoDB for distributed serializable transactions without requiring atomic clocks.
+
+    ??? example "Example"
+        ```text
+        HLC Coordinate Update on Message Receive (m):
+        l' = max(l_local, pt_local, m.l)
+        if l' == l_local == m.l:
+            c' = max(c_local, m.c) + 1
+        else:
+            c' = 0
+        (Guarantees monotonic coordinate advance while keeping pace with real time)
+        ```
+
+---
+
+### How is Read-Your-Own-Writes consistency implemented in an eventually consistent distributed system?
+
+??? question "Reveal answer"
+    **Short Answer:** In an eventually consistent system with asynchronous replication, a client that writes data to the primary node and immediately reads from a lagging read replica will see stale state, appearing as if their write disappeared. **Read-Your-Own-Writes (RYOW)** consistency guarantees that a user always observes their own updates, while other concurrent users may observe eventual consistency.
+
+    **Implementation Patterns:**
+    1. **Primary Read Window:** Route all read requests from the updating user to the primary database for a brief window (e.g., 5 seconds) after any write operation.
+    2. **Client-Side Version Tokens:** The server returns a replication LSN or transaction version token upon write. Subsequent read requests include this token in an HTTP header; the read replica delays response until its local replication offset catches up to the token (`WAIT_FOR_LSN`).
+    3. **Optimistic Local Caching:** The client UI merges recent local mutations into its in-memory view until server responses confirm replication.
+
+    ??? example "Example"
+        ```http
+        # Write Response returns replication commit token
+        HTTP/1.1 200 OK
+        X-Replication-Token: lsn:0/1A2B3C4D
+
+        # Subsequent Read Request sends token to replica
+        GET /api/v1/profile HTTP/1.1
+        X-Wait-Until-LSN: lsn:0/1A2B3C4D
+        ```
 <!-- --8<-- [end:senior] -->
 
 <!-- --8<-- [start:scenarios] -->
@@ -384,6 +492,53 @@ Core interview questions covering distributed systems theory, consistency models
         Partition Event:
         - Sub-cluster 1: {Node 1, Node 2, Node 3} -> Size 3 >= 3 -> HEALTHY (Leader active, writes commit)
         - Sub-cluster 2: {Node 4, Node 5}          -> Size 2 < 3  -> READ-ONLY / BLOCKED (Writes rejected)
+        ```
+
+---
+
+### Incident: Cascading cluster collapse caused by unjittered retry storms during database failover
+
+A database primary underwent a planned 30-second maintenance restart. Instead of smoothly recovering, downstream application clusters suffered a 45-minute cascading outage. Walk through the failure dynamics and retry budget fix.
+
+??? question "Reveal answer"
+    **Short Answer:** When the database restarted, 150 application instances experienced connection errors. All instances were configured with standard retries on a fixed 1,000ms delay without jitter. When the database opened its TCP socket, 60,000 concurrent connection requests hit the server in synchronized waves every second. HikariCP connection timeouts flooded the database CPU to 100%, causing health check failures and continuous kernel OOM kills.
+
+    **Remediation:**
+    1. **Full Jitter Exponential Backoff:** Replaced fixed retry delays with exponential backoff with full jitter: $\text{sleep} = \text{random}(0, \min(M, B \times 2^i))$, flattening synchronized traffic spikes into a uniform distribution.
+    2. **Retry Budgets:** Configured client-side retry budgets capping retry traffic to at most 10% of total request volume; if retry volume exceeds 10%, requests fail fast immediately.
+    3. **Resilience4j Circuit Breaker:** Open circuit breaker on initial connection failure to prevent applications from hammering the database during startup.
+
+    ??? example "Example"
+        ```java
+        // Exponential Backoff with Full Jitter calculation
+        long baseSleepMs = 100;
+        long maxSleepMs = 5000;
+        long exponentialDelay = Math.min(maxSleepMs, baseSleepMs * (1L << attempt));
+        long sleepWithJitter = ThreadLocalRandom.current().nextLong(0, exponentialDelay);
+        Thread.sleep(sleepWithJitter);
+        ```
+
+---
+
+### Incident: Silent financial ledger divergence caused by NTP clock step backward in Cassandra cluster
+
+A financial payment microservice running on Cassandra experienced silent data corruption where customer balance updates were completely ignored after a VM live migration. Walk through the timestamp hazard and fix.
+
+??? question "Reveal answer"
+    **Short Answer:** Apache Cassandra relies on **Last-Write-Wins (LWW)** conflict resolution based on message timestamps. During a cloud VM live migration, the host system clock jumped backwards by 8 seconds before NTP stepped it into synchronization. Updates written by microservices during this 8-second window carried timestamps 8 seconds in the past. Because Cassandra had already committed prior balance updates with newer timestamps, Cassandra silently discarded the new valid transactions as "older" writes without returning an error!
+
+    **Remediation:**
+    1. **NTP Slew vs Step:** Configure time synchronization (via `chrony`) to use clock *slewing* rather than stepping, preventing system time from ever moving backwards.
+    2. **Lightweight Transactions (Paxos LWT):** For financial ledger entries where ordering is critical, use Cassandra Paxos-based Lightweight Transactions (`IF EXISTS` / `IF balance = :expected`) instead of raw LWW timestamps.
+    3. **Append-Only Immutable Event Sourcing:** Replace in-place mutable balance overwrites with an immutable transaction event stream, removing dependency on wall-clock order for ledger validity.
+
+    ??? example "Example"
+        ```cql
+        -- Replace blind LWW update with Paxos Lightweight Transaction
+        UPDATE account_balances 
+        SET balance = 1500.00, version = 4 
+        WHERE account_id = 'ACC-9821' 
+        IF version = 3;
         ```
 <!-- --8<-- [end:scenarios] -->
 

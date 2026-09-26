@@ -264,12 +264,50 @@
         ```java
         --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q16WebClientExponentialBackoffRetryExample.java"
         ```
+
+---
+
+### Q24: How do you configure and monitor Reactor Netty ConnectionProvider metrics for outbound HTTP connection pools?
+
+??? question "Reveal answer"
+    **Short Answer:**
+    Reactor Netty's `ConnectionProvider` metrics are enabled via `.metrics(true)` on `ConnectionProvider.builder()` and registered into Micrometer. Key gauges monitor active acquired connections, idle pooled connections, and pending acquire queue depth (`reactor.netty.connection.provider.pending.connections`).
+
+    **Internal Mechanism:**
+    When metrics are enabled, Reactor Netty creates an internal `PoolMetrics` decorator that instruments channel leases, releases, closures, and pending acquire queues. Micrometer binds these to meters prefixed with `reactor.netty.connection.provider.<name>`.
+
+    **Common Mistake:**
+    Forgetting to enable metrics (`.metrics(true)`) or omitting pool names, resulting in unnamed pools where metrics collide or are disabled by default to save overhead.
+
+    ??? example "Example"
+        ```java
+        --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q24ReactorNettyConnectionProviderMetricsExample.java"
+        ```
+
+---
+
+### Q25: How does Spring WebFlux handle Server-Sent Events (SSE) and NDJSON (Newline Delimited JSON) streaming, and how is client cancellation detected?
+
+??? question "Reveal answer"
+    **Short Answer:**
+    WebFlux streams items over HTTP using `MediaType.TEXT_EVENT_STREAM_VALUE` (SSE) or `APPLICATION_NDJSON_VALUE`. Netty flushes each emitted item over chunked transfer encoding. When the remote client disconnects or aborts the TCP connection, Netty detects EOF, terminates the socket channel, and propagates a `cancel()` signal upstream through the `Subscription`, cleanly aborting source generation.
+
+    **Internal Mechanism:**
+    Under the hood, `HttpServerOperations` registers a channel close listener. When an inbound RST or FIN is received, `channelInactive` triggers `Subscription.cancel()`. Operators like `doOnCancel()` execute cleanup hooks immediately.
+
+    **Common Mistake:**
+    Buffering elements into an intermediate `List` inside the controller or forgetting to configure heartbeats/keep-alives for idle SSE streams across load balancers.
+
+    ??? example "Example"
+        ```java
+        --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q25ServerSentEventsAndNdjsonStreamingExample.java"
+        ```
 <!-- --8<-- [end:intermediate] -->
 
 ---
 
 <!-- --8<-- [start:senior] -->
-## Senior Questions (5)
+## Senior Questions (8)
 
 ### Q17: In Java 21+ with Virtual Threads available in Spring Boot, when should an engineering team choose Spring WebFlux over Spring MVC with Virtual Threads, and when should WebFlux be avoided?
 
@@ -283,10 +321,10 @@
     **Internal Mechanism:**
     Virtual Threads park via JVM continuation mechanics when encountering blocking socket reads. WebFlux relies on Netty `ChannelHandler` pipelines and OS kernel readiness notifications (`epoll_wait`). Virtual Threads still allocate JVM objects for thread state, whereas Netty event loops reuse pooled buffers and zero-copy slicing.
 
-    **Example:**
-    ```java
-    --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q17WebFluxVsVirtualThreadsTradeoffsExample.java"
-    ```
+    ??? example "Example"
+        ```java
+        --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q17WebFluxVsVirtualThreadsTradeoffsExample.java"
+        ```
 
     **Common Mistake:**
     Migrating a standard CRUD Spring Boot application to Spring WebFlux thinking it will make database queries "faster", only to encounter blocking JDBC issues or complex reactive transaction bugs.
@@ -315,10 +353,10 @@
     **Internal Mechanism:**
     `onBackpressureBuffer` maintains an internal `MpscLinkedQueue`. When queue size exceeds capacity, it invokes the configured `BufferOverflowStrategy` (`DROP_OLDEST`, `DROP_LATEST`, or `ERROR`). `onBackpressureDrop` checks `requested > 0`; if zero, it immediately invokes the drop callback and discards the reference.
 
-    **Example:**
-    ```java
-    --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q18BackpressureBufferDropLatestStrategiesExample.java"
-    ```
+    ??? example "Example"
+        ```java
+        --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q18BackpressureBufferDropLatestStrategiesExample.java"
+        ```
 
     **Common Mistake:**
     Using unbounded `onBackpressureBuffer()` without a capacity limit, which merely delays an eventual `OutOfMemoryError` during sustained consumer degradation.
@@ -344,10 +382,10 @@
     **Internal Mechanism:**
     `ResourceLeakDetector` samples `ByteBuf` allocations (1% of buffers at `SIMPLE`, 100% at `PARANOID`) and wraps them in phantom references. When the JVM GC collects the Java wrapper without `release()` having been called, Netty logs an error containing the allocation stack trace.
 
-    **Example:**
-    ```java
-    --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q19ByteBufLeakDetectionAndOperatorDebugExample.java"
-    ```
+    ??? example "Example"
+        ```java
+        --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q19ByteBufLeakDetectionAndOperatorDebugExample.java"
+        ```
 
     **Common Mistake:**
     Enabling `Hooks.onOperatorDebug()` in production environments, which forces every reactive operator instantiation to capture a snapshot of the execution thread stack trace, degrading throughput by 50% or more.
@@ -373,10 +411,10 @@
     **Internal Mechanism:**
     Resilience4j's `CircuitBreaker` maintains a ring-bit-buffer sliding window of call outcomes. When `transform(CircuitBreakerOperator.of(cb))` is chained, the operator intercepts `onNext`, `onError`, and cancellation signals, recording execution latency and state transitions in lock-free atomic registers.
 
-    **Example:**
-    ```java
-    --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q20WebClientCircuitBreakerBulkheadExample.java"
-    ```
+    ??? example "Example"
+        ```java
+        --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q20WebClientCircuitBreakerBulkheadExample.java"
+        ```
 
     **Common Mistake:**
     Applying traditional synchronous Resilience4j decorators (`circuitBreaker.executeSupplier(...)`) around reactive methods, which executes the decorator at *assembly time* rather than *execution time*.
@@ -402,10 +440,10 @@
     **Internal Mechanism:**
     Spring's `ReactiveTransactionManager` (e.g. `R2dbcTransactionManager`) binds the active database connection to the subscriber's Reactor `Context`. When calling external microservices via WebClient inside a reactive flow, the external HTTP call occurs outside the database transaction boundary, preserving short database lock durations.
 
-    **Example:**
-    ```java
-    --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q21ReactiveDistributedTransactionsSagaExample.java"
-    ```
+    ??? example "Example"
+        ```java
+        --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q21ReactiveDistributedTransactionsSagaExample.java"
+        ```
 
     **Common Mistake:**
     Attempting to hold a reactive database transaction open across an external WebClient network call, holding database connection slots during remote network latency.
@@ -416,12 +454,69 @@
     **Follow-up Questions:**
     1. How does the Inbox Pattern prevent duplicate event processing in a reactive consumer?
     2. What is the role of a pivot transaction in a reactive Saga workflow?
+
+---
+
+### Q26: How does Reactor Context lifecycle operate across thread hops, and how do you bridge MDC / ThreadLocal logging context cleanly?
+
+??? question "Reveal answer"
+    **Short Answer:**
+    Reactor `Context` is an immutable key-value store associated with the `Subscriber` that flows *upstream* from subscriber to publisher. Because reactive execution hops between Netty event loops and boundedElastic workers, `ThreadLocal` variables (like SLF4J MDC) are lost. Bridging is achieved via Micrometer's `contextWrite` and automatic context propagation hooks (`Hooks.enableAutomaticContextPropagation()`).
+
+    **Internal Mechanism:**
+    Reactor attaches the `Context` to the downstream `CoreSubscriber`. Operators access it via `Mono.deferContextual()`. When automatic context propagation is enabled, Reactor decorates operator scheduling with snapshots that restore registered `ThreadLocal` values onto the worker thread before running tasks, and clean them up after execution.
+
+    **Common Mistake:**
+    Assuming `contextWrite()` declared upstream affects downstream operators. Because context flows from subscriber up to publisher, `contextWrite()` affects only operators declared *above* it in the assembly chain.
+
+    ??? example "Example"
+        ```java
+        --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q26ReactorContextLifecycleThreadLocalBridgingExample.java"
+        ```
+
+---
+
+### Q27: How does R2DBC connection pooling and transaction demarcation differ from JDBC and `@Transactional`?
+
+??? question "Reveal answer"
+    **Short Answer:**
+    R2DBC (`r2dbc-pool`) provides non-blocking, asynchronous database connectivity over reactive streams without pinning OS threads during network I/O. In WebFlux, `@Transactional` uses `ReactiveTransactionManager` (e.g. `R2dbcTransactionManager`), which passes transaction state through the reactive `Context` rather than a thread-bound `ThreadLocal`.
+
+    **Internal Mechanism:**
+    When a reactive method annotated with `@Transactional` is invoked, `TransactionalOperator` subscribes to the inner publisher, opens a connection from `ConnectionFactory`, starts the transaction via `connection.beginTransaction()`, and binds the active connection to the subscriber's reactive `ContextView`. On complete, it invokes `commitTransaction()`; on error, `rollbackTransaction()`.
+
+    **Common Mistake:**
+    Calling blocking JPA/Hibernate or synchronous JDBC repositories inside a WebFlux pipeline, blocking Netty event loops, or relying on thread-bound transaction contexts.
+
+    ??? example "Example"
+        ```java
+        --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q27R2dbcConnectionPoolingAndTransactionsExample.java"
+        ```
+
+---
+
+### Q28: What is the architectural difference between Hot and Cold publishers in Project Reactor, and how do `publish().refCount()` / `share()` manage shared upstream connections?
+
+??? question "Reveal answer"
+    **Short Answer:**
+    A **Cold Publisher** generates a new independent data stream and executes its pipeline anew for each subscriber (e.g. `Mono.fromCallable`, `WebClient.get()`). A **Hot Publisher** produces data regardless of subscribers; subscribers observe emissions arriving *after* subscription (e.g. event buses, incoming sensor streams). `.publish().refCount(minSubscribers)` (or `.share()`) turns a cold publisher into a hot multicast publisher that starts upstream only when the minimum number of subscribers join, and cancels upstream when all disconnect.
+
+    **Internal Mechanism:**
+    `ConnectableFlux` coordinates multiple subscribers to a single upstream subscription. `refCount(n)` increments an atomic subscriber counter on each `subscribe()` and connects upstream when counter reaches $n$. When downstream subscribers cancel, counter decrements; when it drops to zero, the upstream subscription is cancelled.
+
+    **Common Mistake:**
+    Using `.share()` on an HTTP request when subsequent subscribers arrive after the single HTTP response has completed, causing subsequent subscribers to receive empty or missed signals instead of re-fetching.
+
+    ??? example "Example"
+        ```java
+        --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q28HotVsColdPublishersRefCountExample.java"
+        ```
 <!-- --8<-- [end:senior] -->
 
 ---
 
 <!-- --8<-- [start:scenarios] -->
-## Scenario Questions (2)
+## Scenario Questions (4)
 
 ### Q22: Incident: High latency in a downstream authentication service freezes all unrelated routes on a Spring WebFlux gateway. How do you triage, identify the root cause, and remediate?
 
@@ -435,10 +530,10 @@
     **Internal Mechanism:**
     Taking a thread dump reveals all `reactor-http-epoll-*` threads in `WAITING` or `TIMED_WAITING` states inside `Mono.block()` or a socket read method rather than cycling in `SingleThreadEventLoop.run()`.
 
-    **Example:**
-    ```java
-    --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q22IncidentEventLoopBlockingExhaustionExample.java"
-    ```
+    ??? example "Example"
+        ```java
+        --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q22IncidentEventLoopBlockingExhaustionExample.java"
+        ```
 
     **Common Mistake:**
     Attempting to fix the outage by scaling out CPU limits or increasing the number of gateway pods, which only delays the freeze until concurrent traffic fills the new pods' event loops.
@@ -464,10 +559,10 @@
     **Internal Mechanism:**
     Reactor Netty's `PendingConnectionAllocations` queue hits its ceiling. Channel leases exceed `maxConnections`, and unhandled `onError` signals bubble up to terminate the outer `Flux`, cancelling all remaining in-flight and pending messages in the batch.
 
-    **Example:**
-    ```java
-    --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q23IncidentFlatMapPoolAcquireTimeoutExample.java"
-    ```
+    ??? example "Example"
+        ```java
+        --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q23IncidentFlatMapPoolAcquireTimeoutExample.java"
+        ```
 
     **Common Mistake:**
     Increasing `maxConnections` to 10,000 to "fix" the pool acquire timeout, which overwhelms the downstream service, burns through network sockets, and triggers severe firewall throttling.
@@ -478,6 +573,64 @@
     **Follow-up Questions:**
     1. How does `concatMap` differ from `flatMap` with concurrency=1?
     2. When should you choose `flatMapSequential` instead of `flatMap`?
+
+---
+
+### Q29: Incident: An unbuffered reactive stream publisher causes an `OutOfMemoryError` under high traffic when subscribers are slow. How do you diagnose and fix buffer overflows?
+
+??? question "Reveal answer"
+    **Short Answer:**
+    The root cause is an upstream `Flux.create()` or emitter generating elements faster than a slow downstream subscriber can consume them without applying backpressure strategy, or using an unbounded buffer (`onBackpressureBuffer()`). When buffer queues grow unbounded, the JVM runs out of heap (`java.lang.OutOfMemoryError: Java heap space`). The fix is applying explicit backpressure overflow strategies: bounded buffer with drop oldest/latest (`onBackpressureBuffer(maxSize, BufferOverflowStrategy.DROP_OLDEST)`), `onBackpressureDrop()`, or `onBackpressureLatest()`.
+
+    **Deep Explanation:**
+    In push-based streams (e.g. WebSocket feeds, Kafka consumers, sensor metrics), elements are pushed asynchronously. If the downstream consumer performs I/O or disk operations, backpressure is required. Without bounded queues, internal `RingBuffer` or queue nodes accumulate millions of unconsumed messages in Old Gen memory until GC pauses trigger crash loops.
+
+    **Internal Mechanism:**
+    Under the hood, `FluxOnBackpressureBuffer` maintains an unbounded `Queue<T>`. When the queue size reaches heap capacity, allocations fail. Using `BufferOverflowStrategy.DROP_OLDEST` or `DROP_LATEST` caps the queue size and evicts elements safely, invoking a drop callback to count discarded messages.
+
+    ??? example "Example"
+        ```java
+        --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q29IncidentUnboundedBufferOomExample.java"
+        ```
+
+    **Common Mistake:**
+    Relying on default unbounded buffers without monitoring queue size metrics, assuming reactive streams magically prevent memory growth without flow control.
+
+    **Production Consideration:**
+    Publish drop metrics (`meterRegistry.counter("stream.backpressure.dropped")`) and configure alerts when drops spike.
+
+    **Follow-up Questions:**
+    1. How does `Flux.limitRate(n)` regulate upstream request demand?
+    2. What is the difference between `onBackpressureDrop` and `onBackpressureLatest`?
+
+---
+
+### Q30: Incident: A custom reactive `WebFilter` performs blocking cryptographic validation or synchronous cache lookups, starving the Netty event loop and degrading cluster throughput. How do you detect and remediate carrier thread pinning?
+
+??? question "Reveal answer"
+    **Short Answer:**
+    Synchronous blocking calls (e.g. `Thread.sleep()`, synchronous JWT decryption, legacy database calls) inside a reactive `WebFilter` block the calling Netty event loop thread (`reactor-http-nio-*` or `reactor-http-epoll-*`). Because Netty uses 1 event loop per CPU core, a handful of slow requests freezes all socket I/O across the entire application. Remediate by offloading the blocking operation using `Mono.fromCallable(...).subscribeOn(Schedulers.boundedElastic())` or migrating to non-blocking libraries.
+
+    **Deep Explanation:**
+    Netty event loops must never block. When an engineer executes synchronous logic within a `WebFilter`, the event loop cannot service other sockets or process incoming TCP packets. In thread dumps, event loop threads show as `BLOCKED`, `WAITING`, or executing prolonged CPU/disk operations.
+
+    **Internal Mechanism:**
+    `Schedulers.boundedElastic()` allocates tasks onto a dynamically sized pool capped at 10x CPU cores with bounded task queuing, insulating the non-blocking Netty event loops from thread starvation.
+
+    ??? example "Example"
+        ```java
+        --8<-- "modules/21-webclient-webflux/src/examples/java/lab/webflux/questions/Q30IncidentReactiveWebFilterCarrierPinningExample.java"
+        ```
+
+    **Common Mistake:**
+    Using `Schedulers.parallel()` for blocking operations; `parallel()` is sized strictly to CPU core count and intended solely for non-blocking CPU computations.
+
+    **Production Consideration:**
+    Integrate BlockHound (`BlockHound.install()`) into automated test suites to fail fast if any blocking call occurs on non-blocking threads.
+
+    **Follow-up Questions:**
+    1. How does BlockHound detect blocking calls via bytecode instrumentation?
+    2. Can Virtual Threads replace `Schedulers.boundedElastic()` in WebFlux pipelines?
 <!-- --8<-- [end:scenarios] -->
 
 ---

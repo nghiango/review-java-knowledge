@@ -243,6 +243,47 @@ Core interview questions covering Docker image architecture, multi-stage builds,
               cpus: "2.0" # Allows JVM to size 2 GC threads & 2 event loop cores
               memory: 4096M
         ```
+
+### How do Docker multi-stage builds and BuildKit cache mounts (`--mount=type=cache`) accelerate Gradle/Maven CI builds?
+
+??? question "Reveal answer"
+    **Short Answer:** Standard container builds invalidate local package manager caches on any dependency change, forcing redundant redownloading of hundreds of megabytes of JARs. Docker BuildKit cache mounts (`RUN --mount=type=cache,target=/root/.gradle`) persist the dependency cache directory across image builds on the host engine without baking intermediate cache bloat into the final image layer.
+
+    **Internal Mechanism:** BuildKit mounts an isolated host cache folder onto `/root/.gradle` or `/root/.m2` during the execution of the `RUN` command. In a multi-stage Dockerfile, the builder stage compiles the artifact using the persistent cache, and the final stage (`FROM eclipse-temurin:21-jre`) copies only the compiled runtime JAR. The cached packages never enter the container filesystem layer, producing an ultra-fast build and a lean runtime image.
+
+    **Common Mistake:** Omitting BuildKit cache mounts and instead running `COPY . . && ./gradlew build`, which blows away the local Gradle cache on every single line of code change.
+
+    ??? example "Example"
+        ```dockerfile
+        # syntax=docker/dockerfile:1
+        FROM gradle:8-jdk21 AS builder
+        WORKDIR /app
+        COPY . .
+        # Mount host cache to reuse downloaded artifacts across builds
+        RUN --mount=type=cache,target=/root/.gradle \
+            gradle build --no-daemon -x test
+
+        FROM eclipse-temurin:21-jre-alpine
+        WORKDIR /app
+        COPY --from=builder /app/build/libs/app.jar app.jar
+        ENTRYPOINT ["java", "-jar", "app.jar"]
+        ```
+
+### How do Docker container health checks (`HEALTHCHECK`) interact with orchestrator startup and liveness probes?
+
+??? question "Reveal answer"
+    **Short Answer:** Docker `HEALTHCHECK` executes a command periodically inside the container (e.g. `CMD curl -f http://localhost:8080/actuator/health/liveness || exit 1`). Docker sets the container status to `starting`, `healthy`, or `unhealthy`. However, standalone Docker engine does *not* automatically restart unhealthy containers (it only updates the inspection status). In Kubernetes, Dockerfile `HEALTHCHECK` instructions are ignored; Kubernetes uses its own `startupProbe`, `livenessProbe`, and `readinessProbe` to control pod traffic routing and container restarts.
+
+    **Internal Mechanism:** When `HEALTHCHECK` fails consecutively beyond `--retries`, Docker updates `.State.Health.Status` to `unhealthy`. In Docker Compose, services can declare `depends_on: { service: { condition: service_healthy } }` to sequence initialization order. In Kubernetes, the kubelet directly polls HTTP/TCP sockets from outside the container without spawning an exec subshell.
+
+    **Common Mistake:** Relying on Dockerfile `HEALTHCHECK` in Kubernetes clusters, or executing a heavy curl/wget shell every 5 seconds that creates high CPU churn inside a tiny JVM container.
+
+    ??? example "Example"
+        ```dockerfile
+        # Container-native Docker healthcheck
+        HEALTHCHECK --interval=15s --timeout=3s --start-period=30s --retries=3 \
+          CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health/liveness || exit 1
+        ```
 <!-- --8<-- [end:intermediate] -->
 
 <!-- --8<-- [start:senior] -->
@@ -336,6 +377,61 @@ Core interview questions covering Docker image architecture, multi-stage builds,
           eclipse-temurin:21-jdk \
           jcmd 1 GC.heap_dump /dumps/heap.hprof
         ```
+
+### How does Rootless Docker daemon architecture and user namespace remapping (`userns-remap`) prevent privilege escalation attacks?
+
+??? question "Reveal answer"
+    **Short Answer:** In traditional Docker, the daemon runs as `root` on the host, meaning container processes running as UID 0 have real `root` capabilities if a container breakout vulnerability occurs. User namespace remapping (`userns-remap`) maps the container's internal UID 0 (root) to an unprivileged sub-UID on the host (e.g. UID 100000). Rootless Docker runs the entire daemon and container runtime inside an unprivileged user namespace, completely preventing host-level root compromise.
+
+    **Internal Mechanism:** The Linux kernel `user_namespaces(7)` facility isolates security-related identifiers (UIDs, GIDs, capabilities, keys). When a container root process attempts to access a host file, the host kernel checks permissions against the mapped unprivileged host UID (e.g. 100000). Even with `CAP_SYS_ADMIN` inside the container user namespace, the process cannot modify host system devices or load kernel modules.
+
+    **Common Mistake:** Running containers with `--privileged` in an attempt to bypass permissions issues, completely disabling user namespaces, AppArmor, seccomp, and cgroup restrictions.
+
+    ??? example "Example"
+        ```json
+        // /etc/docker/daemon.json
+        {
+          "userns-remap": "default"
+        }
+        ```
+
+### How do Linux cgroups v2 memory controllers (`memory.max` vs `memory.high`) manage container JVM heap pressure and kernel page caching?
+
+??? question "Reveal answer"
+    **Short Answer:** In Linux cgroups v2, memory limits are structured with two distinct thresholds:
+    1. **`memory.max`**: Hard limit. Exceeding this limit immediately triggers the Linux kernel Out-Of-Memory (OOM) Killer, terminating the process with `SIGKILL` (Exit 137).
+    2. **`memory.high`**: Throttle/reclaim threshold. When memory usage exceeds `memory.high`, the kernel throttles allocations and aggressively reclaims file caches without invoking the OOM Killer.
+    In Java 21+, JVM container awareness reads cgroups v2 files directly (`/sys/fs/cgroup/memory.max`), correctly calculating heap proportions without falling back to host memory values.
+
+    **Internal Mechanism:** When usage passes `memory.high`, the kernel forces the allocating threads into direct reclaim loops. If the container process is unable to free memory (e.g. JVM heap is filled with live objects), memory climbs toward `memory.max`. At `memory.max`, the kernel selects a victim process using `oom_score` and sends `SIGKILL`.
+
+    **Common Mistake:** Confusing container memory with JVM heap size. Setting `memory.max=2GB` and `-Xmx2GB` leaves 0MB for JVM off-heap native memory (Metaspace, thread stacks, direct byte buffers, JIT code cache), guaranteeing kernel OOM kills under load.
+
+    ??? example "Example"
+        ```bash
+        # Inspecting cgroups v2 limits inside modern container:
+        cat /sys/fs/cgroup/memory.max
+        cat /sys/fs/cgroup/memory.high
+        cat /sys/fs/cgroup/memory.current
+        ```
+
+### How do container network namespaces (bridge vs host networking) impact JVM network throughput and socket latency?
+
+??? question "Reveal answer"
+    **Short Answer:** Docker default **bridge** networking places each container in an isolated network namespace connected to `docker0` via a `veth` pair, routing inbound/outbound packets through host `iptables` NAT (Network Address Translation). For ultra-high-throughput JVM microservices (>50,000 req/sec), bridge NAT traversal adds packet latency, connection tracking (`conntrack`) table exhaustion, and CPU overhead. **Host** networking (`--network host`) binds the container directly to the host's network stack, eliminating packet transformation and achieving bare-metal network performance.
+
+    **Internal Mechanism:** With bridge networking, every packet traverses Linux netfilter rules (`PREROUTING`, `POSTROUTING`). Under high connection churn (e.g. non-keepalive HTTP or Redis queries), the Linux kernel `nf_conntrack` table fills up, dropping incoming TCP SYN packets with `table full, dropping packet`. Host networking bypasses netfilter NAT completely.
+
+    **Common Mistake:** Using `--network host` without port isolation, causing port collisions between multiple container replicas running on the same host node.
+
+    ??? example "Example"
+        ```yaml
+        services:
+          order-service:
+            image: order-service:latest
+            # High-throughput bare-metal network performance
+            network_mode: host
+        ```
 <!-- --8<-- [end:senior] -->
 
 <!-- --8<-- [start:scenarios] -->
@@ -373,5 +469,54 @@ Core interview questions covering Docker image architecture, multi-stage builds,
         ```dockerfile
         # Fixed Dockerfile using JSON array exec form:
         ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
+        ```
+
+### Incident: Container JVM OOMKilled by Linux kernel (Exit Code 137) due to disabled container support (`-XX:-UseContainerSupport`). Diagnose and resolve.
+
+??? question "Reveal answer"
+    **Short Answer:** In legacy deployments or images with misconfigured JVM flags, explicit flag `-XX:-UseContainerSupport` disabled HotSpot's container detection heuristics. The JVM detected the entire host physical RAM (e.g. 64GB) instead of the pod's 2GB cgroup limit. By default, HotSpot allocated 25% of 64GB = 16GB for heap. As soon as heap allocations climbed past 2GB, the Linux kernel cgroup controller immediately invoked the OOM Killer, terminating the JVM with `ExitCode 137`.
+
+    **Remediation:**
+    1. **Verify Container Support**: Ensure `-XX:+UseContainerSupport` is enabled (default in modern JDK 17/21).
+    2. **Percentage-Based Heap**: Set `-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0`.
+    3. **Diagnose via Actuator/JVM**: Check `Runtime.getRuntime().maxMemory()` in `/actuator/env` to verify the JVM reads the container limit rather than host RAM.
+
+    ??? example "Example"
+        ```bash
+        # Verify JVM container detection and calculated limits:
+        java -XX:+PrintFlagsFinal -version | grep -i UseContainerSupport
+        # Output: bool UseContainerSupport = true
+
+        # Checking effective max memory under 2G container limit:
+        docker run --rm -m 2g eclipse-temurin:21-jre java -XshowSettings:system -version
+        ```
+
+### Incident: Docker image build failed or slowed to a crawl in CI due to layer cache invalidation caused by unpinned timestamps and misplaced `apt-get` instructions. Diagnose and resolve.
+
+??? question "Reveal answer"
+    **Short Answer:** A team added `COPY . .` at line 3 of their Dockerfile, followed by `RUN apt-get update && apt-get install -y curl`. Because source files change on every git commit, the layer cache for `COPY . .` was invalidated every build. Docker was forced to re-run `apt-get update` against remote package mirrors on every commit, multiplying CI build time from 20 seconds to 8 minutes, and frequently failing when external Debian mirrors were throttled or returned 503 errors.
+
+    **Remediation:**
+    1. **Reorder Layers by Volatility**: Move OS package installation and tool configuration to the very top of the Dockerfile, *before* copying any project files.
+    2. **Clean Package Caches**: Chain `rm -rf /var/lib/apt/lists/*` in the same `RUN` step to keep layer size small.
+    3. **Copy Manifests First**: Copy only dependency descriptor files (`build.gradle.kts`, `settings.gradle.kts`) to download dependencies before copying mutable source code.
+
+    ??? example "Example"
+        ```dockerfile
+        FROM eclipse-temurin:21-jdk-jammy AS builder
+        WORKDIR /app
+
+        # 1. Stable layer: OS tools cached indefinitely
+        RUN apt-get update && apt-get install -y --no-install-recommends curl \
+            && rm -rf /var/lib/apt/lists/*
+
+        # 2. Medium volatility: Gradle wrapper and configs
+        COPY gradlew settings.gradle.kts build.gradle.kts ./
+        COPY gradle/ gradle/
+        RUN ./gradlew dependencies --no-daemon
+
+        # 3. High volatility: Application source code
+        COPY src/ src/
+        RUN ./gradlew bootJar --no-daemon -x test
         ```
 <!-- --8<-- [end:scenarios] -->

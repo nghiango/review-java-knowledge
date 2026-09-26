@@ -263,6 +263,49 @@ Comprehensive interview questions covering Amazon SQS, Amazon SNS, Amazon EventB
                 Namespace: ECS/ContainerInsights
                 MetricName: RunningTaskCount
         ```
+
+### How does the Amazon SQS Extended Client Library handle payloads exceeding the 256 KB limit using Amazon S3?
+
+??? question "Reveal answer"
+    **Short Answer:** Amazon SQS limits individual message payloads to 256 KB. The SQS Extended Client Library (available in AWS SDK for Java) automatically offloads large message bodies (up to 2 GB) to an Amazon S3 bucket, publishing an SQS message that contains only an S3 object pointer and metadata. When the consumer polls SQS, the client library transparently fetches the full payload from S3 and delivers it to the consumer application.
+
+    **Key Considerations:**
+    - **Deletion Lifecycle:** When the consumer deletes the message from SQS via `deleteMessage()`, the Extended Client automatically deletes the corresponding payload object from the S3 bucket.
+    - **Permissions:** Both producer and consumer IAM roles require `s3:PutObject`, `s3:GetObject`, and `s3:DeleteObject` permissions on the designated payload bucket in addition to standard SQS permissions.
+    - **Cost & Latency:** Adds S3 API request charges and network round-trips for payload storage/retrieval.
+
+    ??? example "Example"
+        ```java
+        // Configuring SQS Extended Client with Amazon S3 payload storage
+        AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
+        ExtendedClientConfiguration extendedConfig = new ExtendedClientConfiguration()
+            .withPayloadSupportEnabled(s3Client, "my-large-message-payloads-bucket")
+            .withPayloadSizeThreshold(256 * 1024); // Payload > 256KB offloads to S3
+
+        AmazonSQS sqsExtended = new AmazonSQSExtendedClient(AmazonSQSClientBuilder.defaultClient(), extendedConfig);
+        sqsExtended.sendMessage(new SendMessageRequest(queueUrl, largeJsonPayload));
+        ```
+
+---
+
+### How does SQS Dead-Letter Queue (DLQ) Redrive work, and what is the difference between Redrive to Source vs Redrive to Custom Destination?
+
+??? question "Reveal answer"
+    **Short Answer:** SQS DLQ Redrive is a managed capability that moves failed messages out of a Dead-Letter Queue back into processing queues without writing custom consumer scripts or lambda drainers.
+
+    **Redrive Modes:**
+    - **Redrive to Source Queue:** Re-queues messages directly back into the original primary queue where failures occurred, typically after a bug fix or downstream service recovery.
+    - **Redrive to Custom Destination Queue:** Routes dead-letter messages to a dedicated testing, quarantine, or inspection queue to validate consumer behavior without risking production pipeline disruption.
+    - **Inspection & Velocity Control:** Supports specifying a maximum redrive rate (messages/sec) to prevent thundering herds from overwhelming downstream databases when re-injecting thousands of dead-letter messages.
+
+    ??? example "Example"
+        ```bash
+        # Start a redrive task from DLQ back to source queue with rate limit
+        aws sqs start-message-move-task \
+          --source-arn "arn:aws:sqs:us-east-1:123456789012:orders-dlq" \
+          --destination-arn "arn:aws:sqs:us-east-1:123456789012:orders-queue" \
+          --max-number-of-messages-per-second 100
+        ```
 <!-- --8<-- [end:intermediate] -->
 
 <!-- --8<-- [start:senior] -->
@@ -369,6 +412,73 @@ Comprehensive interview questions covering Amazon SQS, Amazon SNS, Amazon EventB
             AWSXRay.getGlobalRecorder().getTraceEntity().setSampled(xRayTrace.getSampled());
         }
         ```
+
+---
+
+### How does Amazon EventBridge Schema Registry and Schema Discovery validate event structure and generate strongly-typed code bindings?
+
+??? question "Reveal answer"
+    **Short Answer:** Amazon EventBridge Schema Registry stores event schemas (OpenAPI, JSONSchema) to enforce data contracts across distributed microservices. Schema Discovery automatically inspects events sent to an event bus in real-time, infers their JSON schemas, and registers them into the registry without manual schema writing. Developers can download generated Java/TypeScript code bindings to serialize/deserialize events as strongly typed objects in IDEs.
+
+    **Key Capabilities:**
+    - **Contract Governance:** Tracks schema versions and alerts developers when upstream publishers introduce breaking changes.
+    - **Type-Safe Development:** AWS Toolkit / Maven plugin generates Java POJO models directly from discovered schemas, catching payload mismatches at compile time rather than runtime.
+
+    ??? example "Example"
+        ```yaml
+        # Enabling Schema Discovery on an EventBridge Bus
+        SchemaDiscoverer:
+          Type: AWS::EventBridge::Discoverer
+          Properties:
+            SourceArn: !GetAtt OrdersEventBus.Arn
+            Description: "Auto-discover schemas for order events"
+        ```
+
+---
+
+### How are cross-account and cross-region event publishing topologies architected using EventBridge and SNS Access Policies?
+
+??? question "Reveal answer"
+    **Short Answer:** Cross-account event topologies enable microservices residing in separate AWS accounts (e.g., Billing account and Core Commerce account) to exchange events securely without exposing public endpoints.
+
+    **Implementation Architecture:**
+    1. **Resource-Based Policies:** The receiving EventBridge Event Bus or SNS Topic specifies an IAM resource policy granting `events:PutEvents` or `sns:Publish` to specific external AWS Account IDs.
+    2. **EventBridge Cross-Account Routing:** Rules on Account A's event bus forward matching events directly to Account B's event bus ARN as the rule target.
+    3. **KMS Encryption Alignment:** If the target SNS/SQS resource is encrypted with AWS KMS, the KMS Key Policy in the receiving account must explicitly permit the calling account's IAM principal to call `kms:GenerateDataKey*` and `kms:Decrypt`.
+
+    ??? example "Example"
+        ```json
+        {
+          "Sid": "AllowAccountBToPutEvents",
+          "Effect": "Allow",
+          "Principal": { "AWS": "arn:aws:iam::222222222222:root" },
+          "Action": "events:PutEvents",
+          "Resource": "arn:aws:events:us-east-1:111111111111:event-bus/corporate-bus"
+        }
+        ```
+
+---
+
+### How does SQS FIFO High Throughput Mode scale message ingestion up to 70,000 msg/sec while maintaining partition ordering?
+
+??? question "Reveal answer"
+    **Short Answer:** Standard SQS FIFO throughput is capped at 300 transactions/sec (3,000 msg/sec with batching) due to centralized sequence allocation across single partition shards. **SQS FIFO High Throughput Mode** increases this limit up to 70,000 msg/sec (with batching) by partitioning the queue across multiple underlying storage shards allocated by `MessageGroupId`.
+
+    **Scaling Rules:**
+    - **Throughput Sizing:** Each distinct `MessageGroupId` is processed sequentially by a single worker at up to 300 TPS. By utilizing hundreds or thousands of unique `MessageGroupId` values (e.g. `orderId`, `customerId`), SQS distributes message groups across multiple internal partitions, achieving up to 70,000 TPS aggregate throughput.
+    - **Configuration:** Requires enabling `DeduplicationScope = messageGroup` and `FifoThroughputLimit = perMessageGroupId` on the queue.
+
+    ??? example "Example"
+        ```yaml
+        # High Throughput SQS FIFO Queue Configuration
+        HighThroughputFifoQueue:
+          Type: AWS::SQS::Queue
+          Properties:
+            QueueName: high-speed-trading.fifo
+            FifoQueue: true
+            DeduplicationScope: messageGroup
+            FifoThroughputLimit: perMessageGroupId
+        ```
 <!-- --8<-- [end:senior] -->
 
 <!-- --8<-- [start:scenarios] -->
@@ -408,6 +518,72 @@ Comprehensive interview questions covering Amazon SQS, Amazon SNS, Amazon EventB
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt EnterpriseDeadLetterQueue.Arn
           maxReceiveCount: 3 # Automatically unblocks MessageGroupId on 3rd failure
+        ```
+
+---
+
+### Incident: Silent message dropping in cross-account SNS-to-SQS fanout due to missing KMS Decrypt permission
+
+An application published notifications to an encrypted SNS topic; publishers received HTTP 200 OK, but downstream subscriber SQS queues in a partner AWS account remained completely empty. Diagnose the root cause and configure the fix.
+
+??? question "Reveal answer"
+    **Short Answer:** SNS returned HTTP 200 OK because the publish operation to the topic succeeded. However, when SNS attempted asynchronous delivery to the cross-account SQS queue, SQS rejected the message because the queue was encrypted with AWS KMS, and the KMS Key Policy did not grant the `sns.amazonaws.com` service principal permission to decrypt and generate data keys. Without an SNS Dead-Letter Queue configured on the subscription, SNS silently dropped the messages after retries expired.
+
+    **Remediation:**
+    1. Inspect SNS Subscription Delivery Status CloudWatch Logs to identify `KMS.AccessDeniedException`.
+    2. Update the target SQS Customer Managed Key (CMK) policy to allow `sns.amazonaws.com` calling `kms:GenerateDataKey*` and `kms:Decrypt` with condition matching the source SNS topic ARN.
+    3. Attach an SQS Dead-Letter Queue directly to the SNS subscription (`RedrivePolicy`) to capture undeliverable messages.
+
+    ??? example "Example"
+        ```json
+        {
+          "Sid": "AllowSNSToUseKMSKey",
+          "Effect": "Allow",
+          "Principal": { "Service": "sns.amazonaws.com" },
+          "Action": [
+            "kms:GenerateDataKey*",
+            "kms:Decrypt"
+          ],
+          "Resource": "*",
+          "Condition": {
+            "ArnEquals": {
+              "aws:SourceArn": "arn:aws:sns:us-east-1:111111111111:order-notifications"
+            }
+          }
+        }
+        ```
+
+---
+
+### Incident: High-volume event flood dropped thousands of transactions due to EventBridge rule target throttling and missing rule DLQ
+
+A flash sale generated a 10x traffic surge on an EventBridge event bus. Downstream Lambda targets hit regional concurrency limits, causing EventBridge to drop events after 24 hours. Diagnose the missing backpressure and dead-letter architecture.
+
+??? question "Reveal answer"
+    **Short Answer:** Amazon EventBridge automatically retries failed target invocations with exponential backoff for up to 24 hours (or 185 attempts). During the traffic surge, downstream Lambda target concurrency was exhausted (`ThrottlingException`), and target SQS queues hit KMS rate limits. Because the EventBridge Rule was declared without an attached target Dead-Letter Queue (DLQ), events that exceeded the 24-hour retention window were permanently and silently discarded by EventBridge.
+
+    **Remediation:**
+    1. Attach an SQS Dead-Letter Queue to the EventBridge Rule Target (`DeadLetterConfig: { Arn: !GetAtt TargetDLQ.Arn }`).
+    2. Configure CloudWatch Metric Alarms on EventBridge metric `DeadLetterInvocations` and `FailedInvocations`.
+    3. Increase Lambda reserved concurrency or place an intermediate SQS queue between EventBridge and Lambda to buffer bursts and smooth ingestion concurrency.
+
+    ??? example "Example"
+        ```yaml
+        # EventBridge Rule Target with attached SQS Dead Letter Queue
+        EventRule:
+          Type: AWS::Events::Rule
+          Properties:
+            EventBusName: commerce-bus
+            EventPattern:
+              source: ["ecommerce.orders"]
+            Targets:
+              - Id: LambdaOrderProcessor
+                Arn: !GetAtt OrderProcessorFunction.Arn
+                RetryPolicy:
+                  MaximumEventAgeInSeconds: 86400
+                  MaximumRetryAttempts: 185
+                DeadLetterConfig:
+                  Arn: !GetAtt EventBridgeTargetDLQ.Arn
         ```
 <!-- --8<-- [end:scenarios] -->
 
