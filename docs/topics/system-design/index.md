@@ -1,6 +1,8 @@
 # System Design for Senior Backend Engineers
 
-[Practice Q&A](practice.md) — senior-depth commerce scenarios and failure recovery.
+[Start the step-by-step Practice Q&A](practice.md) — complete all rounds for one system
+before moving to the next: URL Shortener → Payments → Orders → Notifications → Flash Sales →
+Rate Limiter → File Processing → Booking.
 
 This module covers large-scale distributed system design for Senior Java / Spring Boot Backend Engineers. Rather than drawing abstract boxes and hand-wavy diagrams, this module focuses on senior-level production engineering: formal requirements scoping, rigorous back-of-the-envelope capacity estimations, data modeling and storage selection (SQL vs NoSQL vs NewSQL), concurrency control (optimistic vs pessimistic vs distributed locks), caching topologies, asynchronous event pipelines, resilience patterns, and operational failure modes.
 

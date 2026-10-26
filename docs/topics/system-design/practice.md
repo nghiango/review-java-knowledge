@@ -1,78 +1,77 @@
 # System Design — Practice Q&A
 
-Senior-depth scenarios from interview-prep §8 and §13. Treat the commerce system as a design case,
-not proof of deployed lab capabilities or achieved scale.
+Study **one complete system at a time**, not isolated questions from different systems.
+For each case, answer every step before moving to the next case. Each answer is collapsed;
+state your assumptions and reasoning aloud before revealing it.
 
-### Q1. Walk through order creation end to end, including failures at each boundary.
+The canonical [Interview Questions](questions.md) remain a mixed reference bank. The case-first
+sequence below is the primary guided practice path. These are design proposals and interview
+assumptions, not claims of deployed lab capacity.
 
-??? question "Reveal answer"
-    - **Separate durable acceptance from asynchronous fulfillment and read visibility.**
-    - **Mechanism:** authenticate/authorize, validate and admit, reserve scoped idempotency, commit order/result/outbox together, then publish and process deduplicated local transitions; projections and caches update later.
-    - **Failure:** a lost response leaves the client uncertain; Kafka failure queues intent; a poison event blocks fulfillment; Redis failure increases source demand.
-    - **Fix:** replay committed results on safe retries, expose pending status, make every required async transition recoverable, and reconcile stuck workflows through stable identities.
-    - **Trade-off:** fast acceptance is not a completed purchase; define precisely whether 201 or 202 communicates the promised resource state.
-    - **Follow-up:** What does the client see when inventory ultimately rejects an accepted order?
-    - **Takeaway:** Give each acknowledgment a precise business meaning.
+## Case-by-case sequence
 
-### Q2. How would you handle a flash sale with 100× demand on one product?
+| Order | Complete case | Questions | Distinctive senior challenge |
+|---|---|---|---|
+| 1 | [URL Shortener](practice-url-shortener.md) | 10 | Identifier space, redirect semantics, hot reads, revocation |
+| 2 | [Payments](practice-payments.md) | 10 | Unknown external outcomes, ledger consistency, reconciliation |
+| 3 | [Order Management](practice-orders.md) | 10 | Durable acceptance, saga transitions, projection rebuild, regional ownership |
+| 4 | [Notification Engine](practice-notifications.md) | 10 | Fan-out, preferences, provider quotas, delivery ambiguity |
+| 5 | [Flash Sale Inventory — expanded pilot](practice-flash-sale.md) | 21 | Full interview progression: commit gaps, payment races, durable grants, CDC recovery, migrations, regional fencing |
+| 6 | [Distributed Rate Limiter](practice-rate-limiter.md) | 10 | Exact versus approximate quotas, atomicity, regional budgets |
+| 7 | [Large File Processing](practice-files.md) | 10 | Resumable upload, resource isolation, stale workers, output publication |
+| 8 | [Hotel / Ticket Booking](practice-booking.md) | 10 | Multi-resource holds, authoritative expiry, no double booking |
 
-??? question "Reveal answer"
-    - **Protect admission and enforce stock atomically before optimizing throughput.**
-    - **Mechanism:** cache descriptive reads; issue bounded checkout access; use positive-quantity conditional decrements or serialized reservations with unique operation IDs and expiry.
-    - **Failure:** SELECT-then-UPDATE oversells; Redis-only admission can diverge from durable stock; partitioned buckets can strand stock or permit double allocation during refill.
-    - **Fix:** define the authoritative stock ledger, durable reservation transitions, payment outcome handling, and reconciliation. Bound queues and per-user attempts; load-test hot-key skew, not uniform products.
-    - **Trade-off:** sharded stock and async confirmation increase throughput but require allocation/transfer rules and a pending UX. Cache hits do not solve write contention.
-    - **Follow-up:** How does expiry racing with payment success avoid releasing purchased stock?
-    - **Takeaway:** Stock correctness, fairness, and throughput need separate protocols.
+## The complete loop inside every case
 
-### Q3. How would payment join the order saga safely?
+1. **Requirements:** clarify scope, user contract, invariants, and consistency.
+2. **Capacity:** calculate average/peak demand, skew, bytes, and recovery headroom.
+3. **API and data:** define identities, states, constraints, indexes, and authorization boundaries.
+4. **Baseline flow:** trace reads/writes and acknowledgment points end to end.
+5. **Alternatives:** compare realistic designs and explain why one fits these assumptions.
+6. **Concurrency:** reason about duplicates, races, ownership, ordering, and expiry.
+7. **Failure/recovery:** cover crash windows, ambiguous outcomes, retries, and reconciliation.
+8. **Scaling:** identify the bottleneck before adding caches, shards, workers, or regions.
+9. **Security/operations:** define controls, business SLIs, bounded telemetry, and operator actions.
+10. **Verification:** test invariants, fault recovery, load, and the assumptions behind the guarantee.
 
-??? question "Reveal answer"
-    - **Persist payment intent and reconcile ambiguous outcomes before compensating.**
-    - **Mechanism:** use a stable provider idempotency identity, durable saga states, outbox transitions, authenticated callbacks, and deduplicated webhook handling.
-    - **Failure:** a timed-out charge may have succeeded; retrying with a new identity charges twice; refund racing late success creates inconsistent order state.
-    - **Fix:** query/reconcile provider status, distinguish authorize/capture/refund states, apply legal versioned transitions, and route unresolved cases to controlled operational handling.
-    - **Trade-off:** orchestration simplifies timers and recovery visibility but adds a workflow owner. Provider idempotency retention may be shorter than your replay horizon.
-    - **Follow-up:** When is the order allowed to ship, and what happens if capture later fails?
-    - **Takeaway:** Unknown payment status is a real state, not failure by default.
+Some cases place rebuild or scaling alternatives in a different step to preserve the natural
+business flow. Finish the whole lifecycle before the next system begins.
 
-### Q4. How do you rebuild a projection while live traffic continues?
+**Full-depth format pilot:** [Flash Sale Inventory](practice-flash-sale.md) expands this loop into
+21 progressive interview rounds, with guided reasoning, concrete failure histories, comparisons,
+recovery tables, and spoken answers. Review that format first; the other seven cases remain
+compact ten-question walkthroughs until the deeper format is approved.
 
-??? question "Reveal answer"
-    - **Build a shadow model from a consistent baseline plus a defined change-stream boundary.**
-    - **Mechanism:** a new group/model replays retained history or applies a snapshot followed by changes; idempotency and versions handle overlap.
-    - **Failure:** a table dump with no source watermark misses or duplicates changes; retention may omit creation events; historical replay can retrigger external actions if handlers are not isolated.
-    - **Fix:** record snapshot/stream positions, handle deletions, compare invariants and sampled rows, catch up, switch reads atomically, and retain a rollback model.
-    - **Trade-off:** dual projection increases broker/DB load; zero lag alone does not prove semantic equivalence.
-    - **Follow-up:** How do you verify a correction when the old model is known to be wrong?
-    - **Takeaway:** A rebuild is a consistency migration with a cutover protocol.
+## Source coverage
 
-### Q5. What changes when an order platform becomes multi-region?
+The commerce scenarios from interview-prep §8 and §13 now live within complete cases:
 
-??? question "Reveal answer"
-    - **Choose ownership, failover, and conflict semantics before choosing replication tools.**
-    - **Mechanism:** active-passive accepts failover delay and potentially lost unreplicated writes; active-active often assigns authoritative home regions or partitions ownership.
-    - **Failure:** both regions accept stock/payment operations during a partition; failback replays duplicate intent; region-local caches retain obsolete ownership.
-    - **Fix:** fence ownership transitions, scope identities and event provenance globally, test failover/reconciliation, and define which operations stop during partitions.
-    - **Trade-off:** cross-region synchronization adds distance-dependent latency; it is not universally impossible within 200 ms, but geography and workload must be measured. LWW/CRDTs do not automatically preserve financial invariants.
-    - **Follow-up:** What happens to an acknowledged order absent from the promoted region?
-    - **Takeaway:** Multi-region is primarily a data ownership and recovery decision.
+- Order acceptance, read-model rebuild, scaling past one primary, and multi-region ownership:
+  [Order Management](practice-orders.md).
+- Payment added to an order saga: [Payments](practice-payments.md), with order integration in
+  [Order Management](practice-orders.md).
+- Hot-product traffic and stock contention: [Flash Sale Inventory](practice-flash-sale.md).
 
-### Q6. How do you scale writes beyond a single PostgreSQL primary?
+The other cases extend the curriculum's eight canonical blueprints. Detailed algorithm and
+framework explanations remain canonical in their respective topic pages; these walkthroughs
+focus on composing them into one defensible system.
 
-??? question "Reveal answer"
-    - **Remove unnecessary work and hot spots before accepting distributed data complexity.**
-    - **Mechanism:** indexes, batching, short transactions, efficient queries, and read offload improve the existing primary; vertical scale, context separation, and sharding address different limits.
-    - **Failure:** table partitioning does not by itself distribute writes across machines; read replicas do not scale writes; an unshardable hot key remains hot.
-    - **Fix:** identify the saturated resource, choose a shard key from transaction locality, and plan resharding, unique identity, routing, cross-shard queries, and recovery before migration.
-    - **Trade-off:** independent databases reduce shared contention but remove simple joins and transactions; sagas add partial-failure handling rather than replacing every invariant transparently.
-    - **Follow-up:** How is a globally unique business constraint enforced across shards?
-    - **Takeaway:** Shard only against a demonstrated limit and an explicit ownership model.
+## Completion gate — before moving to the next case
+
+- Can you draw the complete request and event flow from memory?
+- Can you state the source of truth and the invariant at each write boundary?
+- Can you compare at least two alternatives without claiming one is universally best?
+- Can you explain what a timeout means and how uncertain outcomes are resolved?
+- Can you identify the first bottleneck and calculate a plausible capacity bound?
+- Can you name the fault tests and measurements needed to support your claims?
+- Can you summarize the design, accepted costs, and remaining risk in two minutes?
 
 ## Related
 
+- [Start: URL Shortener](practice-url-shortener.md)
 - [Concepts](concepts.md)
 - [Interview Questions](questions.md)
+- [Exercises](exercises.md)
 - [Solutions](solutions.md)
 - [Architecture practice](../architecture/practice.md)
 - [Distributed data practice](../distributed-data-patterns/practice.md)

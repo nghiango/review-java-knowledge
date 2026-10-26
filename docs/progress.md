@@ -48,6 +48,51 @@
 | **Batch 5** | 21 WebClient/WebFlux, 22 Observability, 23 Performance, 24 Docker, 25 AWS | 150 (30 each) | +35 (+7 each) | ✅ Complete (30/30 each) |
 | **Batch 6** | 26 CI/CD, 27 System Design, 28 Architecture, 29 Design Patterns, 30 Senior Engineering | 150 (30 each) | +25 (+7, +7, +2, +7, +7) | ✅ Complete (30/30 each) |
 
+## Senior Practice Expansion
+
+The supplied `interview-prep.md` remains unchanged as raw input. Its Q&As are distributed by
+primary topic, with repeated follow-ups folded into their primary question. Answers add mechanisms,
+failure diagnosis, fixes, trade-offs, and senior follow-ups; case-study claims are distinguished
+from verified lab implementations. Canonical `questions.md` banks are unchanged by this expansion.
+
+System design uses **eight case-first walkthroughs**. Flash sale is expanded to **21 interview
+rounds** as the review pilot for a deeper format: concrete scenarios, guided reasoning, comparisons,
+failure/recovery tables, diagrams, and interview-ready spoken answers. The other seven retain their
+ten-question format pending review; they have not yet received the same full-depth expansion.
+Core Java includes explicit loop/stream, sequential/parallel/executor, and benchmarking comparisons.
+The three pre-existing JPA practice questions remain intact.
+
+| Topic | Practice questions | Source / merged coverage |
+|---|---:|---|
+| Core Java | 25 | §2, §17; modern Java variants merged; senior comparisons added |
+| JVM | 5 | §3 + §19 memory/CPU diagnosis merged |
+| Concurrency | 12 | §2, §3, §15, §17; future/deadline and virtual-thread variants merged |
+| Spring Core | 3 | §4 injection, lifecycle, scopes |
+| Spring Boot | 5 | §4 auto-configuration, configuration, scheduling, lifecycle |
+| Spring MVC | 1 | §4 filter ordering |
+| Spring Transactions | 5 | §4 + §15 + §18 rollback/propagation/boundary variants merged |
+| JPA / Hibernate | 5 | 3 existing + §4 persistence comparison + §10 N+1 |
+| Database / SQL | 12 | §8, §10, §14, §15, §18, §19; pool/failover variants merged |
+| REST API | 2 | §7 idempotency; §4 + §18 error-contract variants merged |
+| Spring Security | 3 | §12; security gaps from §14 |
+| Testing | 8 | §8 chaos, §11 testing, §18 slices |
+| Caching / Redis | 12 | §5 + §15 failure/invalidation variants; §17 LRU |
+| Kafka | 13 | §6, §15, §18, §19; ack/retry/rebalance/lag variants merged |
+| Distributed Systems | 1 | §7 CAP/PACELC |
+| Resilience | 3 | §7 + §15 + §17 rate-limiter variants, shedding, pattern composition |
+| Distributed Data Patterns | 9 | §7 + §14 + §15 outbox/CQRS/saga/effect variants merged |
+| Observability | 13 | §9 + §19 incident, latency, data-flow, intermittent-error investigation |
+| Performance | 4 | §8 + §11 + §15 capacity, HPA, load tests, extreme tails |
+| Docker / runtime operations | 3 | §8 topology; §19 bad-pod/startup investigation |
+| CI/CD | 2 | §8 rolling deployment + §19 post-release failure |
+| System Design | 91 | §8 + §13 commerce scenarios; 21-round flash-sale pilot plus 7 ten-question walkthroughs |
+| Architecture | 2 | §1 architecture explanation + §10 schema ownership |
+| Senior Engineering | 7 | §14 gaps, §16 behavioral answers, §19 postmortem |
+| **Total** | **246** | **243 added; 3 pre-existing JPA questions preserved** |
+
+Navigation and topic overviews link the practice pages. Verification results are reported with
+the change; these documentation additions do not re-qualify baseline or track implementations.
+
 ## Track: java25-boot4
 
 Java 25 LTS + Spring Boot 4.0.x. Delta modules reuse the baseline number and slug and implement only

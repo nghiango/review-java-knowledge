@@ -2,6 +2,9 @@
 
 ## Core Java
 
+- [ ] Compare [for-loop versus Stream API](topics/core-java/practice.md#q5-when-does-a-stream-execute-and-when-is-a-loop-the-better-choice) across control flow, exceptions, state, allocation, and readability
+- [ ] Defend [sequential, parallel, and executor choices](topics/core-java/practice.md#q24-sequential-stream-parallel-stream-or-explicit-task-executor-for-a-production-workload) and validate equivalent work with representative measurements
+
 - [ ] Explain OOP, SOLID and composition versus inheritance with trade-offs
 - [ ] Define the `equals` / `hashCode` contract and identify mutable-key failures
 - [ ] Explain HashMap hashing, collisions, resize and treeification
@@ -338,6 +341,10 @@
 - [ ] Contrast push-based CI/CD pipelines with declarative pull-based GitOps (ArgoCD reconciliation loops, drift detection, sync waves)
 
 ## System Design
+
+- [ ] Complete the [case-first practice sequence](topics/system-design/practice.md), finishing all rounds for one system before starting the next
+- [ ] Defend the [expanded flash-sale case](topics/system-design/practice-flash-sale.md): commit gaps, payment/expiry races, durable grants, CDC recovery, mixed versions, and regional fencing
+- [ ] For each case, defend requirements, capacity, APIs/model, baseline flows, alternatives, concurrency, recovery, scaling, security/telemetry, and verification
 
 - [ ] Frame high-scale system design using a structured 4-step framework: Scope Requirements, High-Level Design, Deep-Dive Critical Components, and Scale/Bottlenecks
 - [ ] Formulate Back-of-the-Envelope capacity estimates: QPS (Read/Write), network bandwidth ingress/egress, and 5-year storage growth with indexing overhead

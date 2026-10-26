@@ -2,6 +2,11 @@
 
 Comprehensive architectural blueprints and step-by-step engineering exercises to practice designing scalable, resilient, and fault-tolerant distributed systems.
 
+For **complete case-first Q&A**, start with the [guided practice sequence](practice.md).
+Finish one system's requirements, capacity, model, flows, concurrency, failures, scaling,
+security, and verification before moving to another. These exercises are supplementary sketches;
+the guided cases explicitly discuss durability, allocation authority, and ambiguous payment outcomes.
+
 ---
 
 ## Exercise 1: Design a Distributed URL Shortener (Bitly-Scale)

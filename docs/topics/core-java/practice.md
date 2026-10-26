@@ -58,7 +58,20 @@ Examples and deeper explanations live in [Concepts](concepts.md), [Internals](in
     - **Failure:** side effects may be skipped by optimizations, reordered in parallel execution, or partially applied before failure.
     - **Fix:** keep transformations pure, close resource-backed streams, and use loops for retries or transactional workflows.
     - **Production:** measure allocation and blocking with JFR; parallel streams are not a default server-side I/O executor.
-    - **Follow-up:** Why might `peek` not run before `count`?
+    - **Comparison:** choose according to the actual operation, not a team-wide preference.
+
+        | Dimension | Traditional for-loop | Sequential Stream API |
+        |---|---|---|
+        | Intent | Explicit algorithm and local control | Declarative filter/map/reduce pipeline |
+        | Early termination | `break`, `continue`, multiple exits | `findFirst`, `anyMatch`, `limit`, `takeWhile`; no arbitrary `break` |
+        | Exceptions | Checked exceptions and per-item recovery are direct | Standard function interfaces need handling/adaptation |
+        | State | Mutable local accumulator is visible and owned | Prefer stateless functions and collector-owned state |
+        | Execution | Runs immediately as control reaches it | Lazy until a terminal operation; stages may be elided |
+        | Allocation | Can minimize intermediates and pre-size output | Pipeline/boxing overhead may exist; primitive streams and JIT can reduce it |
+        | Debugging | Convenient for branching and step-by-step inspection | Clear for simple transformations; long chains can obscure failures |
+        | Performance | Often good for tiny inputs or complex branches | Can be competitive; neither wins universally |
+
+    - **Follow-up:** Why might `peek` not run before `count`? What changes if `sorted` precedes `limit`?
     - **Takeaway:** Use streams to describe transformations, not to disguise workflows.
 
 ### Q6. What do `final`, `volatile`, `synchronized`, `transient`, `native`, and `static` actually guarantee?
@@ -268,6 +281,38 @@ Also relevant: [Concurrency](../concurrency/index.md)
     - **Trade-off:** stable sorting preserves input ties, but distributed database results need their own total ordering.
     - **Follow-up:** Why does deterministic ordering alone not guarantee snapshot-consistent pagination?
     - **Takeaway:** Stable order and stable data are separate requirements.
+
+### Q24. Sequential stream, parallel stream, or explicit task executor for a production workload?
+
+Also relevant: [Concurrency](../concurrency/index.md)
+
+??? question "Reveal answer"
+    - **Choose a concurrency model from workload cost, ordering, cancellation, and resource ownership.**
+    - **Mechanism:** a sequential stream runs on the caller; a parallel stream splits work and combines results, commonly using shared fork-join resources. An explicit executor gives control over admission and isolation.
+    - **Failure:** blocking HTTP calls in parallel streams consume shared workers; mutating one external ArrayList races. Parallelism overhead exceeds useful work for small inputs or poor splitting.
+    - **Fix:** use pure associative reductions for sufficiently large CPU-bound tasks; use a bounded executor or admission-controlled virtual threads for blocking calls with client-level deadlines. Preserve order only when the contract needs it.
+    - **Trade-off:** more threads do not accelerate CPU work beyond available capacity; parallel processing changes failure timing and does not propagate a Spring transaction to workers.
+
+        | Workload | Starting choice | Evidence required before changing |
+        |---|---|---|
+        | Small in-memory transformation | Loop or sequential stream | Readability and measured allocation/latency |
+        | Large splittable CPU reduction | Sequential baseline, then evaluate parallel | Speedup under container CPU limits and concurrent requests |
+        | Blocking remote calls | Explicit concurrency with bounded admission | Downstream capacity, deadlines, cancellation, context |
+        | Ordered writes with partial failure | Explicit workflow and transactions | Invariants, idempotency, recovery behavior |
+
+    - **Follow-up:** Can another request's common-pool work change this endpoint's tail latency?
+    - **Takeaway:** Parallel syntax is not a capacity or isolation strategy.
+
+### Q25. How would you prove whether a loop or stream is faster without misleading the team?
+
+??? question "Reveal answer"
+    - **Benchmark equivalent semantics, then validate the result in the real service.**
+    - **Mechanism:** a microbenchmark needs warm-up, multiple forks, consumed results, and realistic sizes/types; JIT dead-code elimination, constant folding, and allocation elimination can invalidate naive timing.
+    - **Failure:** comparing a primitive loop with a boxed stream or ordered collection with an unordered reduction measures different contracts. One elapsed-time measurement includes startup and machine noise.
+    - **Fix:** use a proper benchmark harness such as JMH when available, include primitive/object variants and input distributions, inspect allocation and GC, and report uncertainty. Do not add a dependency solely for this prose comparison.
+    - **Production:** validate throughput and p95/p99 at the same offered workload; a microsecond improvement can be irrelevant beside pool waits or database latency.
+    - **Follow-up:** Does the fastest isolated option allocate more and worsen fleet-wide latency under concurrency?
+    - **Takeaway:** Performance claims require equivalent work and representative evidence.
 
 ## Related
 

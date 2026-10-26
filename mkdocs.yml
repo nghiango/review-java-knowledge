@@ -271,6 +271,7 @@ nav:
           - Concepts: topics/performance/concepts.md
           - Internals: topics/performance/internals.md
           - Interview Questions: topics/performance/questions.md
+          - Practice Q&A: topics/performance/practice.md
           - Code Review: topics/performance/code-review.md
           - Solutions: topics/performance/solutions.md
           - Tests: topics/performance/tests.md
@@ -281,6 +282,7 @@ nav:
           - Concepts: topics/docker/concepts.md
           - Internals: topics/docker/internals.md
           - Interview Questions: topics/docker/questions.md
+          - Practice Q&A: topics/docker/practice.md
           - Code Review: topics/docker/code-review.md
           - Solutions: topics/docker/solutions.md
           - Production: topics/docker/production.md
@@ -299,6 +301,7 @@ nav:
           - Concepts: topics/ci-cd/concepts.md
           - Internals: topics/ci-cd/internals.md
           - Interview Questions: topics/ci-cd/questions.md
+          - Practice Q&A: topics/ci-cd/practice.md
           - Code Review: topics/ci-cd/code-review.md
           - Solutions: topics/ci-cd/solutions.md
           - Production: topics/ci-cd/production.md
@@ -308,6 +311,16 @@ nav:
           - Concepts: topics/system-design/concepts.md
           - Internals: topics/system-design/internals.md
           - Interview Questions: topics/system-design/questions.md
+          - Practice Q&A:
+              - Guided Sequence: topics/system-design/practice.md
+              - "1. URL Shortener": topics/system-design/practice-url-shortener.md
+              - "2. Payments": topics/system-design/practice-payments.md
+              - "3. Order Management": topics/system-design/practice-orders.md
+              - "4. Notifications": topics/system-design/practice-notifications.md
+              - "5. Flash Sale Inventory": topics/system-design/practice-flash-sale.md
+              - "6. Distributed Rate Limiter": topics/system-design/practice-rate-limiter.md
+              - "7. Large File Processing": topics/system-design/practice-files.md
+              - "8. Hotel / Ticket Booking": topics/system-design/practice-booking.md
           - Code Review: topics/system-design/code-review.md
           - Solutions: topics/system-design/solutions.md
           - Production: topics/system-design/production.md
@@ -317,6 +330,7 @@ nav:
           - Concepts: topics/architecture/concepts.md
           - Internals: topics/architecture/internals.md
           - Interview Questions: topics/architecture/questions.md
+          - Practice Q&A: topics/architecture/practice.md
           - Code Review: topics/architecture/code-review.md
           - Solutions: topics/architecture/solutions.md
           - Tests: topics/architecture/tests.md
@@ -337,6 +351,7 @@ nav:
           - Concepts: topics/senior-engineering/concepts.md
           - Internals: topics/senior-engineering/internals.md
           - Interview Questions: topics/senior-engineering/questions.md
+          - Practice Q&A: topics/senior-engineering/practice.md
           - Code Review: topics/senior-engineering/code-review.md
           - Solutions: topics/senior-engineering/solutions.md
           - Production: topics/senior-engineering/production.md
