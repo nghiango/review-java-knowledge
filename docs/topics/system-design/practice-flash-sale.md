@@ -4,10 +4,16 @@ Complete [Notifications](practice-notifications.md) first. Stay with this system
 failure, recovery, migration, and regional-ownership rounds before moving to
 [Distributed Rate Limiter](practice-rate-limiter.md).
 
-This expanded case follows the depth and progression of the supplied flash-sale interview guide.
+This page integrates the supplied [Flash-Sale System Design Interview Guide](flash-sale-system-design-interview-guide.md)
+into **one progressive interviewer–candidate conversation**, rather than appending a duplicate guide.
+The dialogue is a teaching adaptation, not a verbatim transcript. The reference is preserved;
+its scenarios, reasoning, failure caveats, and recovery progression are carried into the rounds below.
+
 It is a **design exercise**, not a claim that this lab implements or has benchmarked this entire
 platform. Implementation examples are included from existing lab source; additional protocols
 are described as designs. Framework mechanisms remain canonical in their linked topics.
+A **build checkpoint** specifies what you would design or implement next; it does not claim that
+implementation or its proposed verification has already been completed.
 
 ## Scenario and interview progression
 
@@ -29,10 +35,32 @@ not reservation throughput, and acknowledgment is not completed payment.
 
 ### How to practice
 
-1. Answer each visible interviewer prompt before opening the explanation.
-2. Work through the concrete history, not just the named pattern.
-3. Give the interview-ready answer in your own words.
-4. Defend the trade-off and answer the follow-up before continuing.
+1. Answer the visible interviewer prompt before revealing the conversation.
+2. Read the candidate's **first attempt as a proposal to challenge**, not the recommended solution.
+3. Pause at the interviewer's counterexample and repair the design yourself.
+4. Compare your repair with the revised answer and the detailed reasoning that follows.
+5. Produce the **build checkpoint**, describe its verification, and carry that decision into the next round.
+6. Deliver the interview-ready summary aloud; use the follow-up to start the next challenge.
+
+Keep one evolving design sheet with six columns: **requirement → invariant → authority → durable
+transition → failure/recovery → evidence**. Update it rather than redrawing unrelated architectures.
+Begin with a small correct system. Redis, Kafka, CDC, sharding, and regions are introduced only
+when a specific constraint or failure justifies them; they are not all prerequisites for version one.
+
+### Opening conversation — start before choosing a stack
+
+**Interviewer:** “Design a flash sale for 500,000 concurrent users and a product with 100 units.”
+
+**Candidate:** “Before selecting components, I need the purchase rule, payment deadline, response
+promise, peak arrival pattern, and the failure behavior allowed when stock ownership is uncertain.”
+
+**Interviewer:** “One unit per user per product, reserve before payment, a five-minute payment
+window, no overselling, and pending confirmation is acceptable. Where do you start?”
+
+**Candidate:** “I will write the invariant and API contract, estimate demand, and build the smallest
+transactional reservation flow. Then we can attack that design with races and crashes.”
+
+That is the starting design for Round 1—not a prebuilt microservice diagram.
 
 The rounds cover scope → capacity → contract/model → architecture → atomic allocation → crash
 recovery → payment races → duplicate delivery → quota grants → failover → end-to-end identity →
@@ -44,6 +72,21 @@ extreme admission → regional ownership → disaster recovery → operational v
 ### Q1. Before drawing components, what would you ask the business?
 
 ??? question "Reveal answer"
+
+    **Interviewer:** “You know the opening requirements. What would you put on the design sheet first?”
+
+    **Candidate — first attempt:** “The API must be fast and the stock counter must never be negative.”
+
+    **Interviewer — challenge:** “Two different request keys belong to the same buyer. And all stock
+    is held but unpaid. Does a nonnegative counter enforce our business rule or describe sold out?”
+
+    **Candidate — revision:** “No. I need distinct available, reserved, and sold states, a durable
+    sale/user/product eligibility rule, and a precise meaning for pending versus reserved responses.”
+
+    **Build checkpoint:** Write the requirements, stock conservation rule, purchase eligibility
+    lifecycle, and acknowledgment contract. **Verify:** walk through repeat purchase, expiry,
+    re-admission, and authority outage examples with the business before choosing components.
+    **Carry forward:** these invariants constrain every later optimization.
 
     **Verdict:** Define what the customer is promised and which resource owns that promise.
 
@@ -80,6 +123,21 @@ extreme admission → regional ownership → disaster recovery → operational v
 
 ??? question "Reveal answer"
 
+    **Interviewer:** “We have the invariants. How many requests does 500,000 concurrent users mean?”
+
+    **Candidate — first attempt:** “500,000 requests per second; I will add enough application pods.”
+
+    **Interviewer — challenge:** “What if each user clicks once over five seconds? And how many
+    successful initial allocations can a product with 100 units actually support?”
+
+    **Candidate — revision:** “The burst is about 100,000 attempts/s under that assumption. I must
+    size edge/application work separately and bound the attempts reaching the stock authority.”
+
+    **Build checkpoint:** Produce an arrival/mix worksheet, mean-latency concurrency estimate,
+    peak-duration assumptions, and downstream budgets. **Verify:** load-test hot-product skew and
+    cold/failure paths; hypothetical per-pod RPS is not evidence. **Carry forward:** target useful
+    completed work, not 100,000 contending transactions on one row.
+
     **Verdict:** Size the offered traffic, but deliberately bound authoritative reservation work.
 
     **Calculations**
@@ -112,6 +170,22 @@ extreme admission → regional ownership → disaster recovery → operational v
 ### Q3. Which APIs, identities, records, and constraints are necessary?
 
 ??? question "Reveal answer"
+
+    **Interviewer:** “Now specify the first API and tables. What does a successful purchase call create?”
+
+    **Candidate — first attempt:** “I will decrement stock and return success, then create the order.”
+
+    **Interviewer — challenge:** “Which durable identity lets a timed-out customer retry? Does success
+    mean an admitted attempt, a reservation, an order, or a charge?”
+
+    **Candidate — revision:** “I need an authorized purchase operation with a fingerprint and result,
+    a versioned reservation/deadline, and separate order/payment identities. The response names the
+    exact durable state, not a generic success flag.”
+
+    **Build checkpoint:** Design request/status contracts, ownership checks, schema constraints,
+    and the reservation state machine. **Verify:** concurrent same-key requests return one operation;
+    changed payloads are rejected and different keys still obey the purchase-limit policy.
+    **Carry forward:** every future event and recovery action references these stable identities.
 
     **Verdict:** Separate permission to try, durable acceptance, confirmed reservation, and payment.
 
@@ -150,6 +224,21 @@ extreme admission → regional ownership → disaster recovery → operational v
 ### Q4. Explain Buy Now through payment and order confirmation without hiding commit boundaries.
 
 ??? question "Reveal answer"
+
+    **Interviewer:** “We have the contract and model. Draw the smallest flow that can honor them.”
+
+    **Candidate — first attempt:** “Gateway → Redis → Kafka → order service → payment service.”
+
+    **Interviewer — challenge:** “Where is stock actually owned, and which commit justifies the response?”
+
+    **Candidate — revision:** “The boxes omitted the correctness boundary. I will first build one
+    short transaction for operation identity, allocation, reservation, and outbox. Redis admission
+    and asynchronous transport are extensions around that boundary, not substitutes for it.”
+
+    **Build checkpoint:** Draw a sequence diagram with numbered local commits and external calls;
+    identify the owner of every table and transition. **Verify:** no arrow silently assumes one
+    transaction across databases or a provider. **Carry forward:** build the local reservation
+    path before extracting services or claiming broker-backed acceptance.
 
     **Verdict:** Use Redis for provisional admission and PostgreSQL for durable inventory ownership.
 
@@ -201,6 +290,22 @@ extreme admission → regional ownership → disaster recovery → operational v
 
 ??? question "Reveal answer"
 
+    **Interviewer:** “Implement the allocation boundary from the diagram. Two buyers see one unit.”
+
+    **Candidate — first attempt:** “Read available stock, check it in Java, then decrement.”
+
+    **Interviewer — challenge:** “Both checks pass before either write. Does adding @Transactional
+    alone make the earlier reads exclusive?”
+
+    **Candidate — revision:** “I will use a guarded database mutation or a qualified locking protocol,
+    inspect its result, and commit reservation/identity/outbox with it. Lua can make provisional
+    Redis checks atomic, but cannot extend that transaction to another store.”
+
+    **Build checkpoint:** Implement the allocation and rollback boundary, positive-quantity checks,
+    and durable constraints. **Verify:** race many buyers against one unit using the real database;
+    at most one current allocation succeeds and losing duplicate inserts undo tentative stock changes.
+    **Carry forward:** correctness comes first; the same hot row still needs bounded admission.
+
     **Verdict:** Atomicity within one store is not atomicity or durable ownership across stores.
 
     **Concrete concurrency history:** Buyers A and B both read available stock = 1. Both decide
@@ -234,6 +339,22 @@ extreme admission → regional ownership → disaster recovery → operational v
 ### Q6. Redis decreases stock, then the application crashes before the DB commit or Kafka send. What recovers?
 
 ??? question "Reveal answer"
+
+    **Interviewer:** “Your concurrent allocation test passes. Now kill the pod after Redis changes
+    but before durable recording or publication.”
+
+    **Candidate — first attempt:** “I will catch the error and compensate, or let the Redis TTL expire.”
+
+    **Interviewer — challenge:** “The process is dead. What durable work can another process recover?
+    What if the database committed but its response was lost?”
+
+    **Candidate — revision:** “I must distinguish provisional admission from authoritative allocation.
+    The database transaction records required event intent. Independent Redis claims need stable
+    identity and conservative reconciliation, not a blind increment after timeout.”
+
+    **Build checkpoint:** Add the recoverable outbox handoff and provisional-claim recovery policy.
+    **Verify:** inject death before/after commit and publication; recover from another process using
+    durable state. **Carry forward:** every required action needs a durable owner beyond the request thread.
 
     **Verdict:** An outbox protects committed database intent, not an earlier independent Redis change.
 
@@ -277,6 +398,21 @@ extreme admission → regional ownership → disaster recovery → operational v
 
 ??? question "Reveal answer"
 
+    **Interviewer:** “Reservation and event recovery work. Now payment and expiry both read PENDING.”
+
+    **Candidate — first attempt:** “Both handlers are transactional, so one should run first.”
+
+    **Interviewer — challenge:** “Both may decide from the same earlier state. What prevents expiry
+    releasing stock after payment is accepted? What if the callback is delayed?”
+
+    **Candidate — revision:** “I need conditional legal transitions against the current generation,
+    once-only release, and a durable unknown-payment review path. Callback arrival time does not
+    necessarily determine when payment completed.”
+
+    **Build checkpoint:** Implement the state transition predicates and durable release/refund intent.
+    **Verify:** race callback, expiry, repeated release, and late provider evidence; keep stock and
+    financial outcomes accounted for. **Carry forward:** timeout is uncertainty, not permission to undo.
+
     **Verdict:** Competing decisions need a guarded transition and an explicit ambiguous-payment policy.
 
     ```mermaid
@@ -319,6 +455,21 @@ extreme admission → regional ownership → disaster recovery → operational v
 
 ??? question "Reveal answer"
 
+    **Interviewer:** “The relay recovered the event. A consumer commits an order, then dies before offset commit.”
+
+    **Candidate — first attempt:** “Enable Kafka exactly-once and remember event IDs in Redis.”
+
+    **Interviewer — challenge:** “Does that atomically include the order database? What if a second
+    event ID describes the same reservation, or shipping succeeds before its response is lost?”
+
+    **Candidate — revision:** “I need transactional inbox/effect composition, business uniqueness,
+    post-commit acknowledgment, and stable provider-operation identity at the fulfillment boundary.”
+
+    **Build checkpoint:** Add inbox/order uniqueness and durable fulfillment intent under the actual
+    shipment-unit policy. **Verify:** duplicate envelopes, distinct envelopes for one reservation,
+    and provider response loss cannot create unintended duplicate effects. **Carry forward:** each
+    downstream owner enforces its own boundary; one upstream deduplication table is not enough.
+
     **Verdict:** Commit consumer deduplication with the business effect, then acknowledge; also enforce business identity.
 
     **Guided reasoning:** An inbox keyed by logical consumer and event ID excludes repeated delivery
@@ -344,6 +495,12 @@ extreme admission → regional ownership → disaster recovery → operational v
     | Repeated shipping request | Stable fulfillment/provider operation identity |
     | Replay after dedup retention expires | Defined replay horizon and business uniqueness |
 
+    **Fulfillment boundary from the reference:** one fulfillment per order permits an order-level
+    uniqueness rule. Split shipments require uniqueness on the actual fulfillment/shipment group
+    instead. Commit fulfillment creation, inbox identity, and ShipmentRequested intent locally;
+    the shipping provider receives a stable shipping-operation key. Provider success followed by
+    response loss must recover that same operation rather than create another shipment.
+
     Kafka transactional output/offset semantics do not automatically include a PostgreSQL commit
     or provider call. If the external provider lacks idempotency and reliable lookup, ambiguity
     prevents an unconditional once-only external-effect guarantee.
@@ -359,6 +516,23 @@ extreme admission → regional ownership → disaster recovery → operational v
 ### Q9. One hundred pods share 5,000 requests/s. How do busy pods borrow idle capacity without a remote call per request?
 
 ??? question "Reveal answer"
+
+    **Interviewer:** “The purchase lifecycle is recoverable. Now distribute 5,000 admission permits
+    across 100 unevenly loaded pods without a remote check per request.”
+
+    **Candidate — first attempt:** “Give each pod 50 permits per second.”
+
+    **Interviewer — challenge:** “One pod needs 200 while others are idle. Can it borrow safely?
+    What happens to its unused permits if it crashes?”
+
+    **Candidate — revision:** “Allocate small demand-based grants for an identified window, with
+    stable grant identity and bounded local use. Initially I will let uncertain unused permits
+    expire rather than reclaim rights an isolated holder may still spend.”
+
+    **Build checkpoint:** Specify grant identity, owner, size, validity, clock margins, and local
+    atomic consumption. **Verify:** uneven demand, lost grant responses, expiry, and holder restart;
+    a restart must not reset consumption of an old grant. **Carry forward:** issuance and consumption
+    are two separate invariants, and fixed windows are not rolling caps.
 
     **Verdict:** Issue bounded demand-based grants and consume them locally under explicit rate semantics.
 
@@ -394,6 +568,21 @@ extreme admission → regional ownership → disaster recovery → operational v
 
 ??? question "Reveal answer"
 
+    **Interviewer:** “The batch allocator works until Redis promotes a stale replica and issues again.”
+
+    **Candidate — first attempt:** “I will add a distributed lock and increment a fencing epoch.”
+
+    **Interviewer — challenge:** “The lock state can be lost too. Which boundary rejects the old
+    epoch, and where are already issued grants durably accounted for?”
+
+    **Candidate — revision:** “Hard quotas need a durable bounded grant ledger and enforced authority.
+    A replacement cannot reset issuance from cache; an epoch ignored by a spender provides no protection.”
+
+    **Build checkpoint:** Define idempotent grant allocation, ledger durability/promotion assumptions,
+    and the real redemption/fencing boundary. **Verify:** response loss, stale promotion, old-holder
+    resumption, and reclaim attempts preserve both issuance and spend limits. **Carry forward:**
+    uncertain rights remain unavailable rather than becoming a second allocation.
+
     **Verdict:** Strict failover-safe quotas require durable issuance and enforceable consumption authority.
 
     Atomic operations on two successive primaries do not preserve a shared budget. Redis WAIT can
@@ -415,6 +604,12 @@ extreme admission → regional ownership → disaster recovery → operational v
     | Epoch field | Protects nothing unless an authoritative boundary rejects stale use |
     | PostgreSQL ledger | Still depends on acknowledged commits surviving its actual failover policy |
 
+    **Finite-stock counterexample from the reference:** 80 permits were issued, but a stale replica
+    remembers only 50. If it issues another 50, total issuance becomes 130 against 100 rights.
+    This is distinct from the 5,000-per-window rate example. If permits are merely advisory, final
+    database allocation can still prevent overselling—but admitted customers may lose, violating
+    any stronger admission promise.
+
     Finite reclaimable permits may need stable permit IDs and durable redemption. A new epoch in
     an unreachable coordinator does not stop an isolated local allocator automatically.
 
@@ -430,6 +625,23 @@ extreme admission → regional ownership → disaster recovery → operational v
 ### Q11. HTTP retries, a redelivered reservation event, and duplicate provider callbacks all occur. Which identities matter?
 
 ??? question "Reveal answer"
+
+    **Interviewer:** “We have durable grants and reservations. Show me one retry identity from click
+    through payment, without confusing all the other IDs.”
+
+    **Candidate — first attempt:** “Use one UUID everywhere and everything becomes idempotent.”
+
+    **Interviewer — challenge:** “A refund is not the charge, and a new event envelope may describe
+    the same purchase. Can a buyer bypass the purchase rule by generating another UUID?”
+
+    **Candidate — revision:** “I need an identity map: principal-scoped request, purchase eligibility,
+    reservation, order, event envelope, provider charge, refund, and fulfillment. Each has a different
+    uniqueness rule and recovery horizon.”
+
+    **Build checkpoint:** Trace these identities through records/events and define fingerprint,
+    retention, and provider-dedup semantics. **Verify:** new request keys cannot bypass the business
+    limit; new envelope IDs cannot repeat a business effect. **Carry forward:** all later replay
+    and migration paths preserve original logical identities.
 
     **Verdict:** Every independent business effect needs stable identity at its own boundary.
 
@@ -465,6 +677,23 @@ extreme admission → regional ownership → disaster recovery → operational v
 
 ??? question "Reveal answer"
 
+    **Interviewer:** “New challenge: across the wider platform there are now 100k committed business
+    events/s. Polling and publication-status updates dominate the database.”
+
+    **Candidate — first attempt:** “Replace the outbox with direct Kafka sends, or switch to CDC
+    and assume the scaling problem is solved.”
+
+    **Interviewer — challenge:** “The first loses the atomic handoff. The second still writes event
+    rows and WAL. What happens to storage, ordering, and retention at billions of events per day?”
+
+    **Candidate — revision:** “Keep the transactional intent, measure polling cost, and consider
+    append-only outbox plus CDC. Qualify source capacity, aggregate ordering, and safe retention separately.”
+
+    **Build checkpoint:** Benchmark one complete write/transport/consumer path and design partition,
+    uniqueness, ordering, and retention rules. **Verify:** CDC replay, aggregate-version gaps,
+    partition changes, and cleanup preserve recoverability. **Carry forward:** this is a separate
+    high-event-volume scenario, not 100k successful reservations/s for the original 100 units.
+
     **Verdict:** CDC can remove polling overhead, but it cannot remove database event writes or ordering design.
 
     **Scale check:** 100,000 events/s is **360 million/hour** and **8.64 billion/day**. At an
@@ -498,6 +727,21 @@ extreme admission → regional ownership → disaster recovery → operational v
 
 ??? question "Reveal answer"
 
+    **Interviewer:** “CDC is deployed. It has been down 45 minutes and database disk is 95% full.”
+
+    **Candidate — first attempt:** “Drop the replication slot to free space, then recreate it.”
+
+    **Interviewer — challenge:** “What reconstructs the missing history? What is your backlog,
+    disk runway, complete replay source, and net drain rate after restart?”
+
+    **Candidate — revision:** “First restrict new writes and preserve recovery sources. I must inspect
+    slot/WAL/offset state, repair capture, and use a verified replay protocol if required WAL is gone.”
+
+    **Build checkpoint:** Write the CDC incident runbook, retained-data policy, and capacity/alert
+    worksheet. **Verify:** controlled connector outage and replay detect gaps and duplicates without
+    repeating financial operations. **Carry forward:** lossless recovery may require temporary
+    write restriction; deleting evidence is not an availability fix.
+
     **Verdict:** Protect the source while preserving committed events and a provable replay boundary.
 
     **Quantify carefully:** 100,000 × 45 × 60 = **270 million transactions**. If each produces one
@@ -518,6 +762,12 @@ extreme admission → regional ownership → disaster recovery → operational v
     takes **90 minutes** under those illustrative sustained rates. “Restart and catch up” needs
     enough disk and downstream capacity for that entire recovery period.
 
+    **Disk worksheet from the reference:** an assumed 200 MB/s of retained WAL adds about 360 GB
+    in 30 minutes. This is not inferred from the transaction count. Estimate exhaustion time as
+    usable free bytes divided by measured positive net disk growth, then include operating headroom.
+    Inspect logical-slot `restart_lsn`, `confirmed_flush_lsn`, slot validity, actual disk usage, and
+    connector offsets together; version-specific diagnostic fields must match deployed PostgreSQL.
+
     **If the slot is invalid:** a new slot cannot reconstruct missing history. Recover from complete
     retained outbox/archive data with stable IDs, checkpoints, and overlap deduplication. Timestamps
     alone do not prove commit-order completeness. If WAL and complete replay data are both gone,
@@ -534,6 +784,21 @@ extreme admission → regional ownership → disaster recovery → operational v
 ### Q14. Add mandatory payment_status to 200 million orders receiving 20k writes/s. How can the rollout remain compatible?
 
 ??? question "Reveal answer"
+
+    **Interviewer:** “The platform is live. Add mandatory payment_status to 200 million existing orders.”
+
+    **Candidate — first attempt:** “Deploy NOT NULL with default PENDING and backfill in one update.”
+
+    **Interviewer — challenge:** “Some historical orders are paid or refunded. What locks, WAL, old
+    writers, and rollback behavior did that plan account for?”
+
+    **Candidate — revision:** “Expand compatibly, deploy tolerant readers and compatible writers,
+    backfill authoritative state in resumable batches, validate, then enforce and contract later.”
+
+    **Build checkpoint:** Produce a phased migration with lock/deadline budgets, data provenance,
+    checkpoints, pause signals, and rollback gates. **Verify:** representative data size, concurrent
+    updates, interrupted backfill, and old binaries before production rollout. **Carry forward:**
+    a healthy new deployment cannot tighten the schema while incompatible writers remain.
 
     **Verdict:** Separate schema expansion, compatible writers, data migration, validation, and contraction.
 
@@ -567,6 +832,21 @@ extreme admission → regional ownership → disaster recovery → operational v
 
 ??? question "Reveal answer"
 
+    **Interviewer:** “The backfill is complete, but 30% of pods still omit the new field.”
+
+    **Candidate — first attempt:** “Only a minority remains. Enforce NOT NULL and finish the rollout.”
+
+    **Interviewer — challenge:** “Those pods still write. What does null mean? Can old consumers
+    read the new event, and can new consumers safely replay old events?”
+
+    **Candidate — revision:** “Keep compatibility open until data, active writers, event combinations,
+    and rollback paths comply. Missing state must not be guessed as pending payment.”
+
+    **Build checkpoint:** Create an old/new schema-and-event compatibility matrix, writer telemetry,
+    and constraint-enforcement gate. **Verify:** mixed versions and replay preserve meaning and one
+    business-action owner. **Carry forward:** rollout completion is a behavioral condition, not
+    merely a percentage of healthy pods.
+
     **Verdict:** Not until every active writer and supported replay path can honor the contract.
 
     Keep missing distinct from pending. New readers resolve authoritative payment state or expose
@@ -597,6 +877,21 @@ extreme admission → regional ownership → disaster recovery → operational v
 ### Q16. One hundred pods have pool size 30; PostgreSQL allows 1,000 connections and is CPU-saturated. Raise each pool to 100?
 
 ??? question "Reveal answer"
+
+    **Interviewer:** “Load increases and pools time out. Raise every pod's pool from 30 to 100?”
+
+    **Candidate — first attempt:** “More connections should remove the acquisition queue.”
+
+    **Interviewer — challenge:** “One hundred pods already permit 3,000 connections against a database
+    capped at 1,000. CPU is saturated. Where would extra execution capacity come from?”
+
+    **Candidate — revision:** “I need a fleet-wide connection and active-work budget, admission,
+    short transactions, and measured query/wait diagnosis—not a larger local ceiling.”
+
+    **Build checkpoint:** Allocate connections across services, rollout surge, jobs, and operational
+    reserve; align acquisition deadlines with the response budget. **Verify:** saturation and
+    dependency slowdown keep queues/resources bounded. **Carry forward:** increasing pod count
+    can worsen a shared bottleneck unless downstream concurrency remains controlled.
 
     **Verdict:** A larger queue of active database work can worsen the bottleneck.
 
@@ -631,6 +926,22 @@ extreme admission → regional ownership → disaster recovery → operational v
 
 ??? question "Reveal answer"
 
+    **Interviewer:** “Database concurrency is bounded. Now the provider takes eight seconds while
+    callers time out at three and several layers retry.”
+
+    **Candidate — first attempt:** “Increase the timeout and add more payment pods.”
+
+    **Interviewer — challenge:** “What happens to attempts per logical charge? Does a timeout prove
+    the original charge failed, and who still has capacity to reconcile it?”
+
+    **Candidate — revision:** “Stop retry amplification, cap initiation, isolate calls, and reserve
+    recovery capacity. Persist unknown outcomes and reuse the original provider identity.”
+
+    **Build checkpoint:** Define one retry owner, total deadlines, bulkheads, breakers, and a
+    durable reconciliation queue with reserved capacity. **Verify:** injected response loss and
+    throttling preserve financial identity while draining existing uncertainty. **Carry forward:**
+    protecting dependencies and deduplicating money movement are separate responsibilities.
+
     **Verdict:** Stop amplification while preserving the identity and recoverability of uncertain charges.
 
     At 10k original operations/s and three additional attempts each, the provider can see 40k
@@ -664,6 +975,22 @@ extreme admission → regional ownership → disaster recovery → operational v
 
 ??? question "Reveal answer"
 
+    **Interviewer:** “Final traffic escalation: one million attempts/s for the same 100 initial units.”
+
+    **Candidate — first attempt:** “Put every attempt in Kafka; the queue will absorb the spike.”
+
+    **Interviewer — challenge:** “How long do unsuccessful buyers wait, how large does storage grow,
+    and why should every rejected attempt become durable reservation work?”
+
+    **Candidate — revision:** “Absorb and filter at the edge, apply fair bounded admission, and
+    send only eligible identified work to the durable authority. A permit is not stock unless its
+    contract actually grants stock ownership.”
+
+    **Build checkpoint:** Specify waiting-room/token semantics, queue ceilings, rejection responses,
+    and controlled re-admission after eligible release. **Verify:** hot-product/bot/retry skew and
+    holder failure do not overwhelm the database or strand unbounded work. **Carry forward:**
+    optimize completion and honest customer outcomes, not a raw ingestion headline.
+
     **Verdict:** Optimize for bounded useful work rather than durable storage of unlimited rejected demand.
 
     One million one-unit attempts competing for 100 initial units means at most **0.01% of that
@@ -696,6 +1023,22 @@ extreme admission → regional ownership → disaster recovery → operational v
 ### Q19. Singapore and Tokyo each receive 500k attempts/s and may be partitioned for minutes. How can both use the same 100 global units safely?
 
 ??? question "Reveal answer"
+
+    **Interviewer:** “Now both Singapore and Tokyo must remain useful during a network partition.”
+
+    **Candidate — first attempt:** “Replicate stock = 100 to each region and reconcile counters later.”
+
+    **Interviewer — challenge:** “Both could allocate the same 100 units. What exclusive right does
+    each region own before it accepts a local reservation?”
+
+    **Candidate — revision:** “Preallocate disjoint rights, such as 60/40, under a durable ownership
+    ledger. Local transactions spend local rights. A transfer freezes source rights before destination
+    activation, and a region cannot borrow unreachable capacity unilaterally.”
+
+    **Build checkpoint:** Draw rights accounting and the recoverable freeze/transfer/activate protocol.
+    **Verify:** partitions, duplicate transfer messages, and crashes at each stage preserve one owner
+    per unit. **Carry forward:** low-latency local progress costs stranded capacity and stricter
+    takeover rules; it is not unrestricted global write availability.
 
     **Verdict:** Regions may spend exclusive preallocated rights locally; they may not independently copy global stock.
 
@@ -738,6 +1081,22 @@ extreme admission → regional ownership → disaster recovery → operational v
 
 ??? question "Reveal answer"
 
+    **Interviewer:** “Singapore stops responding. Tokyo has sold its own quota. May Tokyo take the
+    last reported Singapore remainder?”
+
+    **Candidate — first attempt:** “Yes, after its lock expires and we move traffic to Tokyo.”
+
+    **Interviewer — challenge:** “Singapore's local database and pods may still accept writes.
+    What stops them, and how do you know what they sold after their last report?”
+
+    **Candidate — revision:** “I need enforceable old-writer exclusion and durable consumption
+    evidence, or source relinquishment. Otherwise the uncertain rights stay unavailable.”
+
+    **Build checkpoint:** Write the takeover/rejoin runbook and name the exact component that
+    rejects stale authority. **Verify:** network partition, old-owner resumption, and stale DB
+    promotion cannot create dual ownership. **Carry forward:** a health check or epoch field is
+    not a proof; availability claims must respect the actual enforcement boundary.
+
     **Verdict:** Unreachable is not stopped, and a stale available count is not transferable inventory.
 
     A health check failure, expired Redis lock, DNS change, or coordinator epoch increment does not
@@ -772,6 +1131,22 @@ extreme admission → regional ownership → disaster recovery → operational v
 ### Q21. How do you demonstrate the complete design works, and summarize it without reciting technologies?
 
 ??? question "Reveal answer"
+
+    **Interviewer:** “We have evolved the design through each challenge. How do you show that the
+    system is ready rather than merely drawing all the expected technologies?”
+
+    **Candidate — first attempt:** “Run a high-RPS test and check the API p95.”
+
+    **Interviewer — challenge:** “Can you account for every allocated unit and accepted purchase after
+    the failures we discussed, including unresolved charges and old regional owners?”
+
+    **Candidate — revision:** “I need invariant checks and fault histories at every boundary,
+    with measured recovery capacity. API speed is one signal, not proof of business correctness.”
+
+    **Build checkpoint:** Assemble the design sheet, acceptance/fault matrix, dashboards, and
+    recovery runbooks. **Verify:** account for accepted, completed, rejected, compensated, and
+    explicitly unresolved work; record which assumptions remain untested. **Carry forward:**
+    the final explanation should justify each added component by the problem that introduced it.
 
     **Verdict:** Reconcile business invariants through tested failure histories, then state the accepted costs.
 
@@ -811,6 +1186,62 @@ extreme admission → regional ownership → disaster recovery → operational v
     measured recovery capacity.”
 
     **Follow-up:** Which failure assumption would invalidate your strongest guarantee?
+
+## From the conversation to a build plan
+
+This is the order to design and qualify a real implementation—not a claim that the entire system
+exists in this repository. Do not start with every component in the final diagram.
+
+| Stage | Build/design artifact | Evidence required before the next stage |
+|---|---|---|
+| A — Correct local core, Rounds 1–5 | Requirements/invariant sheet; authenticated request/status contract; inventory, operation, reservation, eligibility, and outbox schema; short guarded transaction | Real-DB concurrent allocation and rollback tests; scoped same-key/fingerprint behavior; explicit pending/reserved response |
+| B — Recoverable workflow, Rounds 6–8 and 11 | Outbox transport; inbox/business constraints; order/payment states; durable expiry, unknown-outcome reconciliation, and compensation | Death before/after commit/send/ack; callback/expiry races; provider sandbox identity/lookup contract; no duplicate stock release |
+| C — Bounded service, Rounds 2, 9, 16–18 | Measured admission and waiting-room policy; bounded queues, pool/dependency budgets, deadlines, retries, dashboards | Representative hot-key traffic, retry/provider failure, and controlled rejection; recovery work still progresses |
+| D — Strong grant protocol, Rounds 9–10, only if needed | Durable idempotent issuance and holder-consumption/reclamation contract | Lost grant response, holder restart/partition, stale promotion, enforced fencing; no unproven reclaim |
+| E — Higher volume and safe change, Rounds 12–15, when justified | Measured polling/CDC choice; WAL/retention runbook; phased schema/event compatibility plan | Backlog and disk runway qualification, gap-safe replay, mixed versions, interrupted backfill, constraint/rollback gates |
+| F — Regional ownership, Rounds 19–20, only for a real regional requirement | Exclusive inventory rights, recoverable transfer, old-writer exclusion and rejoin runbook | Partition and failover tests preserve ownership and acknowledged-state assumptions; uncertain rights stay unavailable |
+| Final qualification, Round 21 | Complete decision sheet, business accounting, fault matrix, capacity results, operational ownership | Account for every accepted operation and unit; distinguish proved behavior, tested assumptions, and remaining risk |
+
+**Smallest useful first implementation:** Stage A plus the recovery needed for its accepted
+operations. If version one calls a payment provider, its ambiguous-outcome recovery is mandatory;
+it cannot be deferred because reconciliation appears later in the interview. A modular application
+can retain local boundaries while the design matures. Add Redis, brokers, CDC, sharding, or regions
+only after explaining which requirement/failure each addresses.
+
+For every proposed component, answer: **What problem introduced it? What does it own? What durable
+fact survives its crash? What test demonstrates that?** If you cannot answer, simplify or finish
+that boundary before adding another component.
+
+## How the supplied guide is integrated
+
+The source is retained as [reference material](flash-sale-system-design-interview-guide.md).
+This page is the guided learning path: it adapts the reference into a continuing conversation,
+adds build/verification checkpoints, and retains the detailed reasoning rather than duplicating
+its entire text or presenting its illustrative code as a tested flash-sale implementation.
+
+| Source section | Where it enters this conversation |
+|---|---|
+| §1 Interview approach/scenario | Opening conversation, assumptions, and staged build plan |
+| §2 Requirements | Round 1: business promise and invariant sheet |
+| §3 Capacity | Round 2: attempt/work distinction, concurrency, and sizing |
+| §4 Purchase architecture | Rounds 3–4: added contract/model step, then commit-boundary diagram |
+| §5 Atomic reservation/Lua | Round 5: conditional allocation and store-boundary comparison |
+| §6 Redis/publication crash | Round 6: durable intent and provisional-claim recovery |
+| §7 Payment versus expiry | Round 7: guarded states, once-only release, delayed versus late evidence |
+| §8 Kafka duplicates/fulfillment | Round 8: inbox, business uniqueness, acknowledgment and shipping boundary |
+| §9 Distributed quota | Round 9: demand-based grants, expiry, fixed/rolling semantics |
+| §10 Quota failover | Round 10: durable issuance, finite-quota counterexample, enforced fencing |
+| §11 End-to-end identity | Round 11: request/business/event/provider identity map |
+| §12 Outbox scale | Round 12: separate high-event-volume challenge, ordering and retention |
+| §13 Debezium/WAL recovery | Round 13: backlog/net-drain and disk worksheets, slot/replay caveats |
+| §14 Migration | Round 14: phased compatibility and authoritative backfill |
+| §15 Mixed versions | Round 15: live writers, old/new events, and rollback gates |
+| §16 Pool exhaustion | Round 16: fleet budget and diagnosis rather than blind pool increases |
+| §17 Retry storms | Round 17: bounded initiation and reserved unknown-outcome recovery |
+| §18 Extreme attempts | Round 18: useful-work admission versus unlimited queueing |
+| §19 Regional ownership | Round 19: exclusive rights and freeze-before-transfer |
+| §20 DR/split brain | Round 20: consumption evidence, enforceable exclusion, and rejoin |
+| §21 Final checklist | Round 21, the build plan, and review gate |
 
 ## Review gate — before the next system
 

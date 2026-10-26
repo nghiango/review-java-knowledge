@@ -44,6 +44,11 @@ comparison/recovery tables, diagrams, interview-ready spoken answers, follow-ups
 The ten dimensions above are a study loop, not a limit of ten questions. Seven cases have 15 rounds;
 flash sale has 21. The workload and deep dives stay specific to each system.
 
+[Flash sale's progressive conversation](practice-flash-sale.md) also carries one design through
+candidate proposals, interviewer counterexamples, revisions, and a build/verification checkpoint
+per round. Its staged build plan explains what to implement first and which later infrastructure
+is justified only by stronger requirements or measured limits.
+
 ## Source coverage
 
 The commerce scenarios from interview-prep §8 and §13 now live within complete cases:

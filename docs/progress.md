@@ -61,6 +61,10 @@ have **15 progressive rounds**; flash sale has **21**. Every case follows the ap
 explicit assumptions, guided reasoning, concrete failure histories, calculations/comparisons,
 recovery tables, diagrams, spoken interview answers, follow-ups, and a final review gate.
 The questions are case-specific rather than repeated generic architecture checklists.
+Flash sale additionally integrates the supplied guide into a continuing interviewer–candidate
+dialogue: first attempt, counterexample, revised design, build/verification checkpoint, and
+carried-forward decision in every round. A staged implementation roadmap and source-section map
+connect the conversation to concrete design artifacts; the reference guide remains unchanged.
 Core Java includes explicit loop/stream, sequential/parallel/executor, and benchmarking comparisons.
 The three pre-existing JPA practice questions remain intact.
 

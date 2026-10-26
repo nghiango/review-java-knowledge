@@ -343,6 +343,7 @@
 ## System Design
 
 - [ ] Complete the [case-first practice sequence](topics/system-design/practice.md), finishing all rounds for one system before starting the next
+- [ ] Work through the [progressive flash-sale conversation](topics/system-design/practice-flash-sale.md): challenge each first attempt, revise the design, and produce the build/verification checkpoint before continuing
 - [ ] Defend the [expanded flash-sale case](topics/system-design/practice-flash-sale.md): commit gaps, payment/expiry races, durable grants, CDC recovery, mixed versions, and regional fencing
 - [ ] For all eight expanded cases, answer the visible prompts before revealing guided reasoning, then deliver the spoken answer and defend each follow-up
 - [ ] For each case, defend requirements, capacity, APIs/model, baseline flows, alternatives, concurrency, recovery, scaling, security/telemetry, and verification
