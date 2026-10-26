@@ -71,6 +71,36 @@ mkdocs serve                      # http://127.0.0.1:8000
 docker compose up -d              # PostgreSQL, Kafka, RabbitMQ, Redis for bootRun / integration tests
 ```
 
+### Publish the portal on GitHub Pages
+
+The deployment workflow is [`.github/workflows/docs.yml`](.github/workflows/docs.yml).
+It builds MkDocs in strict mode and deploys the generated `site/` artifact using GitHub's Pages
+Actions; no `gh-pages` branch or personal access token is needed.
+
+1. In the GitHub repository, open **Settings → Pages → Build and deployment** and select
+   **GitHub Actions** as the source. Repository visibility and your GitHub plan must support Pages.
+2. Commit the workflow and MkDocs changes on `main`. Create/publish the `docs-release` branch
+   from that committed configuration, or merge `main` into an existing `docs-release` branch.
+3. In **Settings → Environments → github-pages**, allow `docs-release` as a deployment branch.
+   A default policy allowing only the default branch must be updated before this branch can deploy.
+4. For subsequent releases, open a pull request with **base: `docs-release`**, **compare: `main`**,
+   and merge it when ready to publish. Normal pushes/merges to `main` do not run this workflow.
+5. Open **Actions → Deploy MkDocs to GitHub Pages** to monitor the deployment, then open the URL
+   reported by its `github-pages` environment. The expected default address is
+   <https://nghiango.github.io/review-java-knowledge/>.
+
+Only updates to `docs-release` affecting docs, embedded module/track sources, or documentation
+configuration trigger deployment. There is no pull-request or manual-run trigger. A direct push
+to that branch would also qualify: to enforce merge-only publishing, configure a branch rule for
+`docs-release` requiring pull requests and disallow bypasses as appropriate for your repository.
+The initial branch publication can trigger the first deployment when it includes matching files.
+A local `docs-release` branch without the new committed configuration is not yet deployable.
+
+Deployment uses the repository's automatic `GITHUB_TOKEN` with scoped Pages/OIDC permissions.
+The workflow reads the configured Pages base URL for MkDocs, including a configured custom domain.
+The default `site_url` in `mkdocs.yml` also supports local builds; `MKDOCS_SITE_URL` can override it.
+Enabling Pages and successfully running the workflow are required before the address is live.
+
 ### 2. The study loop for one topic
 
 1. Open the topic in the portal (`Topics → Spring Transactions`) and read `concepts` and

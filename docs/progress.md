@@ -48,6 +48,19 @@
 | **Batch 5** | 21 WebClient/WebFlux, 22 Observability, 23 Performance, 24 Docker, 25 AWS | 150 (30 each) | +35 (+7 each) | ✅ Complete (30/30 each) |
 | **Batch 6** | 26 CI/CD, 27 System Design, 28 Architecture, 29 Design Patterns, 30 Senior Engineering | 150 (30 each) | +25 (+7, +7, +2, +7, +7) | ✅ Complete (30/30 each) |
 
+## GitHub Pages Deployment
+
+The MkDocs deployment workflow is configured in `.github/workflows/docs.yml`: strict build,
+Pages artifact upload, and environment-scoped deployment on relevant `docs-release` branch updates.
+Normal `main` updates, pull requests, and manual dispatch do not trigger this workflow. Publishing
+is batched by merging `main` into `docs-release`; a branch rule is needed to prohibit direct pushes.
+MkDocs uses the configured Pages base URL, with the project URL as a local-build default.
+**Publication is pending:** enable GitHub Actions under repository Settings → Pages, allow
+`docs-release` in the `github-pages` environment, publish the committed configuration to that branch,
+and confirm the first successful deployment. A local release branch has been created; it is not
+pushed and does not yet contain the uncommitted publishing configuration. Local verification does
+not establish that the public site is live. Setup steps are in the root README.
+
 ## Senior Practice Expansion
 
 The supplied `interview-prep.md` remains unchanged as raw input. Its Q&As are distributed by
