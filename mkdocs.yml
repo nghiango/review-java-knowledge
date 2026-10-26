@@ -1,5 +1,8 @@
 site_name: Senior Java / Spring Interview Lab
 site_description: Senior backend interview preparation and production engineering laboratory
+site_url: !ENV [MKDOCS_SITE_URL, 'https://nghiango.github.io/review-java-knowledge/']
+repo_url: https://github.com/nghiango/review-java-knowledge
+repo_name: nghiango/review-java-knowledge
 docs_dir: docs
 strict: true
 
