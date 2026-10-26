@@ -1,5 +1,7 @@
 # Database / SQL
 
+[Practice Q&A](practice.md) — senior-depth SQL, isolation, pooling, and recovery.
+
 ## Why this matters
 
 The relational database is the single source of truth for enterprise backend systems. While ORMs abstract query syntax, real-world scalability and reliability depend directly on deep SQL knowledge: query planner execution strategies, B-tree composite index ordering, covering index scans, ACID isolation anomalies, transaction lock hierarchies, MVCC garbage collection, and zero-downtime schema evolution. Misconceptions in these areas lead directly to production catastrophes: database CPU saturation from sequential scans on unindexed foreign keys, connection pool starvation from long transactions holding row locks, lost updates from un-synchronized read-modify-write cycles, and outages from destructive schema migrations.

@@ -2,25 +2,326 @@
 
 ## Object design and SOLID
 
-Encapsulation protects invariants, not merely fields. Abstraction exposes a stable contract;
-polymorphism lets callers depend on that contract. Prefer composition when a relationship is
-"uses/has" or when subtype equality would be ambiguous. Inheritance fits genuine substitutability.
+### Object-Oriented Principles
 
-SOLID is diagnostic vocabulary, not a target score: SRP identifies reasons to change; OCP protects
-stable policy with extension points; LSP demands substitutability; ISP avoids forcing unused
-capabilities; DIP points policy toward abstractions. Too many tiny interfaces can be as costly as a
-god class.
+Encapsulation protects invariants, not merely fields.
+
+Abstraction exposes a stable contract.
+
+Polymorphism lets callers depend on that contract. Prefer composition when a relationship is "uses/has" or when subtype equality would be ambiguous.
+
+Inheritance fits genuine substitutability.
+
+### SOLID Principles
+
+SOLID are five fundamental principles of object-oriented design and programming.
+
+#### SRP - Single Responsibility Principle
+
+- Definition: A class should have only one reason to change, meaning it should focus on a single job or responsibility.
+- Impact: Reduces coupling and makes code more maintainable.
+
+??? "Example"
+    ```java
+    // Bad example, UserHandler has multiple responsibilities
+    // It handles user data and also database operations and email sending
+    public class UserHandler {
+        private String name;
+        private String email;
+        
+        public void saveToDatabase() {
+            // Database logic
+        }
+        
+        public void sendEmail() {
+            // Email logic
+        }
+    }
+
+    // Good example, User only handles user data
+    // Database operations and email sending are handled by separate classes
+    public class User {
+        private String name;
+        private String email;
+    }
+
+    public class UserRepository {
+        public void save(User user) {
+            // Database logic
+        }
+    }
+
+    public class EmailService {
+        public void send(User user) {
+            // Email logic
+        }
+    }
+    ```
+
+#### OCP - Open/Closed Principle
+
+- Definition: Protects stable policy with extension points. It means that classes should be open for extension but closed for modification.
+- Impact: Makes code more maintainable and extensible.
+
+??? "Example"
+    ```java
+    // Bad example, PaymentProcessor has multiple responsibilities
+    // It handles different payment methods and also logging
+    public class PaymentProcessor {
+        public void processPayment(PaymentMethod method, double amount) {
+            // Payment logic
+            System.out.println("Processing payment of " + amount);
+        }
+        
+        public void logPayment(PaymentMethod method, double amount) {
+            // Logging logic
+            System.out.println("Logged payment of " + amount);
+        }
+    }
+
+    // Good example, PaymentProcessor only handles payment processing
+    // Logging is handled by a separate class
+    public class PaymentProcessor {
+        public void processPayment(PaymentMethod method, double amount) {
+            // Payment logic
+            System.out.println("Processing payment of " + amount);
+        }
+    }
+
+    public class PaymentLogger {
+        public void logPayment(PaymentMethod method, double amount) {
+            // Logging logic
+            System.out.println("Logged payment of " + amount);
+        }
+    }
+    ```
+
+#### LSP - Liskov Substitution Principle
+
+- Definition: Demands substitutability. It means that objects of a superclass should be replaceable with objects of its subclasses without breaking the application.
+- Impact: Ensures that subclasses can be used interchangeably with their base classes.
+
+??? "Example"
+    ```java
+    // Bad example, Rectangle and Square don't follow LSP
+    // Square breaks the contract of Rectangle
+    public class Rectangle {
+        protected int width;
+        protected int height;
+        
+        public void setWidth(int width) {
+            this.width = width;
+        }
+        
+        public void setHeight(int height) {
+            this.height = height;
+        }
+        
+        public int getArea() {
+            return width * height;
+        }
+    }
+    
+    public class Square extends Rectangle {
+        public Square(int side) {
+            super(side, side);
+        }
+        
+        @Override
+        public void setWidth(int width) {
+            this.width = width;
+            this.height = width; // This breaks the contract of Rectangle
+        }
+        
+        @Override
+        public void setHeight(int height) {
+            this.width = height;
+            this.height = height; // This breaks the contract of Rectangle
+        }
+    }
+
+    // Good example, Rectangle and Square follow LSP
+    // Both have the same contract and can be used interchangeably
+    public abstract class Shape {
+        public abstract int getArea();
+    }
+    
+    public class Rectangle extends Shape {
+        private int width;
+        private int height;
+        
+        public Rectangle(int width, int height) {
+            this.width = width;
+            this.height = height;
+        }
+        
+        @Override
+        public int getArea() {
+            return width * height;
+        }
+    }
+    
+    public class Square extends Shape {
+        private int side;
+        
+        public Square(int side) {
+            this.side = side;
+        }
+        
+        @Override
+        public int getArea() {
+            return side * side;
+        }
+    }
+    ```
+
+#### ISP - Interface Segregation Principle
+
+- Definition: Avoids forcing unused capabilities. It means that clients should not be forced to depend on interfaces they don't use.
+- Impact: Makes code more maintainable and extensible.
+
+??? "Example"
+    ```java
+    // Bad example
+    public interface Worker {
+        void work();
+        void feed();
+    }
+    
+    public class Robot implements Worker {
+        @Override
+        public void work() {
+            System.out.println("Robot is working");
+        }
+        
+        @Override
+        public void feed() {
+            // Robot doesn't need to feed, but it has to implement this method
+            throw new UnsupportedOperationException("Robot doesn't need to feed");
+        }
+    }
+
+    // Good example
+    public interface Workable {
+        void work();
+    }
+    
+    public interface Feedable {
+        void feed();
+    }
+
+    public class Robot implements Workable {
+        @Override
+        public void work() {
+            System.out.println("Robot is working");
+        }
+    }
+    
+    public class Human implements Workable, Feedable {
+        @Override
+        public void work() {
+            System.out.println("Human is working");
+        }
+        
+        @Override
+        public void feed() {
+            System.out.println("Human is feeding");
+        }
+    }
+    ```
+
+#### DIP - Dependency Inversion Principle
+
+- Definition: Points policy toward abstractions. It means that high-level modules should not depend on low-level modules. Both should depend on abstractions.
+- Impact: Makes code more maintainable and extensible.
+
+??? "Example"
+    ```java
+    // Bad example
+    public class Car {
+        private Engine engine = new V8Engine(); // Tight coupling
+        
+        public Car() {
+        }
+    }
+    
+    // Good example
+    public interface Engine {
+        void start();
+    }
+    public class Car {
+        private final Engine engine; // Depends on abstraction
+        
+        public Car(Engine engine) { // Dependency injection
+            this.engine = engine;
+        }
+    }
+    ```
+
+Too many tiny interfaces can be as costly as a god class.
 
 ## Equality, hashing and ordering
 
-`==` compares primitive values or reference identity. `equals` defines logical equality. It must be
-reflexive, symmetric, transitive, consistent and false for null. Equal objects must have equal hash
-codes; unequal objects may collide. Equality/hash state used as a HashMap key must not change while
-stored.
+- `==` compares primitive values or reference identity.
+- `equals` defines logical equality. It must be
+reflexive, symmetric, transitive, consistent and false for null. 
 
-`Comparable` defines a type's natural order; `Comparator` defines external orders. A sorted set uses
+??? "Example"
+    ```java
+    String s1 = "hello";
+    String s2 = "hello";
+    System.out.println(s1 == s2); // true (string pool)
+    System.out.println(s1.equals(s2)); // true
+
+    String s3 = new String("hello");
+    String s4 = new String("hello");
+    System.out.println(s3 == s4); // false (different objects)
+    System.out.println(s3.equals(s4)); // true (same content)
+
+    String s5 = "hello";
+    String s6 = new String("hello");
+    System.out.println(s5 == s6); // false (different objects)
+    System.out.println(s5.equals(s6)); // true (same content)
+    ```
+
+- Equal objects must have equal hash codes; unequal objects may collide. Equality/hash state used as a HashMap key must not change while
+stored.
+- `Comparable` defines a type's natural order; `Comparator` defines external orders. A sorted set uses
 comparison equality (`compare == 0`) for uniqueness, so inconsistency with `equals` can surprise
 callers even though Java permits it.
+
+??? "Example"
+    ```java
+    public class Person implements Comparable<Person> {
+        private final String name;
+        private final int age;
+        
+        public Person(String name, int age) {
+            this.name = name;
+            this.age = age;
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+            Person person = (Person) obj;
+            return age == person.age && Objects.equals(name, person.name);
+        }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hash(name, age);
+        }
+        
+        @Override
+        public int compareTo(Person other) {
+            int nameCompare = name.compareTo(other.name);
+            if (nameCompare != 0) return nameCompare;
+            return Integer.compare(age, other.age);
+        }
+    }
+    ```
 
 ## Immutability and Java 21 data types
 

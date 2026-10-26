@@ -1,5 +1,7 @@
 # Automated Testing
 
+[Practice Q&A](practice.md) — senior-depth boundary, concurrency, and recovery verification.
+
 ## Why this matters
 
 Production code is only as changeable as its test suite is trustworthy. A suite that asserts *how* a

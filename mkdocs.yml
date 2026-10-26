@@ -36,6 +36,7 @@ nav:
           - Concepts: topics/core-java/concepts.md
           - Internals: topics/core-java/internals.md
           - Interview Questions: topics/core-java/questions.md
+          - Practice Q&A: topics/core-java/practice.md
           - Code Review: topics/core-java/code-review.md
           - Solutions: topics/core-java/solutions.md
           - Tests: topics/core-java/tests.md
@@ -46,6 +47,7 @@ nav:
           - Concepts: topics/jvm/concepts.md
           - Internals: topics/jvm/internals.md
           - Interview Questions: topics/jvm/questions.md
+          - Practice Q&A: topics/jvm/practice.md
           - Code Review: topics/jvm/code-review.md
           - Solutions: topics/jvm/solutions.md
           - Tests: topics/jvm/tests.md
@@ -56,6 +58,7 @@ nav:
           - Concepts: topics/concurrency/concepts.md
           - Internals: topics/concurrency/internals.md
           - Interview Questions: topics/concurrency/questions.md
+          - Practice Q&A: topics/concurrency/practice.md
           - Code Review: topics/concurrency/code-review.md
           - Solutions: topics/concurrency/solutions.md
           - Tests: topics/concurrency/tests.md
@@ -66,6 +69,7 @@ nav:
           - Concepts: topics/spring-core/concepts.md
           - Internals: topics/spring-core/internals.md
           - Interview Questions: topics/spring-core/questions.md
+          - Practice Q&A: topics/spring-core/practice.md
           - Code Review: topics/spring-core/code-review.md
           - Solutions: topics/spring-core/solutions.md
           - Tests: topics/spring-core/tests.md
@@ -76,6 +80,7 @@ nav:
           - Concepts: topics/spring-boot/concepts.md
           - Internals: topics/spring-boot/internals.md
           - Interview Questions: topics/spring-boot/questions.md
+          - Practice Q&A: topics/spring-boot/practice.md
           - Code Review: topics/spring-boot/code-review.md
           - Solutions: topics/spring-boot/solutions.md
           - Tests: topics/spring-boot/tests.md
@@ -86,6 +91,7 @@ nav:
           - Concepts: topics/spring-mvc/concepts.md
           - Internals: topics/spring-mvc/internals.md
           - Interview Questions: topics/spring-mvc/questions.md
+          - Practice Q&A: topics/spring-mvc/practice.md
           - Code Review: topics/spring-mvc/code-review.md
           - Solutions: topics/spring-mvc/solutions.md
           - Tests: topics/spring-mvc/tests.md
@@ -96,6 +102,7 @@ nav:
           - Concepts: topics/spring-transactions/concepts.md
           - Internals: topics/spring-transactions/internals.md
           - Interview Questions: topics/spring-transactions/questions.md
+          - Practice Q&A: topics/spring-transactions/practice.md
           - Code Review: topics/spring-transactions/code-review.md
           - Solutions: topics/spring-transactions/solutions.md
           - Tests: topics/spring-transactions/tests.md
@@ -117,6 +124,7 @@ nav:
           - Concepts: topics/database-sql/concepts.md
           - Internals: topics/database-sql/internals.md
           - Interview Questions: topics/database-sql/questions.md
+          - Practice Q&A: topics/database-sql/practice.md
           - Code Review: topics/database-sql/code-review.md
           - Solutions: topics/database-sql/solutions.md
           - Tests: topics/database-sql/tests.md
@@ -127,6 +135,7 @@ nav:
           - Concepts: topics/rest-api/concepts.md
           - Internals: topics/rest-api/internals.md
           - Interview Questions: topics/rest-api/questions.md
+          - Practice Q&A: topics/rest-api/practice.md
           - Code Review: topics/rest-api/code-review.md
           - Solutions: topics/rest-api/solutions.md
           - Tests: topics/rest-api/tests.md
@@ -137,6 +146,7 @@ nav:
           - Concepts: topics/spring-security/concepts.md
           - Internals: topics/spring-security/internals.md
           - Interview Questions: topics/spring-security/questions.md
+          - Practice Q&A: topics/spring-security/practice.md
           - Code Review: topics/spring-security/code-review.md
           - Solutions: topics/spring-security/solutions.md
           - Tests: topics/spring-security/tests.md
@@ -147,6 +157,7 @@ nav:
           - Concepts: topics/testing/concepts.md
           - Internals: topics/testing/internals.md
           - Interview Questions: topics/testing/questions.md
+          - Practice Q&A: topics/testing/practice.md
           - Code Review: topics/testing/code-review.md
           - Solutions: topics/testing/solutions.md
           - Tests: topics/testing/tests.md
@@ -157,6 +168,7 @@ nav:
           - Concepts: topics/caching-redis/concepts.md
           - Internals: topics/caching-redis/internals.md
           - Interview Questions: topics/caching-redis/questions.md
+          - Practice Q&A: topics/caching-redis/practice.md
           - Code Review: topics/caching-redis/code-review.md
           - Solutions: topics/caching-redis/solutions.md
           - Tests: topics/caching-redis/tests.md
@@ -167,6 +179,7 @@ nav:
           - Concepts: topics/kafka/concepts.md
           - Internals: topics/kafka/internals.md
           - Interview Questions: topics/kafka/questions.md
+          - Practice Q&A: topics/kafka/practice.md
           - Code Review: topics/kafka/code-review.md
           - Solutions: topics/kafka/solutions.md
           - Tests: topics/kafka/tests.md
@@ -196,6 +209,7 @@ nav:
           - Concepts: topics/distributed-systems/concepts.md
           - Internals: topics/distributed-systems/internals.md
           - Interview Questions: topics/distributed-systems/questions.md
+          - Practice Q&A: topics/distributed-systems/practice.md
           - Code Review: topics/distributed-systems/code-review.md
           - Solutions: topics/distributed-systems/solutions.md
           - Production: topics/distributed-systems/production.md
@@ -205,6 +219,7 @@ nav:
           - Concepts: topics/resilience/concepts.md
           - Internals: topics/resilience/internals.md
           - Interview Questions: topics/resilience/questions.md
+          - Practice Q&A: topics/resilience/practice.md
           - Code Review: topics/resilience/code-review.md
           - Solutions: topics/resilience/solutions.md
           - Tests: topics/resilience/tests.md
@@ -215,6 +230,7 @@ nav:
           - Concepts: topics/distributed-data-patterns/concepts.md
           - Internals: topics/distributed-data-patterns/internals.md
           - Interview Questions: topics/distributed-data-patterns/questions.md
+          - Practice Q&A: topics/distributed-data-patterns/practice.md
           - Code Review: topics/distributed-data-patterns/code-review.md
           - Solutions: topics/distributed-data-patterns/solutions.md
           - Tests: topics/distributed-data-patterns/tests.md
@@ -244,6 +260,7 @@ nav:
           - Concepts: topics/observability/concepts.md
           - Internals: topics/observability/internals.md
           - Interview Questions: topics/observability/questions.md
+          - Practice Q&A: topics/observability/practice.md
           - Code Review: topics/observability/code-review.md
           - Solutions: topics/observability/solutions.md
           - Tests: topics/observability/tests.md
@@ -528,6 +545,7 @@ markdown_extensions:
   - pymdownx.tasklist:
       custom_checkbox: true
   - pymdownx.tilde
+      
 extra_css:
   - stylesheets/extra.css
 

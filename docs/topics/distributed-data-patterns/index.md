@@ -1,5 +1,7 @@
 # Distributed Data Patterns
 
+[Practice Q&A](practice.md) — senior-depth outbox, saga, inbox, and projection recovery.
+
 In microservice architectures, monolithic ACID database transactions cannot scale across decoupled network services
 without devastating availability and latency penalties. Distributed Data Patterns provide the architectural blueprints
 to manage consistency, state transitions, event publication, and duplicate detection across distributed nodes.

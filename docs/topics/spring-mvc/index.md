@@ -1,5 +1,7 @@
 # Spring MVC
 
+[Practice Q&A](practice.md) — senior-depth filter ordering and request-boundary behavior.
+
 ## Why this matters
 
 Spring MVC is the foundational web framework for building synchronous REST APIs and enterprise web applications in the Spring ecosystem. Mastering its architecture—from the front-controller `DispatcherServlet` request lifecycle, `HandlerMapping` and `HandlerAdapter` dispatching, argument resolvers, and content negotiation to RFC 9457 `ProblemDetail` exception handling, async non-blocking offloading, and CORS security—is essential for designing reliable, performant, and secure microservices.

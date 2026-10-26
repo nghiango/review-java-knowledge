@@ -1,5 +1,7 @@
 # Core Java
 
+[Practice Q&A](practice.md) — senior-depth mechanisms, failure diagnosis, fixes, and trade-offs.
+
 ## Why this matters
 
 Framework expertise cannot compensate for unstable equality, leaked resources or unsafe shared

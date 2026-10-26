@@ -1,5 +1,7 @@
 # Caching and Redis
 
+[Practice Q&A](practice.md) — senior-depth consistency, outages, and cache trade-offs.
+
 High-throughput systems require fast, low-latency data access to shield relational databases,
 minimize computation overhead, and maintain predictable SLA latencies under heavy traffic.
 

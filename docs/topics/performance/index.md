@@ -1,5 +1,7 @@
 # Performance
 
+[Practice Q&A](practice.md) — senior-depth capacity, autoscaling, and load-test evidence.
+
 Performance engineering connects user-visible latency and throughput to finite resources: CPU,
 memory, threads, database connections, locks, and downstream capacity. This module uses measurements
 and bounded experiments rather than folklore.

@@ -1,5 +1,7 @@
 # Spring Core
 
+[Practice Q&A](practice.md) — senior-depth dependency, lifecycle, proxy, and scope reasoning.
+
 ## Why this matters
 
 The Spring IoC (Inversion of Control) container powers modern enterprise Java applications. Understanding container mechanics—such as bean lifecycle phases, proxy generation (JDK dynamic vs CGLIB), AOP interceptor chains, scope resolution, and event decoupling—is essential for designing maintainable microservices and avoiding subtle production defects like self-invocation proxy bypasses, circular dependency locks, and singleton state leaks.

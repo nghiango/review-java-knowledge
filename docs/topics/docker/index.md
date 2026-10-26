@@ -1,5 +1,7 @@
 # Docker & Container Engineering
 
+[Practice Q&A](practice.md) — senior-depth container operations and pod troubleshooting.
+
 Containerizing enterprise Java applications requires understanding how the JVM interacts with Linux kernel namespaces, control groups (cgroups v1 and v2), copy-on-write storage drivers, and container orchestrators. A naive Dockerfile (`FROM openjdk` + `COPY . .`) creates gigabyte-sized images riddled with CVE vulnerabilities, risks sudden Linux Out-Of-Memory (OOM) killer terminations (`Exit Code 137`), drops active transactions during redeployments, and leaks build credentials.
 
 This topic is a **doc module** exploring production Docker engineering for Java 21 and Spring Boot 3.5: image layering, multi-stage builds, Spring Boot layered JARs (`layertools`), JVM container ergonomics, non-root security boundaries, signal propagation for zero-downtime graceful shutdown, and container image scanning.

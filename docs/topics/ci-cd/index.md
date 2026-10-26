@@ -1,5 +1,7 @@
 # CI/CD and Zero-Downtime Deployment Engineering
 
+[Practice Q&A](practice.md) — senior-depth deployment and rollback reasoning.
+
 This module covers Continuous Integration, Continuous Delivery, and zero-downtime release engineering for Senior Java / Spring Boot Backend Engineers. Modern backend engineering requires pipelines that guarantee automated verification, supply chain security, immutable artifact distribution, and zero-downtime database and container deployments.
 
 ```mermaid

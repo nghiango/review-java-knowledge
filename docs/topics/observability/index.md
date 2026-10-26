@@ -1,5 +1,7 @@
 # Observability
 
+[Practice Q&A](practice.md) — senior-depth telemetry contracts and incident investigation.
+
 In modern distributed microservice systems, complex failures rarely manifest as isolated, easily reproducible crashes. Observability is the capability to infer the internal health, performance, and failure states of a system solely from its external outputs: **logs**, **metrics**, and **distributed traces**.
 
 ## Architectural Overview

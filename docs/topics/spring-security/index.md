@@ -1,5 +1,7 @@
 # Spring Security Architecture & Engineering
 
+[Practice Q&A](practice.md) — senior-depth authorization, hardening, and abuse prevention.
+
 ## Why this matters
 
 Security is non-negotiable in enterprise systems. A single architectural oversight—such as evaluating request matchers in the wrong order, failing to validate JWT cryptographic signatures, trusting client-supplied identifiers without principal cross-checks (IDOR/BOLA), or disabling CSRF on session-cookie authentication—can result in catastrophic data breaches, regulatory penalties, and compliance failures (PCI-DSS, GDPR, SOC 2).

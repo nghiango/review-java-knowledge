@@ -114,10 +114,15 @@ Four levels of interview questions covering memory consistency, synchronization 
     The happens-before relationship guarantees that memory writes performed by one action are visible to another action without data races.
     
     Key rules include:
+
     1. **Program Order**: Each action in a single thread happens-before later actions in that thread.
+
     2. **Monitor Lock**: Releasing a lock happens-before any subsequent acquisition of the same lock.
+
     3. **Volatile Variable**: A write to a `volatile` field happens-before every subsequent read of that field.
+
     4. **Thread Start/Join**: Calling `start()` happens-before actions in the new thread; actions in a thread happen-before a caller's successful `join()`.
+
     5. **Transitivity**: If $A \to_{hb} B$ and $B \to_{hb} C$, then $A \to_{hb} C$.
 
     ??? example "Example"

@@ -1,5 +1,7 @@
 # Senior Engineering & Technical Leadership
 
+[Practice Q&A](practice.md) — evidence-based decisions, mentoring, and postmortems.
+
 Senior and Staff Backend Engineers operate beyond individual task completion: they shape technical direction, mentor engineers, navigate trade-offs, manage production incidents, and foster psychological safety and operational rigor across teams.
 
 ---

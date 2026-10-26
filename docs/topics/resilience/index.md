@@ -1,5 +1,7 @@
 # Resilience
 
+[Practice Q&A](practice.md) — senior-depth rate limits, shedding, and deadline budgets.
+
 In microservice and distributed architectures, network latency, hardware degradation, remote outages,
 and concurrency bottlenecks are inevitable. Resilience is the discipline of designing software to absorb,
 contain, isolate, and recover gracefully from partial failures rather than collapsing in cascading system-wide outages.

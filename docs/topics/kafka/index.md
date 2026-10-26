@@ -1,5 +1,7 @@
 # Kafka
 
+[Practice Q&A](practice.md) — senior-depth ordering, commits, retries, and replay.
+
 Apache Kafka is a distributed event streaming platform designed for high-throughput, fault-tolerant,
 and low-latency real-time data pipelines and asynchronous event-driven architectures.
 

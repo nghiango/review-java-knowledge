@@ -1,5 +1,7 @@
 # JVM & Performance
 
+[Practice Q&A](practice.md) — senior-depth memory, GC, CPU, and warm-up diagnosis.
+
 ## Why this matters
 
 Framework configurations and syntax sugar cannot prevent OutOfMemory errors, thread pool exhaustion,

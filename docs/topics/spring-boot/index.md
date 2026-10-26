@@ -1,5 +1,7 @@
 # Module 05 — Spring Boot
 
+[Practice Q&A](practice.md) — senior-depth configuration, scheduling, and lifecycle decisions.
+
 Spring Boot is the industry-standard framework for building production-ready, cloud-native Java applications. It eliminates boilerplate configuration through opinionated starters, condition-driven auto-configuration, externalized hierarchical properties, production-grade telemetry (Actuator), and lifecycle-managed embedded runtimes.
 
 ---

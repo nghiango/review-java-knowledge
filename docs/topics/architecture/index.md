@@ -1,5 +1,7 @@
 # Software Architecture in Java & Spring
 
+[Practice Q&A](practice.md) — senior-depth architecture decisions and ownership boundaries.
+
 A production-grade engineering laboratory exploring architectural styles, domain-driven design, modular monoliths, hexagonal boundaries, CQRS, and architectural fitness enforcement with ArchUnit.
 
 ---

@@ -69,6 +69,33 @@ Also relevant: [Database / SQL](../database-sql/index.md)
     - **Fix 2:** Use batch fetching (`@BatchSize` or `hibernate.default_batch_fetch_size: 20`) without `JOIN FETCH` on the pageable query.
     - **Takeaway:** Never fetch-join to-many collections in pageable queries; paginate IDs first, then batch-fetch children.
 
+### Q4. When should an aggregate use Spring Data JDBC, JPA, or explicit SQL?
+
+Source: interview-prep §4 persistence comparison. Its jOOQ design is case-study context, not a new lab dependency.
+
+??? question "Reveal answer"
+    - **Choose from aggregate behavior and query needs, not a blanket ORM preference.**
+    - **Mechanism:** JPA provides persistence contexts, dirty checking, associations, and fetch plans; Spring Data JDBC uses a simpler aggregate model; explicit JDBC or a SQL DSL gives precise query control.
+    - **Failure:** treating JDBC aggregate saves as universally minimal updates can cause unexpected work; JPA lazy loading can hide query count and boundary errors. SQL code generation does not prove runtime schema compatibility.
+    - **Fix:** inspect actual SQL, define aggregate boundaries, use projections for reads, and test locking, batching, and transaction participation against PostgreSQL.
+    - **Trade-off:** SQL control costs mapping and portability; JPA can efficiently express PostgreSQL queries with deliberate native SQL and fetching. Neither guarantees or prevents N+1 by itself.
+    - **Follow-up:** Do the chosen repositories share the same transaction manager and physical connection?
+    - **Takeaway:** Persistence tools must serve a measured access pattern.
+
+### Q5. How do you detect and remove N+1 without creating a pagination problem?
+
+Source: interview-prep §10 N+1.
+Also relevant: [Database / SQL](../database-sql/index.md)
+
+??? question "Reveal answer"
+    - **Measure query count at realistic cardinality, then choose an explicit fetch strategy.**
+    - **Mechanism:** one parent query plus one child query per parent multiplies network and database overhead. It can occur in hand-written repository loops as well as ORM lazy loading.
+    - **Diagnosis/Fix:** observe SQL and counts; use DTO projections, batch IN queries, an appropriate fetch join/entity graph, or a maintained read model. Fetching a to-many collection with pagination needs a separate strategy such as ID paging.
+    - **Failure:** eager-everything replaces many queries with excessive rows or still issues additional queries. Denormalization avoids joins only for the reads it actually supports.
+    - **Trade-off:** join multiplication increases bytes and memory; batching trades round trips for bounded extra queries. Assert behavior for both small and large collections.
+    - **Follow-up:** How do you preserve parent page order after a two-phase fetch?
+    - **Takeaway:** Optimize total work and result correctness, not merely query count.
+
 ## Related
 
 - [Concepts](concepts.md)

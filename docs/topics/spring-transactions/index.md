@@ -1,5 +1,7 @@
 # Spring Transactions
 
+[Practice Q&A](practice.md) — senior-depth commit boundaries, routing, rollback, and side effects.
+
 ## Why this matters
 
 Transactions form the bedrock of data integrity in enterprise applications. Understanding Spring's declarative transaction management (`@Transactional`), proxy interceptor chains, `PlatformTransactionManager`, `TransactionSynchronizationManager`, connection pool lifecycles (HikariCP), propagation semantics, and rollback rules is critical. Misunderstandings frequently lead to severe production outages: connection pool starvation from remote HTTP calls inside transactions, silent data corruption from self-invocation bypasses or checked exception commits, and deadlock from misuse of `Propagation.REQUIRES_NEW`.

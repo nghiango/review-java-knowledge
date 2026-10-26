@@ -1,5 +1,7 @@
 # Distributed Systems
 
+[Practice Q&A](practice.md) — operation-specific CAP and consistency reasoning.
+
 A distributed system consists of autonomous computing nodes communicating over a shared network to coordinate actions and share state. While distributed architectures unlock horizontal scalability and fault tolerance, they introduce fundamental physics and computer science constraints: network partitions, independent clock drift, asynchronous message delivery, and partial failure.
 
 This topic is a **doc module** exploring foundational distributed systems theory, consistency models, consensus mechanics, distributed locking hazards, and operational incident triage.

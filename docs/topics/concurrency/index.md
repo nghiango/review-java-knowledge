@@ -1,5 +1,7 @@
 # Concurrency
 
+[Practice Q&A](practice.md) — senior-depth synchronization, capacity, and failure diagnosis.
+
 ## Why this matters
 
 Concurrent execution is at the core of high-throughput backend services. Subtle bugs—such as lost updates, data races, deadlocks, and thread pool starvation—rarely appear in local single-threaded tests but manifest catastrophically under production load. Senior engineers must understand the Java Memory Model, lock-free coordination, executor boundaries, and Java 21 Virtual Threads to build resilient, high-performance systems.

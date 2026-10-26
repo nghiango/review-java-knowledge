@@ -1,5 +1,7 @@
 # REST API Design & Architecture
 
+[Practice Q&A](practice.md) — senior-depth idempotency and safe error contracts.
+
 ## Why this matters
 
 RESTful APIs serve as the primary communication bridge between backend services, frontend web/mobile clients, and third-party integrations. Designing production-grade REST APIs requires deep understanding of HTTP protocol semantics (safe vs idempotent methods, precise status code selection, RFC 9457 Problem Details), cache control (`Cache-Control`, `ETag`, `If-None-Match`), concurrency safety (`If-Match`, 412 Precondition Failed), resource pagination and bounding, and strict DTO boundaries to prevent mass assignment and data leakage.
