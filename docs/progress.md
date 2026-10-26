@@ -55,10 +55,12 @@ primary topic, with repeated follow-ups folded into their primary question. Answ
 failure diagnosis, fixes, trade-offs, and senior follow-ups; case-study claims are distinguished
 from verified lab implementations. Canonical `questions.md` banks are unchanged by this expansion.
 
-System design uses **eight case-first walkthroughs**. Flash sale is expanded to **21 interview
-rounds** as the review pilot for a deeper format: concrete scenarios, guided reasoning, comparisons,
-failure/recovery tables, diagrams, and interview-ready spoken answers. The other seven retain their
-ten-question format pending review; they have not yet received the same full-depth expansion.
+System design uses **eight expanded case-first interview walkthroughs: 126 rounds total**.
+URL shortener, payments, orders, notifications, rate limiting, file processing, and booking each
+have **15 progressive rounds**; flash sale has **21**. Every case follows the approved deeper format:
+explicit assumptions, guided reasoning, concrete failure histories, calculations/comparisons,
+recovery tables, diagrams, spoken interview answers, follow-ups, and a final review gate.
+The questions are case-specific rather than repeated generic architecture checklists.
 Core Java includes explicit loop/stream, sequential/parallel/executor, and benchmarking comparisons.
 The three pre-existing JPA practice questions remain intact.
 
@@ -85,10 +87,10 @@ The three pre-existing JPA practice questions remain intact.
 | Performance | 4 | §8 + §11 + §15 capacity, HPA, load tests, extreme tails |
 | Docker / runtime operations | 3 | §8 topology; §19 bad-pod/startup investigation |
 | CI/CD | 2 | §8 rolling deployment + §19 post-release failure |
-| System Design | 91 | §8 + §13 commerce scenarios; 21-round flash-sale pilot plus 7 ten-question walkthroughs |
+| System Design | 126 | §8 + §13 commerce scenarios; eight expanded walkthroughs: 21 flash-sale rounds plus 7 × 15 rounds |
 | Architecture | 2 | §1 architecture explanation + §10 schema ownership |
 | Senior Engineering | 7 | §14 gaps, §16 behavioral answers, §19 postmortem |
-| **Total** | **246** | **243 added; 3 pre-existing JPA questions preserved** |
+| **Total** | **281** | **278 added; 3 pre-existing JPA questions preserved** |
 
 Navigation and topic overviews link the practice pages. Verification results are reported with
 the change; these documentation additions do not re-qualify baseline or track implementations.

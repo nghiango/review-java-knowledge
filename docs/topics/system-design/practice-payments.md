@@ -1,148 +1,438 @@
-# Case 2 — Payments, Step by Step
+# Case 2 — Payments: Senior Interview Walkthrough
 
-Complete [URL Shortener](practice-url-shortener.md) first; finish this case before
-[Order Management](practice-orders.md). This extends interview-prep §13's payment scenario.
+Complete [URL Shortener](practice-url-shortener.md), then stay with this payment lifecycle before
+[Orders](practice-orders.md). Answer each prompt aloud before revealing the guided explanation.
+This is a design exercise: provider contracts, durability, and capacity must be verified rather
+than inferred from framework annotations or this lab's smaller examples.
 
-## Step 1 — Scope and invariants
+## Scenario and progression
 
-### Q1. Which guarantees must a payment service define before choosing a queue?
+| Dimension | Working assumption |
+|---|---|
+| Product | Marketplace payments; authorize/capture, partial refund, status, settlement reconciliation |
+| Baseline demand | Illustrative 200 new operations/s; 0.5 s mean provider latency |
+| Acceptance | Durable pending intent is allowed; it is not a successful charge |
+| Invariants | Stable logical charge identity; balanced local ledger; bounded refunds; authorized access |
+| Dependencies | External provider with documented idempotency and lookup, plus asynchronous callbacks |
 
-??? question "Reveal answer"
-    - **Define one logical charge, durable accounting, and explicit unknown outcomes.**
-    - Clarify authorization versus capture, refunds, partial payments, currencies, provider contracts, settlement, and regulatory boundaries.
-    - Invariants include no duplicate logical debit, balanced ledger entries, authorized ownership, and traceable provider references.
-    - A timeout is not proof of failure; a customer-facing pending state is preferable to guessing and creating another charge.
-    - **Trade-off:** asynchronous acceptance improves availability but is not payment success. Avoid promising universal exactly-once behavior across an external provider.
-    - **Follow-up:** When may the order ship, and what constitutes final payment confirmation?
-    - **Takeaway:** Money movement requires an outcome model, not just an endpoint.
+Progress through scope → capacity → identity/model → flow → alternatives → timeout → callbacks →
+ledger → refund races → cancellation → resilience → settlement → security → regions → evidence.
+Later outage and refund examples are separate challenges, not measurements from this repository.
 
-## Step 2 — Capacity and budgets
+## Round 1 — Define financial success
 
-### Q2. What capacity matters beyond payments per second?
-
-??? question "Reveal answer"
-    - **Budget provider limits, outstanding unknown operations, storage, and reconciliation capacity.**
-    - For an illustrative 200 operations/s and 0.5 s mean provider latency, Little's law suggests 100 average in-flight calls before headroom and retries.
-    - Peak bursts, callback volume, provider quota, connection pools, and slow settlement determine backlog and recovery time.
-    - Keep a deadline for the request distinct from the longer durable workflow deadline. Do not allocate one open DB connection per provider wait.
-    - **Trade-off:** additional concurrency may increase provider throttling without increasing completed payments.
-    - **Follow-up:** Can reconciliation catch up after a provider outage while new traffic continues?
-    - **Takeaway:** Capacity includes unresolved financial work.
-
-## Step 3 — API and durable model
-
-### Q3. Which identities and records belong in the model?
+### Q1. What must be clarified before promising that a payment succeeded?
 
 ??? question "Reveal answer"
-    - **Separate client request, payment intent, provider attempt, and ledger transaction identities.**
-    - Creation accepts amount/currency, authorized business reference, and scoped idempotency key; status exposes intent state, not raw provider internals. Refunds have their own operation identity.
-    - Store intent, attempts/provider references, request fingerprint/result, ledger headers/entries, inbox, and outbox. Unique constraints prevent duplicate logical operations.
-    - Ledger entries are immutable corrections/reversals, not ad hoc balance overwrites; enforce balanced postings per currency through a controlled transaction protocol.
-    - **Trade-off:** provider retries can map to one intent but require attempt audit; one generic status field is often too coarse.
-    - **Follow-up:** How do you correlate a late callback when the original HTTP response was lost?
-    - **Takeaway:** Financial identity must survive retries and crashes.
 
-## Step 4 — Baseline flow
+    **Verdict:** Authorization, capture, settlement, and customer-visible completion are different states.
 
-### Q4. How does a payment proceed without holding a transaction across HTTP?
+    | Question | Design implication |
+    |---|---|
+    | Authorize now, capture later? | Separate operations and expiry handling |
+    | Partial capture/refund? | Amount bounds and concurrent operation accounting |
+    | Multiple currencies? | Per-currency balance and explicit FX accounting |
+    | When may goods ship? | Defined required financial evidence |
+    | Provider and settlement contracts? | Idempotency, finality, reversals, reconciliation |
 
-??? question "Reveal answer"
-    - **Persist intent, execute the provider operation outside the transaction, then record the result durably.**
-    - Validate and authorize; atomically reserve identity plus intent and outbox command. A worker calls the provider with stable idempotency identity and a bounded client deadline.
-    - Record verified outcome, ledger transition, and next event in a short transaction. Deduplicate callbacks and worker results against the same intent.
-    - Expose pending/unknown status if the synchronous request budget expires; retain recovery ownership after the client disconnects.
-    - **Trade-off:** extra state and async latency buy recoverable failure boundaries; local database atomicity cannot include an ordinary external provider call.
-    - **Follow-up:** What happens if the worker crashes after the provider accepts but before local completion?
-    - **Takeaway:** Recovery bridges the external commit gap.
+    An accepted API request proves only durable intent under the chosen contract. An authorized
+    amount may never be captured, and a captured payment can later have chargebacks. Do not collapse
+    all financial states into one irreversible SUCCESS flag. Clarify retention, dispute handling,
+    regulatory responsibilities, and operator approval for repair/refund actions.
 
-```mermaid
-flowchart LR
-    Client --> API[Authorized payment API]
-    API --> DB[(Intent and outbox)]
-    DB --> Worker[Payment worker]
-    Worker --> PSP[Payment provider]
-    PSP --> Callback[Verified callback inbox]
-    Callback --> Ledger[(Outcome and ledger)]
-    Worker --> Ledger
-```
+    **Interview-ready answer:** “I would define the business success point and distinguish it from
+    transport acceptance. My invariants concern one logical money movement, balanced accounting,
+    authorized transitions, and traceable reconciliation—not a claim that every network call runs once.”
 
-## Step 5 — Alternatives
+    **Follow-up:** Which confirmed state is sufficient to ship for this business?
 
-### Q5. Synchronous provider calls, asynchronous workers, or 2PC?
+## Round 2 — Capacity and recovery
+
+### Q2. What limits throughput when 200 operations/s meet a slower provider?
 
 ??? question "Reveal answer"
-    - **Choose an honest latency/outcome contract; do not assume the provider participates in distributed transactions.**
-    - A synchronous path offers immediate results when fast, but still needs durable intent, idempotency, and recovery after timeout.
-    - Workers isolate load and survive request termination; callers receive a pending resource and query or subscribe for completion.
-    - 2PC is not available for a typical HTTP PSP and cannot solve arbitrary side effects; local ledger/outbox atomicity remains valuable.
-    - **Trade-off:** queues add delay and operations; synchronous waiting adds request resource pressure. Both need reconciliation.
-    - **Follow-up:** Which operations genuinely need an immediate definitive answer?
-    - **Takeaway:** Async changes coordination, not financial correctness obligations.
 
-## Step 6 — Idempotency and concurrency
+    **Verdict:** Provider quotas and unresolved work matter more than application thread count.
 
-### Q6. How are double-clicks, webhook duplicates, and concurrent refunds controlled?
+    | Assumption | Calculation |
+    |---|---|
+    | 200/s at 0.5 s mean call latency | 100 mean in-flight calls before headroom |
+    | Same arrivals at 8 s mean latency | 1,600 mean in-flight calls if unconstrained |
+    | 15-minute total outage at 200/s | 180,000 new intents if all are accepted |
+    | Recovery at 300/s with 200/s new work | 100/s net drain; about 30 minutes for that backlog |
 
-??? question "Reveal answer"
-    - **Enforce operation uniqueness and legal state transitions in durable storage.**
-    - Scope request keys to the verified principal/business operation and reject mismatched fingerprints; save recoverable results atomically with local effects.
-    - Use provider idempotency identity for external attempts; authenticate callbacks and deduplicate event identity in the same transaction as application.
-    - Lock/version the relevant payment/refund aggregate so concurrent partial refunds cannot exceed captured amount. A Redis lease is not the source of truth.
-    - **Trade-off:** provider dedup windows may expire before your recovery horizon; query provider history before attempting an old unknown operation again.
-    - **Follow-up:** How is a callback racing a worker response applied only once?
-    - **Takeaway:** Deduplication must protect each independent effect boundary.
+    These calculations assume comparable work/rates; status queries, callbacks, retries, and refunds
+    may share provider quotas and change the result. Durable workflow deadlines exceed individual
+    HTTP deadlines. Avoid holding a DB connection for every provider wait.
 
-## Step 7 — Ambiguous failure and compensation
+    **Trade-off:** accepting unlimited pending payments creates storage and customer uncertainty;
+    cap admission and reserve reconciliation capacity rather than scaling workers into a quota wall.
 
-### Q7. The provider times out after receiving the request: should you retry or refund?
+    **Interview-ready answer:** “I would budget provider calls and recovery separately, bound in-flight
+    work, and measure unknown-state age. Virtual threads or more pods cannot expand provider capacity.”
 
-??? question "Reveal answer"
-    - **Persist UNKNOWN and reconcile with the original operation identity.**
-    - A client deadline only stops waiting; the provider may have charged successfully. Query status or retry under the provider's documented idempotency contract.
-    - Apply a confirmed late outcome through guarded transitions. Refund is a new financial operation, not a rollback, and must itself be idempotent and reconcilable.
-    - Escalate unresolved cases with an audit trail rather than indefinitely creating new attempts or asserting failure.
-    - **Trade-off:** customers may wait longer, but premature retry/refund can move money incorrectly.
-    - **Follow-up:** What happens if cancellation is requested while outcome remains unknown?
-    - **Takeaway:** Unknown outcome requires evidence, not optimistic guessing.
+    **Follow-up:** How much provider quota must remain available for reconciliation during recovery?
 
-## Step 8 — Scale and isolation
+## Round 3 — Durable model and API
 
-### Q8. How do you scale without breaking ledger invariants?
+### Q3. Why separate intent, attempt, provider identity, and ledger identity?
 
 ??? question "Reveal answer"
-    - **Partition work by financial ownership and serialize only the necessary invariants.**
-    - Apply per-provider quotas, bounded workers, circuit breakers, and priority for reconciliation; separate slow providers into bulkheads.
-    - Shard by a key that keeps required account/intent operations local where possible. Cross-shard balanced transfers require a deliberate protocol and recovery, not independent writes.
-    - Rebuild balance projections from the authoritative ledger with versioned events; do not use a stale cache to authorize spending without an explicit reservation model.
-    - **Trade-off:** append-only history improves audit but grows storage; snapshots accelerate reads without replacing source history.
-    - **Follow-up:** What bottleneck remains when one merchant generates most payments?
-    - **Takeaway:** Scale throughput without distributing an invariant accidentally.
 
-## Step 9 — Security and operations
+    **Verdict:** One customer's financial intent can have several observations without becoming several charges.
 
-### Q9. Which security and reliability signals are payment-specific?
+    | Record | Identity and responsibility |
+    |---|---|
+    | API operation | Principal/key, request fingerprint, recoverable result |
+    | Payment intent | Authorized business reference, amount/currency, lifecycle/version |
+    | Provider operation | Stable logical provider key; provider reference and status |
+    | Attempt/observation | Request/response/callback evidence and timing |
+    | Ledger transaction and entries | Immutable posting identity; balanced accounting |
+    | Refund operation | Separate identity and bounded refundable amount |
+    | Inbox/outbox | Duplicate observation and recoverable next-step intent |
+
+    Creation returns a resource or durable pending status; status reads authorize the caller.
+    Amount/currency and ownership come from a verified quote or permitted merchant operation, not
+    a blindly trusted client field. A changed fingerprint cannot reuse the previous key.
+
+    **Interview-ready answer:** “I preserve logical identity across HTTP retries, provider attempts,
+    callbacks, and accounting. Attempt history is audit evidence; it must not create a new charge
+    identity merely because an earlier response was lost.”
+
+    **Follow-up:** Can one provider operation identity represent both charge and refund?
+
+## Round 4 — End-to-end flow
+
+### Q4. Trace payment initiation without a transaction spanning the provider call.
 
 ??? question "Reveal answer"
-    - **Protect credentials and financial data while measuring outcomes, not only HTTP success.**
-    - Use provider tokenization and minimize sensitive card data; enforce ownership, least privilege, signed/verified callbacks, and operator audit. Compliance scope needs specialist review.
-    - Track intent age by state, unknown outcomes, duplicate suppression, provider errors, reconciliation mismatch, and ledger imbalance alarms with bounded labels.
-    - Store traceable references in protected logs, not full tokens/payloads; test secret rotation and incident access.
-    - **Trade-off:** detailed audit retention has privacy and cost obligations; keep business audit separate from sampled traces.
-    - **Follow-up:** Which alert catches a successful API that never reaches settled payment?
-    - **Takeaway:** Financial correctness needs its own telemetry.
 
-## Step 10 — Verification and final defense
+    **Verdict:** Commit intent, perform the remote effect outside the DB transaction, then reconcile the outcome durably.
 
-### Q10. Which tests would make your payment guarantees credible?
+    ```mermaid
+    sequenceDiagram
+        actor Customer
+        participant API
+        participant DB as Payment authority
+        participant Worker
+        participant PSP as Provider
+        Customer->>API: Create with scoped operation key
+        API->>DB: Commit intent, identity, outbox
+        API-->>Customer: Durable pending resource
+        Worker->>DB: Recover claimed operation identity
+        Worker->>PSP: Charge using stable provider key
+        PSP-->>Worker: Result or ambiguous timeout
+        Worker->>DB: Commit verified outcome or UNKNOWN plus recovery intent
+        PSP->>API: Verified callback; duplicates possible
+        API->>DB: Inbox, guarded outcome, ledger and next event
+    ```
+
+    Worker response and callback are two observations of one operation. They must converge through
+    the same guarded state rules. The external commit gap remains even if every local method is
+    annotated transactional. A disconnected caller does not cancel durable recovery ownership.
+
+    **Interview-ready answer:** “Short local transactions surround, but do not contain, the provider
+    call. Stable identity and reconciliation bridge the crash after provider acceptance and before
+    local recording. Every accepted intent retains an owner until resolved or explicitly escalated.”
+
+    **Follow-up:** What happens if the worker dies after charging but before recording the provider reference?
+
+## Round 5 — Architectural comparison
+
+### Q5. Synchronous provider call, durable worker, or distributed transaction?
 
 ??? question "Reveal answer"
-    - **Exercise every commit gap and reconcile against independent provider evidence.**
-    - Test lost responses, duplicate requests, fingerprint mismatch, concurrent refunds, callback reordering, worker death after provider acceptance, and idempotency expiry.
-    - Verify local accounting invariants and provider totals, restore backups, and rehearse settlement mismatch resolution without issuing uncontrolled live charges.
-    - Compare synchronous and queued approaches using latency, outstanding unknowns, provider quota, operations burden, and recovery time.
-    - **Trade-off:** mocks test logic but not real provider contracts; use approved sandbox and contractual integration tests, never unapproved real payments.
-    - **Follow-up:** What can the design prove locally, and what does it assume about the provider?
-    - **Takeaway:** End the design with explicit guarantees and bounded assumptions.
+
+    **Verdict:** Choose latency and recovery ownership without assuming an HTTP provider supports 2PC.
+
+    | Choice | Benefit | Obligation |
+    |---|---|---|
+    | Synchronous fast path | Immediate result when provider is fast | Durable intent and timeout recovery still required |
+    | Durable asynchronous worker | Survives client/pod lifetime; isolates capacity | Pending UX, queue deadlines, operations |
+    | 2PC with participating resources | Atomicity under its specific protocol | Typical PSP HTTP calls do not participate |
+
+    A synchronous path can wait for bounded completion of the same durable workflow; it should not
+    be a separate unsafe charge implementation. Queues change scheduling, not payment uniqueness.
+    A modular service and one financial database may be simpler than distributing ledger writes
+    before a measured need exists.
+
+    **Interview-ready answer:** “I would support immediate completion only inside a finite waiting
+    budget, then expose pending status. The durable operation is shared by both paths. I would not
+    describe ordinary provider HTTP calls as part of our database transaction.”
+
+    **Follow-up:** If the client abandons pending checkout, who determines whether cancellation is safe?
+
+## Round 6 — Unknown external outcome
+
+### Q6. The provider charged, but the response was lost. Is it safe to retry or refund?
+
+??? question "Reveal answer"
+
+    **Verdict:** Preserve UNKNOWN and obtain evidence using the original provider identity.
+
+    | Observation | Action |
+    |---|---|
+    | Verified decline | Record the decline; no blind repeated charging |
+    | Timeout after possible send | Query/reconcile or retry under documented idempotency semantics |
+    | Same provider operation confirmed successful | Apply once locally |
+    | No reliable lookup and dedup window expired | Escalate; do not manufacture certainty |
+    | Success for a cancelled business operation | Durable policy-driven compensation |
+
+    An application deadline generally stops waiting, not the remote side effect. A new key can
+    create a second charge. Provider deduplication windows may be shorter than your recovery horizon;
+    old pending operations require special handling. A local unique row cannot force a provider to
+    honor an identity it does not support.
+
+    **Interview-ready answer:** “I would persist the uncertainty and reconcile before a new logical
+    charge or refund. Permitted retries reuse the same identity. Where the provider contract cannot
+    establish the outcome, the system needs a controlled unresolved state rather than a false guarantee.”
+
+    **Follow-up:** What if provider lookup is eventually consistent and initially reports not found?
+
+## Round 7 — Callbacks and ordering
+
+### Q7. A callback arrives before the worker response, then arrives twice after a later refund. How is it applied?
+
+??? question "Reveal answer"
+
+    **Verdict:** Authenticate observations, deduplicate envelopes, and apply legal operation-level transitions.
+
+    Verify callback authenticity and match payment reference, merchant/order, amount, currency, and
+    operation type. Persist inbox identity with the local effect. Different callback IDs can still
+    describe the same capture, so enforce business operation uniqueness too.
+
+    A late CAPTURED observation must not overwrite REFUNDED with a simplistic status assignment.
+    Record capture and refund as distinct facts/operations and derive the correct lifecycle. Provider
+    sequence numbers or query reconciliation may be needed when callbacks disagree.
+
+    **Trade-off:** retaining observations improves audit and repair but requires privacy-aware
+    storage and schema evolution. Acknowledging a callback before durable recording risks permanent
+    loss if the provider stops retrying; rejecting every duplicate may cause unnecessary retry traffic.
+
+    **Interview-ready answer:** “Callback order is not financial order. I retain verified evidence,
+    deduplicate at envelope and operation boundaries, and converge through guarded state/accounting
+    rules. Late evidence cannot erase a later valid refund.”
+
+    **Follow-up:** Which evidence distinguishes a duplicate callback from a genuine correction?
+
+## Round 8 — Ledger design
+
+### Q8. What does balanced double-entry accounting prove, and what does it not prove?
+
+??? question "Reveal answer"
+
+    **Verdict:** Balanced postings preserve accounting structure, not the truth of an external payment by themselves.
+
+    A captured 100-unit payment might debit provider receivable and credit merchant payable under
+    the chosen accounting model. A reversal appends compensating postings; it does not edit history.
+    Balance entries per currency and record explicit FX/fee/rounding legs rather than adding unlike units.
+
+    Enforce one authorized posting protocol with a unique logical transaction identity. A simple
+    row CHECK cannot generally validate the sum of arbitrary sibling entries; use a controlled
+    transaction/validation mechanism appropriate to the database. Capture result, ledger entries,
+    and outbox commit locally together where owned by that database.
+
+    Materialized balances accelerate reads but must reconcile against entries. Spending authority
+    also needs concurrency/reservation rules; a stale cached balance is insufficient.
+
+    **Interview-ready answer:** “The ledger provides immutable, balanced, traceable local facts.
+    It still needs authorization, correct account mapping, external reconciliation, and concurrency
+    control. A balanced duplicate charge is still a financial defect.”
+
+    **Follow-up:** How would you rebuild a corrupted balance projection without reposting money movements?
+
+## Round 9 — Concurrent partial refunds
+
+### Q9. Two operators simultaneously refund 70 against a captured 100. How do you avoid refunding 140?
+
+??? question "Reveal answer"
+
+    **Verdict:** Reserve refundable capacity atomically and give each refund its own durable identity.
+
+    Both requests reading remaining refundable amount = 100 is not protection. Guard the aggregate
+    so completed plus in-flight reserved refunds never exceed captured refundable value. Commit the
+    refund intent and reserved amount together; provider execution happens later outside the lock.
+
+    | Outcome | Capacity/accounting behavior |
+    |---|---|
+    | Verified refund success | Move reserved refund into completed accounting |
+    | Verified failure | Release its reserved refundable amount once |
+    | Unknown refund | Retain ownership while reconciling |
+    | Duplicate operator retry | Return the same refund operation |
+
+    A timeout cannot justify releasing the refund reservation and sending another refund with a
+    new key. Authorization and approval thresholds apply independently of concurrency safety.
+
+    **Interview-ready answer:** “I serialize or conditionally version the refundable budget, not the
+    entire provider wait. Each refund reserves capacity durably, and unknown outcomes retain that
+    reservation until evidence supports success or release.”
+
+    **Follow-up:** How do chargebacks arriving during refunds affect the accounting model?
+
+## Round 10 — Business cancellation race
+
+### Q10. The order expires while capture is uncertain. Should payment immediately become FAILED?
+
+??? question "Reveal answer"
+
+    **Verdict:** Business cancellation and external financial outcome are independent facts.
+
+    ```mermaid
+    stateDiagram-v2
+        PROCESSING --> CAPTURED: Verified success
+        PROCESSING --> DECLINED: Verified decline
+        PROCESSING --> UNKNOWN: Ambiguous outcome
+        UNKNOWN --> CAPTURED: Reconciled success
+        UNKNOWN --> DECLINED: Reconciled definitive failure
+        CAPTURED --> REFUND_PENDING: Business policy requires compensation
+        REFUND_PENDING --> REFUNDED: Verified refund
+    ```
+
+    Persist the cancellation request and resolve the race under the order/payment contract. A late
+    capture may require refund; do not silently discard the successful financial observation because
+    the order transition lost. Stock reallocation must not depend on an unverified assumption that
+    money movement failed. Across services, compensation commands and acknowledgments are durable.
+
+    **Interview-ready answer:** “I keep order eligibility separate from payment truth. Cancellation
+    does not turn an unknown charge into a decline. Reconciliation determines the financial outcome;
+    policy then creates a distinct idempotent compensation operation if needed.”
+
+    **Follow-up:** Can the platform safely reopen stock while a payment remains unresolved?
+
+## Round 11 — Overload protection
+
+### Q11. Slow providers cause retry storms and growing UNKNOWN work. How do you recover?
+
+??? question "Reveal answer"
+
+    **Verdict:** Reduce initiation while preserving capacity to resolve already accepted money movement.
+
+    Use per-provider bulkheads, total deadlines, bounded queues, and classified retries with one
+    owner and jitter. Circuit breakers reduce futile calls; they do not prevent duplicate charges.
+    Reserve quotas and workers for verified callbacks, status queries, settlement ingestion, and
+    reconciliation. Track attempts per logical payment, not just request throughput.
+
+    If a provider permits 300 calls/s, 300 new charges/s plus 100 status checks/s is already over
+    budget. A priority/reserved-share policy is needed; unlimited priority can starve initiation
+    forever, so define a controlled recovery mode and exit criteria.
+
+    **Interview-ready answer:** “I would bound amplification and isolate providers, then measure
+    unknown-state age and net drain. More pods or longer timeouts do not fix the shared provider
+    limit. Recovery is complete only when prior financial uncertainty is accounted for.”
+
+    **Follow-up:** Who owns a payment that exhausts its automated reconciliation budget?
+
+## Round 12 — Settlement mismatch
+
+### Q12. Local captures total 1 million, but the provider settlement differs. What is the investigation?
+
+??? question "Reveal answer"
+
+    **Verdict:** Reconcile itemized financial evidence, not only aggregate totals.
+
+    | Check | Possible explanation |
+    |---|---|
+    | Currency and period boundary | Time-zone, cutoff, delayed settlement |
+    | Fees, reversals, reserves | Legitimate accounting categories |
+    | Provider transaction references | Missing, duplicated, or unmapped operations |
+    | Capture/refund status | Late evidence or unknown operation |
+    | Ledger uniqueness and posting | Local duplicate or mapping defect |
+
+    Ingest immutable settlement evidence with deduplicated file/report identity, verify completeness,
+    and link discrepancies to operations. Do not automatically create correcting charges to make
+    totals match. Corrections need approved, traceable accounting and business actions.
+
+    **Trade-off:** daily reconciliation is cheaper but increases detection delay; near-real-time
+    checks supplement rather than replace final settlement reconciliation.
+
+    **Interview-ready answer:** “I compare like periods and currencies, then match provider references
+    to local operations and ledger facts. I classify legitimate differences separately from defects,
+    preserve evidence, and use controlled repair rather than mutating history to hide a mismatch.”
+
+    **Follow-up:** Can equal totals conceal one missing payment and one duplicate payment?
+
+## Round 13 — Security and audit
+
+### Q13. Which controls protect money and sensitive data beyond authenticating the caller?
+
+??? question "Reveal answer"
+
+    **Verdict:** Authorization, minimized data, provider verification, and audited operational authority are separate controls.
+
+    Enforce merchant/customer scope, allowed amounts/currencies, role-based refund limits, and
+    approval for sensitive repairs. Use provider tokenization and avoid handling raw card data where
+    possible; real compliance scope requires specialist review, not an interview checklist claim.
+
+    Verify callbacks and protect against replay under the provider's contract. Keep provider keys,
+    tokens, and personal payloads out of logs/metrics. Financial audit must remain available even
+    when traces are sampled; access, retention, encryption, and tamper evidence need explicit policy.
+    Secret rotation and callback-key overlap must not break recovery for in-flight operations.
+
+    **Interview-ready answer:** “I minimize sensitive data, authorize every business transition, and
+    audit operational actions independently of debug telemetry. Provider authenticity and financial
+    identity are verified before accepting an observation or posting money.”
+
+    **Follow-up:** Who can issue a manual refund, and how do you detect unauthorized use?
+
+## Round 14 — Sharding and regional recovery
+
+### Q14. How can payments scale across shards or regions without duplicating financial authority?
+
+??? question "Reveal answer"
+
+    **Verdict:** Partition ownership deliberately and preserve acknowledged operations through promotion.
+
+    Keep commonly atomic intent/ledger work local where possible. Cross-account or cross-shard
+    transfers require a defined protocol and recovery; two independent postings do not become one
+    atomic transfer because they share an ID. A hot merchant may remain hot under merchant sharding.
+
+    Assign home ownership or use a qualified strongly consistent store. Promotion must fence old
+    writers and recover in-flight provider operations under their original identities. A replicated
+    database that loses an acknowledged payment intent can lose the very key needed to prevent
+    another charge. Provider evidence may be needed to reconstruct uncertain operations before resuming.
+
+    Schema/event changes use compatible readers/writers and immutable ledger meaning; do not reinterpret
+    historical postings when introducing new account types or fees.
+
+    **Interview-ready answer:** “I scale around financial ownership, not arbitrary hash buckets.
+    Regional failover includes ledger durability and external-operation reconciliation. Traffic
+    routing alone does not establish safe authority to initiate payments.”
+
+    **Follow-up:** What is the safe RPO for a provider charge whose local intent was already acknowledged?
+
+## Round 15 — Evidence and final defense
+
+### Q15. Which tests support your guarantees, and how do you explain the design in two minutes?
+
+??? question "Reveal answer"
+
+    **Verdict:** Test every commit gap and reconcile local facts against independent financial evidence.
+
+    | Fault / race | Required evidence |
+    |---|---|
+    | Same key concurrently; mismatched payload | One operation; mismatch rejected |
+    | Provider success then worker death | Original identity recovered; no new logical charge |
+    | Callback/response reorder and duplicates | One legal effect; late observations preserved |
+    | Concurrent refunds | Completed plus reserved refunds stay within policy |
+    | Cancellation/unknown outcome | No fabricated decline; compensation recoverable |
+    | Settlement replay and restore | Balanced ledger and accounted provider operations |
+
+    Use approved sandboxes and controlled faults; do not issue real charges as an unapproved test.
+    Measure pending/unknown age, provider quota, retry amplification, reconciliation mismatches,
+    refund backlog, and accounting invariants with bounded metric labels.
+
+    **Interview-ready answer:** “I persist authorized intent and stable identities before external
+    calls. Short local transactions commit outcome, ledger, and next intent; callbacks and retries
+    converge through guarded deduplication. Unknown money movement stays recoverable. Refunds reserve
+    a bounded budget, settlement independently verifies results, and failover preserves ownership.
+    I accept pending states and controlled refusal rather than guessing about money.”
+
+    **Follow-up:** Which guarantees are local, and which depend on the provider's actual contract?
+
+## Review gate
+
+Defend capture versus settlement, the external commit gap, callback ordering, balanced postings,
+refund reservations, and regional recovery before starting the order case.
 
 ## Related
 
@@ -150,4 +440,5 @@ flowchart LR
 - [Concepts](concepts.md)
 - [Interview Questions](questions.md)
 - [API idempotency](../rest-api/practice.md)
-- [Next: Order Management](practice-orders.md)
+- [Outbox and inbox mechanisms](../distributed-data-patterns/practice.md)
+- [Next: Orders](practice-orders.md)

@@ -12,14 +12,15 @@ assumptions, not claims of deployed lab capacity.
 
 | Order | Complete case | Questions | Distinctive senior challenge |
 |---|---|---|---|
-| 1 | [URL Shortener](practice-url-shortener.md) | 10 | Identifier space, redirect semantics, hot reads, revocation |
-| 2 | [Payments](practice-payments.md) | 10 | Unknown external outcomes, ledger consistency, reconciliation |
-| 3 | [Order Management](practice-orders.md) | 10 | Durable acceptance, saga transitions, projection rebuild, regional ownership |
-| 4 | [Notification Engine](practice-notifications.md) | 10 | Fan-out, preferences, provider quotas, delivery ambiguity |
-| 5 | [Flash Sale Inventory — expanded pilot](practice-flash-sale.md) | 21 | Full interview progression: commit gaps, payment races, durable grants, CDC recovery, migrations, regional fencing |
-| 6 | [Distributed Rate Limiter](practice-rate-limiter.md) | 10 | Exact versus approximate quotas, atomicity, regional budgets |
-| 7 | [Large File Processing](practice-files.md) | 10 | Resumable upload, resource isolation, stale workers, output publication |
-| 8 | [Hotel / Ticket Booking](practice-booking.md) | 10 | Multi-resource holds, authoritative expiry, no double booking |
+| 1 | [URL Shortener](practice-url-shortener.md) | 15 | Alias races, revocation/stale fills, HTTP caching, analytics ambiguity, regional ownership |
+| 2 | [Payments](practice-payments.md) | 15 | Provider commit gap, ledger postings, concurrent refunds, cancellation, settlement reconciliation |
+| 3 | [Order Management](practice-orders.md) | 15 | Durable acceptance, saga/cancellation races, poison events, read freshness, shadow rebuild, DR |
+| 4 | [Notification Engine](practice-notifications.md) | 15 | Audience checkpoints, consent/send races, provider ambiguity, fairness, fallback, content evolution |
+| 5 | [Flash Sale Inventory](practice-flash-sale.md) | 21 | Commit gaps, payment races, durable grants, CDC recovery, migrations, regional fencing |
+| 6 | [Distributed Rate Limiter](practice-rate-limiter.md) | 15 | Algorithm bounds, hierarchical accounting, grants/restarts, time, failover, policy rollout |
+| 7 | [Large File Processing](practice-files.md) | 15 | Multipart/finalization gaps, immutable input, worker fencing, manifest publication, cleanup races |
+| 8 | [Hotel / Ticket Booking](practice-booking.md) | 15 | Group/date atomicity, renewal generations, payment/expiry, durable timers, modification, regional authority |
+| **Total** | **8 complete interview walkthroughs** | **126** | **Finish one case before moving to the next** |
 
 ## The complete loop inside every case
 
@@ -37,10 +38,11 @@ assumptions, not claims of deployed lab capacity.
 Some cases place rebuild or scaling alternatives in a different step to preserve the natural
 business flow. Finish the whole lifecycle before the next system begins.
 
-**Full-depth format pilot:** [Flash Sale Inventory](practice-flash-sale.md) expands this loop into
-21 progressive interview rounds, with guided reasoning, concrete failure histories, comparisons,
-recovery tables, and spoken answers. Review that format first; the other seven cases remain
-compact ten-question walkthroughs until the deeper format is approved.
+**All eight cases use the expanded interview format:** an explicit scenario and assumptions,
+progressive interviewer prompts, guided reasoning, concrete failure histories, calculations and
+comparison/recovery tables, diagrams, interview-ready spoken answers, follow-ups, and a review gate.
+The ten dimensions above are a study loop, not a limit of ten questions. Seven cases have 15 rounds;
+flash sale has 21. The workload and deep dives stay specific to each system.
 
 ## Source coverage
 

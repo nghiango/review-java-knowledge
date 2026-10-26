@@ -344,6 +344,7 @@
 
 - [ ] Complete the [case-first practice sequence](topics/system-design/practice.md), finishing all rounds for one system before starting the next
 - [ ] Defend the [expanded flash-sale case](topics/system-design/practice-flash-sale.md): commit gaps, payment/expiry races, durable grants, CDC recovery, mixed versions, and regional fencing
+- [ ] For all eight expanded cases, answer the visible prompts before revealing guided reasoning, then deliver the spoken answer and defend each follow-up
 - [ ] For each case, defend requirements, capacity, APIs/model, baseline flows, alternatives, concurrency, recovery, scaling, security/telemetry, and verification
 
 - [ ] Frame high-scale system design using a structured 4-step framework: Scope Requirements, High-Level Design, Deep-Dive Critical Components, and Scale/Bottlenecks

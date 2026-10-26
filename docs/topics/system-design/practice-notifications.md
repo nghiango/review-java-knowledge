@@ -1,142 +1,438 @@
-# Case 4 — Notification Engine, Step by Step
+# Case 4 — Notification Engine: Senior Interview Walkthrough
 
-Complete [Orders](practice-orders.md) first, then finish this case before [Flash Sales](practice-flash-sale.md).
-Follow the entire request lifecycle, not just the queue choice.
+Finish [Orders](practice-orders.md), then complete this notification lifecycle before
+[Flash Sales](practice-flash-sale.md). Explain each prompt before revealing the guided answer.
+This case designs a service; it does not claim production provider guarantees or measured lab scale.
 
-## Step 1 — Requirements
+## Scenario and progression
 
-### Q1. What does 'notification delivered' mean for email, SMS, and push?
+| Dimension | Working assumption |
+|---|---|
+| Channels | Email, SMS, mobile push; transactional and marketing categories |
+| Burst example | One million campaign recipients in ten minutes |
+| Priority | Expiring credentials and critical receipts must not sit behind bulk marketing |
+| Provider constraint | Illustrative 500 attempts/s on one channel; actual quotas vary |
+| Correctness | Durable accepted intent; authorized preferences; explicit duplicate/loss policy |
 
-??? question "Reveal answer"
-    - **Separate accepted intent, provider acceptance, device delivery, and user reading.**
-    - Clarify transactional versus marketing traffic, deadlines, preference rules, quiet hours, channels, cancellation, and legal obligations.
-    - Define which categories must be durable and which can expire; a stale OTP may be worse than a dropped message.
-    - Duplicate suppression cannot guarantee a human sees exactly one message unless every provider boundary supports the necessary contract.
-    - **Trade-off:** provider acknowledgments are often the strongest directly observable outcome, not proof of user receipt.
-    - **Follow-up:** Is channel fallback permitted for sensitive content?
-    - **Takeaway:** Delivery semantics must match what the system can observe.
+Follow requirements → capacity → identity/model → architecture → fan-out recovery → preferences →
+external ambiguity → ordering → deadlines → fair scheduling → fallback → security → rollout →
+regional recovery → evidence. Delivery, provider acceptance, and human reading remain different facts.
 
-## Step 2 — Capacity
+## Round 1 — Delivery promises
 
-### Q2. How do campaigns and provider quotas affect sizing?
-
-??? question "Reveal answer"
-    - **Size fan-out, bytes, provider capacity, and deadline backlog independently.**
-    - One million recipients over ten minutes requires about 1,667 attempts/s before channel fan-out or retries; a 500/s quota cannot meet that schedule without changed requirements.
-    - Model template rendering, preference lookup, enqueue rate, callback volume, attachment sizes, and per-tenant bursts.
-    - Prioritize OTPs and critical alerts separately from campaigns; measure oldest eligible work age, not only queue depth.
-    - **Trade-off:** more workers cannot overcome contractual provider quotas and may trigger throttling.
-    - **Follow-up:** What happens to low-priority work during a provider outage?
-    - **Takeaway:** Queue capacity must be measured against deadlines and service rate.
-
-## Step 3 — API and model
-
-### Q3. What data must survive retries and preference changes?
+### Q1. What does a successful notification API response actually mean?
 
 ??? question "Reveal answer"
-    - **Persist notification intent separately from per-recipient/channel attempts.**
-    - API requests contain category, recipient reference, template/version, allowed channels, deadline, and scoped operation identity; avoid trusting arbitrary template execution from callers.
-    - Store intent, delivery identity, attempt/provider reference, status, preference provenance, and outbox/inbox. Deduplication includes the business operation and channel policy.
-    - Decide whether payload/template content is frozen at acceptance or resolved at delivery; apply required consent checks at the appropriate boundary.
-    - **Trade-off:** freezing simplifies audit but retains personal data; late resolution reflects current preferences but changes replay results.
-    - **Follow-up:** Does a replayed password-reset event create a fresh valid token?
-    - **Takeaway:** Durable identity and content lifecycle prevent unsafe replay.
 
-## Step 4 — Baseline architecture
+    **Verdict:** Define durable acceptance separately from provider acceptance, device delivery, and reading.
 
-### Q4. How do you separate fan-out from provider delivery?
+    | Category | Questions that change the design |
+    |---|---|
+    | OTP / reset link | Useful lifetime, token validity, duplicate tolerance |
+    | Transaction receipt | Durability and acceptable delay |
+    | Marketing campaign | Consent, quiet hours, cancellation, expiration |
+    | Security alert | Allowed channels and escalation policy |
 
-??? question "Reveal answer"
-    - **Use durable acceptance, bounded fan-out, and isolated channel workers.**
-    - Commit intent plus outbox; a planner resolves eligible recipients and creates deduplicated deliveries in bounded pages.
-    - Channel workers apply quotas, render safely, call providers with deadlines, and persist outcomes; verified callbacks update delivery state idempotently.
-    - Separate priority queues or schedules prevent bulk campaigns blocking critical messages. Apply backpressure to acceptance when durable capacity is exhausted.
-    - **Trade-off:** multiple stages add latency but make fan-out and provider failures independently recoverable.
-    - **Follow-up:** How does a planner resume after creating half a campaign's deliveries?
-    - **Takeaway:** Do not materialize unlimited recipients in one transaction or heap.
+    A provider 2xx is not proof the recipient received or read anything. Some channels expose
+    delivery callbacks, others limited evidence; even a read signal may be incomplete. Clarify
+    whether fallback is permitted and whether every accepted recipient must reach an accounted
+    terminal or unresolved state. Never equate an enqueue metric with a delivery SLO.
 
-## Step 5 — Alternatives
+    **Interview-ready answer:** “I would specify an observable promise per category and channel.
+    Acceptance persists intent; delivery evidence is recorded later. Critical and marketing work
+    can have different deadlines, loss tolerance, duplicate policy, and fallback rules.”
 
-### Q5. One queue, per-channel queues, or synchronous send?
+    **Follow-up:** Is a message that arrives after its useful deadline considered successful?
 
-??? question "Reveal answer"
-    - **Choose isolation and ordering from category/channel requirements.**
-    - Synchronous sending is simple but couples user latency to providers and still has ambiguous-result retries.
-    - A shared queue is easy to operate but creates head-of-line and noisy-neighbor risk; channel/priority isolation adds independent capacity and quotas.
-    - Partition by a recipient when sequence matters; ordering all recipients globally is usually unnecessary.
-    - **Trade-off:** too many queues multiply operations; a small number of bounded workload classes is often enough.
-    - **Follow-up:** Must a cancellation message arrive after a confirmation for the same order?
-    - **Takeaway:** Isolation should follow business urgency and failure boundaries.
+## Round 2 — Fan-out and quota sizing
 
-## Step 6 — Concurrency and deduplication
-
-### Q6. How do you prevent duplicate sends without pretending the provider call is atomic?
+### Q2. Can one million recipients be notified in ten minutes with a 500/s provider quota?
 
 ??? question "Reveal answer"
-    - **Deduplicate local deliveries and use provider idempotency where supported.**
-    - One durable delivery identity excludes duplicate planning; workers claim with ownership generations and persist provider references.
-    - A crash after send but before recording success can still cause duplicates if the provider lacks idempotency or queryable correlation.
-    - Reconcile uncertain attempts before resend; make the residual duplicate risk explicit and ensure OTP/token use itself is safe.
-    - **Trade-off:** suppressing all uncertain retries risks loss; retrying favors delivery but may duplicate. Categories may choose differently.
-    - **Follow-up:** How long must delivery dedup records survive historical replay?
-    - **Takeaway:** At-least-once work plus a non-idempotent provider has an unavoidable ambiguity to manage.
 
-## Step 7 — Retry, expiry, and failure
+    **Verdict:** Not through that quota with one attempt per recipient, even before retries.
 
-### Q7. What happens during provider throttling or prolonged outage?
+    | Calculation | Result |
+    |---|---|
+    | 1M / 600 seconds | About 1,667 attempts/s needed |
+    | 500 × 600 | At most 300k attempts in ten minutes |
+    | 1M / 500 | About 33.3 minutes ideal minimum |
+    | 100k backlog, 500/s capacity, 300/s new load | 200/s net drain; about 8.3 minutes |
 
-??? question "Reveal answer"
-    - **Honor category deadlines and provider retry guidance with bounded backoff and jitter.**
-    - Classify invalid addresses/tokens separately from transient throttling/timeouts; stop expired work and persist the reason.
-    - Open breakers, cap pending attempts, and let safe priority work consume available quota. Recovery must not unleash every delayed retry simultaneously.
-    - Fallback channels require policy and duplicate coordination; do not leak sensitive information through an unapproved channel.
-    - **Trade-off:** delayed delivery may be acceptable for receipts but not expiring credentials; DLT recovery must revalidate eligibility.
-    - **Follow-up:** Should a week-old campaign in the DLT ever be resent automatically?
-    - **Takeaway:** A retry after the useful deadline is not recovery.
+    Multi-channel fan-out, SMS segmentation, callbacks, preferences, rendering, and retries add
+    different costs. Request more quota, extend the deadline, reduce recipients, or use permitted
+    alternate providers; worker autoscaling alone cannot change the arithmetic.
 
-## Step 8 — Scaling
+    Estimate eligible distinct recipients and payload/reference size. One million-recipient intent
+    is not one small worker operation. Measure oldest eligible age and deadline misses by priority,
+    not only total queue length.
 
-### Q8. How do you scale a campaign to tens of millions of recipients fairly?
+    **Interview-ready answer:** “I would expose the infeasible deadline early and budget provider
+    work separately from queue ingestion. Capacity planning includes retries and reconciliation,
+    with a reserved share for critical messages.”
 
-??? question "Reveal answer"
-    - **Shard planning and delivery while keeping provider and tenant budgets authoritative.**
-    - Use paginated recipient snapshots/checkpoints, bounded batches, and distributed quota allocation; retain exact progress and avoid a hot global campaign counter.
-    - Weight scheduling by tenant/service tier and urgency; cap fan-out generation so persistence and queues remain bounded.
-    - Scale on eligible backlog age and drain rate, not raw queue length alone; cold workers still need provider permissions and connection budgets.
-    - **Trade-off:** local quota leases reduce coordination but allow bounded overshoot; strict global quota requires shared state.
-    - **Follow-up:** Can one campaign monopolize all SMS capacity?
-    - **Takeaway:** Fair scheduling matters as much as worker count.
+    **Follow-up:** Does a second provider add usable quota if policy forbids cross-provider fallback?
 
-## Step 9 — Security and observability
+## Round 3 — Identities and data model
 
-### Q9. How do you secure callbacks, content, and recipient data while measuring delivery?
+### Q3. What must be durable to distinguish intent, recipient delivery, and a provider attempt?
 
 ??? question "Reveal answer"
-    - **Treat templates, destinations, and callbacks as untrusted boundaries.**
-    - Verify callback authenticity/replay bounds; enforce caller permission to send each category and recipient scope; sanitize templates and avoid rendering arbitrary executable content.
-    - Minimize and encrypt sensitive destinations/content; keep tokens out of logs and metric labels, with retention appropriate to category and audit needs.
-    - Measure acceptance-to-provider latency, expiry, unknown attempts, bounce/complaint rates, quota saturation, and priority starvation.
-    - **Trade-off:** callbacks may arrive late or out of order; use monotonic legal transitions rather than overwriting status blindly.
-    - **Follow-up:** Which metric detects delivery degradation when enqueue success remains perfect?
-    - **Takeaway:** Provider success and responsible user communication are different outcomes.
 
-## Step 10 — Verification
+    **Verdict:** One campaign can create many channel deliveries, each with recoverable attempts.
 
-### Q10. Which tests complete the design rather than only testing a mock send?
+    | Record | Durable meaning |
+    |---|---|
+    | Intent/campaign | Authorized category, operation key, template/version, audience definition |
+    | Recipient snapshot/checkpoint | Stable fan-out boundary and resumable progress |
+    | Delivery | Recipient/channel/business identity, deadline, current state |
+    | Provider attempt | Stable operation correlation, provider reference, observation |
+    | Preference provenance | Applicable consent/category/channel decision |
+    | Inbox/outbox | Safe input replay and recoverable next work |
+
+    Creation accepts references and permitted structured variables—not arbitrary executable templates
+    or another tenant's recipient list. Status distinguishes suppressed, expired, provider-accepted,
+    delivered where observable, and unknown. Define key/fingerprint scope and whether duplicate
+    business events with different envelope IDs still represent the same delivery.
+
+    **Interview-ready answer:** “I separate the accepted intent from each recipient/channel action.
+    Stable identities and versioned content let the planner and workers recover without duplicating
+    fan-out or silently changing what a replay means.”
+
+    **Follow-up:** Should a reset-email replay generate a new token or reuse an already expired business operation?
+
+## Round 4 — Baseline flow and commit boundaries
+
+### Q4. Trace acceptance through planning, provider send, and callback.
 
 ??? question "Reveal answer"
-    - **Test recovery, policy, and ambiguity as well as happy-path routing.**
-    - Exercise duplicate intents, planner crash, send-before-crash, late callbacks, consent changes, expiry, throttling, and priority starvation with controlled provider simulations.
-    - Use approved provider sandboxes for contract behavior; never send real messages as an unapproved verification step.
-    - Reconcile accepted intents with delivered, expired, suppressed, and explicitly unresolved outcomes under representative fan-out load.
-    - **Trade-off:** a mock proves classification but not provider idempotency or rate-limit contracts; state those assumptions explicitly.
-    - **Follow-up:** What evidence justifies adding another queue or provider?
-    - **Takeaway:** Finish with an accountable outcome for every accepted intent.
+
+    **Verdict:** Commit each required next step durably before acknowledging its predecessor.
+
+    ```mermaid
+    flowchart LR
+        Caller[Authorized caller] --> Intent[(Intent and outbox)]
+        Intent --> Planner[Bounded audience planner]
+        Planner --> Deliveries[(Unique deliveries and checkpoints)]
+        Deliveries --> Schedule[Priority and quota scheduler]
+        Schedule --> Workers[Isolated channel workers]
+        Workers --> Provider[External providers]
+        Provider --> Callback[Verified callback inbox]
+        Callback --> State[(Guarded delivery observations)]
+        Workers --> State
+    ```
+
+    The planner pages audience work; workers enforce eligibility/deadline and provider budgets.
+    Sends occur outside long DB transactions. Worker response and callback update the same logical
+    delivery through legal transitions. Required status/recovery intent must not live only in memory.
+
+    **Trade-off:** a synchronous send is simpler for a bounded small workload, but still has an
+    external commit gap. Durable staging isolates provider failure at latency/operational cost.
+
+    **Interview-ready answer:** “I would acknowledge only durable intent, then plan and send in
+    bounded recoverable stages. Channel failures do not block unrelated classes, and callbacks
+    converge on the same delivery identity rather than creating new work.”
+
+    **Follow-up:** Which state recovers a worker that dies after provider acceptance?
+
+## Round 5 — Planner crash and audience mutation
+
+### Q5. A planner creates half a campaign, crashes, and the audience changes. How does it resume?
+
+??? question "Reveal answer"
+
+    **Verdict:** Decide audience snapshot semantics and atomically checkpoint deduplicated fan-out.
+
+    Offset pagination over a changing recipient table can skip or duplicate recipients. Use a stable
+    snapshot/list identity or a documented membership boundary, stable ordering, and resumable
+    keyset/checkpoint progress. Create bounded batches with unique campaign/recipient/channel identity;
+    checkpoint only with the durable batch so crash recovery safely repeats uncertain work.
+
+    | Choice | Benefit | Cost |
+    |---|---|---|
+    | Frozen membership | Reproducible campaign and audit | Snapshot storage and consent revalidation |
+    | Live membership | Current eligibility | Harder definition of completeness and moving boundary |
+
+    Do not create one million rows in one long transaction or materialize the full audience in heap.
+    A snapshot of membership does not freeze legal consent indefinitely; sending still applies the
+    required policy at the chosen authority boundary.
+
+    **Interview-ready answer:** “I define who belongs to the campaign, then resume bounded unique
+    batches from durable progress. A repeated page is harmless; a checkpoint cannot get ahead of
+    committed delivery records. Membership and permission to send are separate decisions.”
+
+    **Follow-up:** What if the campaign is cancelled between committing a batch and enqueueing it?
+
+## Round 6 — Consent, quiet hours, and cancellation
+
+### Q6. A user unsubscribes after planning but before send. Can a frozen campaign still send?
+
+??? question "Reveal answer"
+
+    **Verdict:** Apply category-specific eligibility at an explicitly defined send boundary.
+
+    Resolve current consent/quiet-hour rules using authoritative or acceptably fresh policy; record
+    the decision/version for audit. A cached preference with a long TTL may violate the required
+    withdrawal window. Transactional versus marketing exemptions need actual policy, not an invented
+    blanket bypass. Quiet hours require timezone and daylight-saving semantics.
+
+    Cancellation can race an in-flight provider call. A guarded local claim can stop unsent work,
+    but cannot recall a message already accepted externally. State that cutoff clearly and account
+    for in-flight/unknown deliveries instead of marking every row cancelled blindly.
+
+    **Trade-off:** strict just-in-time eligibility increases dependency and latency; eventual policy
+    propagation requires an explicit acceptable delay and may not fit regulatory requirements.
+
+    **Interview-ready answer:** “Planning chooses recipients; current policy decides whether a
+    specific send may proceed. I would define the withdrawal/cancellation cutoff, retain evidence,
+    and never claim a local flag can unsend an external message.”
+
+    **Follow-up:** What guarantees can the service make if the preference authority is unavailable?
+
+## Round 7 — Ambiguous provider send
+
+### Q7. The provider sends SMS, but the response is lost and the worker lease expires. Can it resend?
+
+??? question "Reveal answer"
+
+    **Verdict:** Local deduplication cannot close a non-idempotent external send gap.
+
+    | Provider capability | Recovery |
+    |---|---|
+    | Stable idempotency key | Retry under its actual scope/retention contract |
+    | Reliable correlation lookup | Reconcile before another send |
+    | Neither | Explicit category-specific loss-versus-duplicate decision |
+
+    Keep the same delivery/provider-operation identity through takeover. A lease timeout is not
+    evidence the old worker did not send, and a new attempt key can bypass provider deduplication.
+    Persist unknown outcomes and classify late callbacks. Critical content should make repeated
+    presentation safe where possible; OTP redemption needs its own validity/one-use protection.
+
+    **Trade-off:** never retrying ambiguous sends risks loss; always retrying risks duplicate delivery.
+    Do not promise exactly-once human notification without a contract that can support it.
+
+    **Interview-ready answer:** “I would enforce local delivery uniqueness and use provider identity,
+    but make residual ambiguity explicit. Recovery preserves correlation rather than pretending a
+    worker restart proves the prior external effect did not occur.”
+
+    **Follow-up:** What changes when the provider deduplication horizon is shorter than replay retention?
+
+## Round 8 — Ordering and delayed callbacks
+
+### Q8. Confirmation and cancellation notifications arrive in reverse order. How do you prevent misleading users?
+
+??? question "Reveal answer"
+
+    **Verdict:** Define which messages are sequence-dependent and what current truth may supersede stale work.
+
+    Partitioning by recipient or business aggregate helps only if source sequencing, retries, and
+    worker application preserve it. A retry topic or alternate provider can overtake another message.
+    Consider versioned business references and eligibility checks that suppress an obsolete unsent
+    confirmation after a known cancellation, while preserving audit of what actually happened.
+
+    Delivery callbacks also reorder: an old accepted observation must not erase a later delivered
+    or bounced outcome under simplistic last-write-wins. Model compatible observations rather than
+    impose an invalid one-dimensional order on distinct provider facts.
+
+    **Trade-off:** strict per-recipient serialization can block unrelated alerts behind one bad
+    message. Order only the business sequence that needs it.
+
+    **Interview-ready answer:** “I distinguish business message ordering from provider callback
+    ordering. Versions and current eligibility suppress stale work where allowed; preserved observations
+    update delivery facts without undoing later evidence.”
+
+    **Follow-up:** Can the system control display order after two providers have accepted the messages?
+
+## Round 9 — Retry, expiry, and DLT
+
+### Q9. The provider is down for an hour. Should every queued message be retried on recovery?
+
+??? question "Reveal answer"
+
+    **Verdict:** A retry after a message's useful deadline may be a defect rather than recovery.
+
+    | Result/category | Action |
+    |---|---|
+    | Invalid address/token | Terminal classification; clean invalid endpoint under policy |
+    | Throttle/transient failure | Bounded jittered retry respecting quota/guidance |
+    | Expired OTP | Suppress; do not create a fresh credential from an old replay |
+    | Old campaign | Revalidate deadline, cancellation, consent, content |
+    | Unknown provider outcome | Reconcile stable identity where possible |
+
+    Store retry eligibility/deadline durably; cap attempts and queue growth. Recovery must not release
+    every delayed retry simultaneously. Ordinary Kafka records do not themselves implement arbitrary
+    delivery timers; define the scheduling service or retry mechanism explicitly.
+
+    **Interview-ready answer:** “I would classify failures and preserve deadlines through retries
+    and DLT handling. Replaying an old event is authorized new execution only if current business
+    policy permits it; clearing a queue is not a reason to send obsolete content.”
+
+    **Follow-up:** Who approves retry of a week-old security notification containing stale account information?
+
+## Round 10 — Fair scheduling and quotas
+
+### Q10. How do bulk campaigns coexist with low-latency OTP traffic?
+
+??? question "Reveal answer"
+
+    **Verdict:** Isolate workload classes and allocate real provider capacity, not only queue priority.
+
+    | Technique | Benefit | Cost |
+    |---|---|---|
+    | Channel/priority isolation | Failure and resource separation | More operational queues/workers |
+    | Reserved critical share | Keeps urgent traffic serviceable | Unused capacity policy needed |
+    | Weighted fair tenant scheduling | Prevents one campaign monopolizing capacity | State and scheduling complexity |
+    | Aging/bulk minimum share | Limits starvation | Can affect urgent latency budget |
+
+    A worker priority flag cannot override a provider quota already consumed by marketing. Coordinate
+    provider budgets across pods and reserve capacity for callbacks/reconciliation where those consume
+    the same limits. Scale against eligible work age, resource cost, and net drain—not queue length alone.
+
+    **Interview-ready answer:** “I would schedule bounded work classes with tenant shares and explicit
+    provider budgets. Critical traffic has reserved service, while bulk has a defined minimum or aging
+    policy. Autoscaling is limited by the shared delivery contract.”
+
+    **Follow-up:** Can one tenant label every marketing message urgent and bypass fairness?
+
+## Round 11 — Provider and channel fallback
+
+### Q11. Email provider A times out. Can you immediately use provider B or send SMS instead?
+
+??? question "Reveal answer"
+
+    **Verdict:** Fallback changes duplicate and privacy semantics; it is not just another retry.
+
+    A may already have accepted. B usually does not share A's idempotency namespace, so an immediate
+    fallback can deliver twice. Channel changes may expose sensitive data or violate consent/quiet-hour
+    rules. Persist fallback ownership and its decision evidence against one logical delivery policy.
+
+    | Option | Accepted cost |
+    |---|---|
+    | Wait/reconcile A | Delay and unresolved state |
+    | Permitted duplicate-tolerant fallback | Possible duplicate, explicitly bounded by category |
+    | Strict single-send policy | Potential non-delivery under ambiguity |
+
+    Circuit breakers and health checks indicate capacity risk, not proof of non-delivery. Test
+    late callbacks from the first provider after fallback has progressed.
+
+    **Interview-ready answer:** “I would define fallback per category, preserve the original attempt,
+    and acknowledge cross-provider deduplication limits. A channel switch must be authorized and
+    cannot leak data simply to improve a delivery dashboard.”
+
+    **Follow-up:** Which policy is preferable for a receipt versus a one-time login credential?
+
+## Round 12 — Security and data lifecycle
+
+### Q12. How do templates, callbacks, and recipient data change the threat model?
+
+??? question "Reveal answer"
+
+    **Verdict:** Sending authority and rendering are security boundaries, independent of queue correctness.
+
+    Authorize caller/category/recipient scope and rate/cost budgets. Render trusted versioned templates
+    with constrained variables and correct escaping; do not evaluate arbitrary caller-supplied code.
+    Verify callback authenticity/replay behavior and restrict administrative resend capability.
+
+    Minimize encrypted destination/content storage, redact tokens and signed links from logs, and
+    separate financial/business audit requirements from sampled traces. Retention/deletion must reach
+    delivery rows, payload archives, dead letters, replicas, and provider integrations according to
+    their real capabilities. Deleting dedup records too early can enable replayed sends.
+
+    **Interview-ready answer:** “I would treat the engine as delegated authority to contact people,
+    with constrained content and auditable recipients. Recovery and diagnostics cannot become paths
+    for leaking credentials or resending deleted/suppressed content.”
+
+    **Follow-up:** Can an operator safely inspect a failed OTP message without seeing the credential?
+
+## Round 13 — Template and event evolution
+
+### Q13. A template changes during backlog drain and old/new consumers coexist. Which content gets sent?
+
+??? question "Reveal answer"
+
+    **Verdict:** Choose immutable content/version semantics and test historical replay, not just new requests.
+
+    Freeze the template version and required variables at acceptance, or explicitly resolve current
+    content under policy. Mixing those choices silently can make identical retries send different
+    legal or security wording. Preserve old renderers/schema support for the required horizon or
+    migrate unresolved deliveries through a verified compatibility workflow.
+
+    Add optional event fields with semantic defaults; missing does not automatically mean consent
+    or marketing permission. In one consumer group versions share partitions; separate groups each
+    receive work and can duplicate actual sends unless ownership is controlled.
+
+    **Trade-off:** immutable snapshots improve audit at storage/privacy cost. Dynamic templates
+    simplify corrections but change reproducibility and may require revalidation.
+
+    **Interview-ready answer:** “I would make content version and policy explicit in the delivery
+    record, test old/new renderers and replay, and coordinate consumer ownership. A template deployment
+    must not accidentally resend or reinterpret the backlog.”
+
+    **Follow-up:** How can you withdraw an unsafe template already referenced by a million unsent deliveries?
+
+## Round 14 — Regional outage and delivery accounting
+
+### Q14. How do you fail over delivery workers without resending an entire campaign?
+
+??? question "Reveal answer"
+
+    **Verdict:** Preserve planning checkpoints, delivery identities, and provider ambiguity under fenced ownership.
+
+    Region-local workers may own disjoint delivery partitions, but a takeover must prevent stale
+    workers initiating uncontrolled sends and recover unknown attempts. A lost inbox/checkpoint can
+    cause repeat planning; a lost provider-operation record can defeat external deduplication.
+
+    Maintain an accounting equation for planned deliveries: pending, suppressed, expired, completed
+    under the observable contract, or explicitly unresolved. Provider callback loss and eventual
+    status may require reconciliation. Queue lag zero is not proof of completed human delivery.
+
+    **Trade-off:** conservative takeover delays urgent work; aggressive resending increases duplicates.
+    State the policy by category and the durability/promotion assumptions that make it credible.
+
+    **Interview-ready answer:** “I would recover the durable delivery ledger and original provider
+    identities before resuming, not replay every accepted campaign as new. Old-worker exclusion,
+    unknown-attempt policy, and accounting remain part of regional recovery.”
+
+    **Follow-up:** What is the accepted behavior if the old region can still call providers while isolated?
+
+## Round 15 — Evidence and final defense
+
+### Q15. How do you test the complete engine and summarize its guarantees?
+
+??? question "Reveal answer"
+
+    **Verdict:** Verify recoverable intent, policy, fairness, and the provider ambiguity boundary.
+
+    | Test | Evidence |
+    |---|---|
+    | Planner crash and audience mutation | No skipped/duplicate logical deliveries |
+    | Unsubscribe/cancel versus send | Stated cutoff and preserved observations |
+    | Send then crash; late duplicate callback | Category-specific recovery without false certainty |
+    | Provider throttle/outage | Bounded retries, expired work suppressed, priority preserved |
+    | Fallback and regional takeover | Original identities and allowed duplicate/loss policy |
+    | Template migration/replay | Stable permitted content and one business owner |
+
+    Measure acceptance-to-provider latency, expiry, unknown age, quota use, fairness/starvation,
+    bounce/complaint rates, and reconciliation mismatch. Use approved sandboxes rather than real
+    unsolicited sends; mock success does not establish a provider contract.
+
+    **Interview-ready answer:** “I durably accept authorized intent, plan bounded unique deliveries,
+    and schedule by channel, urgency, tenant, and provider quota. Workers enforce current policy
+    and record verified observations. Unknown sends, fallback, and replay follow explicit category
+    contracts. I account for every delivery without pretending provider acceptance proves a human read it.”
+
+    **Follow-up:** Which metric detects failure when API enqueue success remains 100%?
+
+## Review gate
+
+Defend the delivery promise, audience checkpoint, send cutoff, ambiguous external effect,
+quota fairness, fallback semantics, and replay/region accounting before the next case.
 
 ## Related
 
 - [Practice sequence](practice.md)
 - [Concepts](concepts.md)
 - [Interview Questions](questions.md)
-- [Resilience practice](../resilience/practice.md)
+- [Resilience mechanisms](../resilience/practice.md)
+- [Kafka delivery mechanisms](../kafka/practice.md)
 - [Next: Flash Sales](practice-flash-sale.md)
