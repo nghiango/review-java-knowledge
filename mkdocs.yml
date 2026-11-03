@@ -6,6 +6,9 @@ repo_name: nghiango/review-java-knowledge
 docs_dir: docs
 strict: true
 
+exclude_docs: |
+  topics/core-java/concepts/*.md
+
 validation:
   links:
     absolute_links: relative_to_docs
