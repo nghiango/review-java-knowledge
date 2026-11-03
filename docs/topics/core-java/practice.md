@@ -6,6 +6,46 @@ HyperScale Commerce names and measurements describe the supplied case study, not
 Examples and deeper explanations live in [Concepts](concepts.md), [Internals](internals.md),
 [Code Review](code-review.md), and [Solutions](solutions.md).
 
+### Why is composition often preferred over inheritance?
+
+??? question "Reveal answer"
+    Inheritance models an "is-a" relationship, while composition models a "has-a" or "uses-a" relationship.
+
+    Composition is often preferred because it produces looser coupling. An object delegates behavior to another component, which can be replaced without changin the object's class hierachy. This improves flexibility, maintainability, and testability.
+
+    Inheritance can create rigid and fragile hierarchies. A change in a parent class may unexpected affect its subclasses, and an inappropriate subclass may violate the Liskov Substitution Principle. Therefore, I use inheritance only when there is a genuine and stable "is-a" relationship.
+
+
+    ??? example "Example"
+
+        ```java
+            // Bad example: Inheritance
+            class EmailNotificationService extends SmtpEmailSender {
+                public void notifyUser(String message) {
+                    sendEmail(message);
+                }
+            }
+
+            // Good example: Composition
+            class NotificationService {
+                private final MessageSender sender;
+                
+                public NotificationService(MessageSender sender) {
+                    this.sender = sender;
+                }
+                
+                public void notifyUser(String message) {
+                    sender.send(message);
+                }
+            }
+
+            var emailService =
+                    new NotificationService(new EmailSender());
+
+            var smsService =
+                    new NotificationService(new SmsSender());
+        ```
+
 ### Q1. How do the four OOP pillars protect business invariants?
 
 ??? question "Reveal answer"

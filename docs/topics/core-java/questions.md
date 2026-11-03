@@ -2,6 +2,57 @@
 
 <!-- --8<-- [start:basic] -->
 ## Basic
+### What is the difference between an `interface` and an `abstract class` in Java? When would you choose one over the other?
+
+??? question "Reveal answer"
+
+    **Short Answer:**
+    
+    An abstract class represents a shared base type and is appropriate when related classes share state, constructor logic, or common implementation. It can contain instance fields, constructors, abstract methods, concrete methods, and final methods. However, a class can extend only one abstract class.
+
+    An interface primarily defines a contract or capability. It cannot hold mutable instance state, although it can contain constants and default, static, and private methods. A class can implement multiple interfaces.
+
+    I generally choose an interface for API boundaries, dependency inversion, interchangeable implementations, and capabilities that can apply to otherwise unrelated classes.
+
+    I choose an abstract class when closely related classes need shared state, protected helper methods, construction rules, or a common algorithm whose certain steps can be customized by subclasses.
+
+    ??? example "Example"
+
+        ```java
+        --8<-- "modules/01-core-java/src/examples/java/lab/corejava/questions/InterfaceVsAbstractClassExample.java"
+        ```
+
+### What is the difference between method overloading and method overriding?
+
+??? question "Reveal answer"
+
+    Overloading means defining methods with the same name but different parameter lists. It is resolved at compile time and is useful when the same conceptual operation accepts different inputs. The return type alone cannot distinguish overloaded methods.
+
+    Overriding means that a subclass provides a specialized implementation of an inherited instance method. It is resolved at runtime based on the concrete object. The overriding method cannot reduce visibility, return an incompatible type, or declare broader checked exceptions.
+
+    ??? example "Example"
+
+        ```java
+            void send(String message) {}
+
+            void send(String message, String recipient) {}
+
+            void send(byte[] data) {}
+
+            // Overriding
+            class Animal {
+                public void speak() {
+                    System.out.println("Animal sound");
+                }
+            }
+
+            class Dog extends Animal {
+                @Override
+                public void speak() {
+                    System.out.println("Woof");
+                }
+            }
+        ```
 
 ### 1. What is the difference between `==` and `equals`?
 
@@ -20,8 +71,11 @@
 
 ??? question "Reveal answer"
 
-    **Short Answer:** Equal objects must have equal hashes. Equality must also be reflexive, symmetric,
-    transitive and consistent. Unequal objects may collide. [Concept](/topics/core-java/concepts.md#equality-hashing-and-ordering)
+    **Short Answer:** 
+    
+    A HashMap first uses the key's `hashCode()` to determine the bucket. It then uses `equals()` to compare the key with entries in that bucket. If two objects are equal, they must return the same hash code. However, two objects with the same hash code do not equal because collisions are possible.
+
+    If I override `equals()` without overriding `hashCode()`, logically equal objects may be placed in different buckets. This can cause failed lookups or duplicate logical values in a `HashSet`. [Concept](/topics/core-java/concepts.md#equality-hashing-and-ordering)
 
     ??? example "Example"
 
