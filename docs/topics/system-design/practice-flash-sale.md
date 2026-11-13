@@ -9,6 +9,12 @@ into **one progressive interviewer–candidate conversation**, rather than appen
 The dialogue is a teaching adaptation, not a verbatim transcript. The reference is preserved;
 its scenarios, reasoning, failure caveats, and recovery progression are carried into the rounds below.
 
+A second companion source, [Flash Sale System Design](learning-flash-sale.md), is a working
+learning draft covering the same opening ground — clarification, capacity math, the Redis
+crash gap, and the payment-timeout race — with concrete Spring Boot implementations (Redisson
+locks, keyspace notifications, `SKIP LOCKED` reconciliation). Its sections map to the rounds
+below; the code there is a design reference, not lab-verified source.
+
 It is a **design exercise**, not a claim that this lab implements or has benchmarked this entire
 platform. Implementation examples are included from existing lab source; additional protocols
 are described as designs. Framework mechanisms remain canonical in their linked topics.
@@ -1212,9 +1218,9 @@ For every proposed component, answer: **What problem introduced it? What does it
 fact survives its crash? What test demonstrates that?** If you cannot answer, simplify or finish
 that boundary before adding another component.
 
-## How the supplied guide is integrated
+## How the supplied guides are integrated
 
-The source is retained as [reference material](flash-sale-system-design-interview-guide.md).
+The primary source is retained as [reference material](flash-sale-system-design-interview-guide.md).
 This page is the guided learning path: it adapts the reference into a continuing conversation,
 adds build/verification checkpoints, and retains the detailed reasoning rather than duplicating
 its entire text or presenting its illustrative code as a tested flash-sale implementation.
@@ -1243,6 +1249,18 @@ its entire text or presenting its illustrative code as a tested flash-sale imple
 | §20 DR/split brain | Round 20: consumption evidence, enforceable exclusion, and rejoin |
 | §21 Final checklist | Round 21, the build plan, and review gate |
 
+The companion learning draft is retained as [Flash Sale System Design](learning-flash-sale.md).
+It covers the early rounds with implementation-level detail and illustrative code:
+
+| Source section | Where it enters this conversation |
+|---|---|
+| Problem statement / clarifying questions | Round 1: business promise, invariant sheet, assumptions table |
+| Capacity estimation | Round 2: RPS, in-flight concurrency, instance sizing, common mistakes |
+| High-level architecture and purchase flow | Rounds 3–5: contract, commit boundaries, conditional allocation |
+| Redis crash before durable reservation | Round 6: outbox, retry cases, TTL lease, keyspace notifications, lock heartbeat, `SKIP LOCKED` reconciliation |
+| Payment timeout race condition | Round 7: order state machine, conditional `PENDING_PAYMENT` transitions |
+| Traffic-spike production incident | Round 16–18: admission control, metric diagnosis, mitigation order |
+
 ## Review gate — before the next system
 
 - Explain all acknowledgment and commit boundaries without equating pending with reserved.
@@ -1255,6 +1273,8 @@ its entire text or presenting its illustrative code as a tested flash-sale imple
 
 ## Related
 
+- [Flash Sale System Design — learning notes with implementation examples](learning-flash-sale.md)
+- [Flash-Sale System Design Interview Guide — original reference](flash-sale-system-design-interview-guide.md)
 - [Practice sequence](practice.md)
 - [Concepts](concepts.md)
 - [Interview Questions](questions.md)

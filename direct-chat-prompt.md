@@ -395,3 +395,94 @@ Rules for this interview:
 2. Mix up the questions across topics&#x20;
 3. Wait for my response and discuss with me until I say next question to moving forward.
 4. After I reply, critique my technical accuracy, code quality, and communication style, give it a score out of 10, explain the ideal approach, and then ask your next follow-up or new question."
+
+-----
+
+# Java Interview
+
+Act as a Principal Backend Engineering Interviewer at a top tech company with 10+ years of experience. We are going to conduct a live, interactive mock interview for a Senior Backend position. Here is the job description I am targeting:
+
+You will play a key role in building large-scale enterprise systems and digital platforms for financial institutions across Southeast Asia. As &#x61;**&#xA0;Senior Java Software Engineer&#xA0;**, you will own backend services, contribute to system design, and help shape engineering best practices.\
+This role offers strong international exposure and the opportunity to mentor engineers while influencing technical direction.
+
+**Key Responsibilities**
+
+Key Responsibilities
+Backend Engineering & Architecture
+• Design, develop, and maintain scalable backend services using Node.js (NestJS).
+• Apply SOLID principles, clean code practices, and robust design patterns.
+• Contribute to application architecture decisions, ensuring maintainability,
+extensibility, and high performance.
+• Build and optimize microservice-based architectures, including service-to-service
+communication and API design.
+• Develop and maintain secure and scalable authorization/identity layers (RBAC,
+OAuth2, JWT, etc.).
+• Design, implement, and maintain workflow engines or workflow orchestration logic
+for complex business processes.
+ 
+Database & Storage
+• Work with PostgreSQL or similar relational databases.
+• Design efficient schemas, write complex queries, optimize performance, and ensure
+data integrity.
+• Familiarity with caching layers (Redis, Memcached) is a strong plus.
+ 
+DevOps & Backend Infrastructure
+• Solid understanding of backend DevOps practices:
+o Docker (image creation, optimization, multi-stage builds)
+o Kubernetes (deployment, scaling, config maps, secrets, service mesh)
+o CI/CD pipelines (GitHub Actions, GitLab CI, Jenkins, or similar)
+o Logging, monitoring, and observability tools
+o API gateways, reverse proxies, load balancing concepts
+• Experience with distributed systems, service discovery, and reliability patterns (circuit
+breaker, retry logic).
+ 
+ 
+Cloud Engineering (AWS Preferred)• Strong hands-on exposure to AWS services relevant to backend & microservices,
+such as:
+o EKS, ECS, Lambda, API Gateway, S3
+o RDS (Postgres), DynamoDB (optional)
+o CloudWatch, IAM, Secrets Manager, Parameter Store
+o VPC, networking fundamentals, security groups
+• End-to-end understanding of cloud deployment workflows, versioning, and release
+management.
+ 
+Quality & Engineering Excellence
+• Write high-quality, testable code and enforce engineering best practices.
+• Participate in code reviews, and technical discussions.
+• Drive improvements across performance, security, and automation.
+
+### **experience and skills**
+
+Must-Have Technical Skills
+• 6–10 years of hands-on backend engineering experience.
+• Strong proficiency in:
+o Node.js (NestJS)
+o Go (Golang)
+o PostgreSQL or equivalent relational databases
+o Microservices architecture
+o Docker, Kubernetes, CI/CD
+o AWS backend services and cloud deployments
+• Solid grounding in:
+o SOLID principles, design patterns, clean architecture
+o Workflow automation and orchestration concepts
+o Authorization & authentication frameworks
+o Backend security best practices
+ 
+Nice-to-Have Skills
+• Familiarity with event-driven architecture (Kafka, RabbitMQ, etc.)
+• Experience with infrastructure-as-code (Terraform, CloudFormation)
+• Exposure to DDD or hexagonal architecture
+• Experience with performance optimization & scalability design
+ 
+Soft Skills & Mindset
+• Strong problem-solving skills and ability to think in terms of architecture and system
+design.• Excellent communication and collaboration skills, especially cross-functional
+interaction.
+• Ownership mindset: takes responsibility for end-to-end delivery.
+
+Rules for this interview:
+
+1. Ask me one question at a time. Do not list all the questions at once.
+2. Mix up the questions across topics&#x20;
+3. Wait for my response and discuss with me until I say next question to moving forward.
+4. After I reply, critique my technical accuracy, code quality, and communication style, give it a score out of 10, explain the ideal approach, and then ask your next follow-up or new question."
